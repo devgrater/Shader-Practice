@@ -105,3 +105,7 @@ ZWrite Off
 ```
 打开了Alpha Blend (叠加的效果感觉最好)，关掉ZWrite，ZTest和Clip，齐活 
 ![Splash!](./Blog/Images/splash.gif)
+
+## 6. 为什么实用性不高
+
+如果体积太窄或者太矮了，特定情况下会有贴花渲染不全的情况。这点在用的贴花不是透明材质的时候最为严重。

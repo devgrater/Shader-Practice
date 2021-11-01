@@ -67,7 +67,7 @@ Shader "Unlit/DecalProjector"
                 //what do we need:
                 //1. world pos of the pixel
                 float3 cameraDirection = i.viewDir;
-                float3 pixelPosition = _WorldSpaceCameraPos + cameraDirection * i.vertex.w;
+
                 fixed4 screenDepth = tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPosition));
                 float linearEyeDepth = LinearEyeDepth(screenDepth);
                 //with depth, we can compute world pos?

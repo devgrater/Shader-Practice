@@ -61,7 +61,20 @@ Shader "Unlit/TextureCube"
                 float sinx = abs(dot(normalize(i.viewDir), float3(1, 0, 0)));
                 float dist = x_diff / sinx;
 
-                float3 actual_position = i.viewDir * 4.5 / 3.5 - _WorldSpaceCameraPos;
+                //this is accurate for this case specifically.
+                //now, lets project things back to the object space:
+                float3 objectSpaceCenter = mul(unity_WorldToObject, float4(0, 0, 0, 1));
+                float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
+                float3 objectSpaceViewDir = mul(unity_WorldToObject, float4(i.viewDir, 0));
+
+                float abs_z = abs(objectSpaceCameraPos.z);
+                float abs_x = abs(objectSpaceCameraPos.x);
+                float abs_max = max(abs_z, abs_x);
+                float abs_min = min(abs_z, abs_x);
+
+                //abs_max += 0.5;
+
+                float3 actual_position = (objectSpaceViewDir) * (abs_max + 0.5f) / (abs_max - 0.5f) - objectSpaceCameraPos;
 
                 fixed3 objectCenterVector = mul(unity_ObjectToWorld, float4(0, 0, 0, 1)) - _WorldSpaceCameraPos;
                 fixed3 theoreticalVector = i.viewDir - objectCenterVector;

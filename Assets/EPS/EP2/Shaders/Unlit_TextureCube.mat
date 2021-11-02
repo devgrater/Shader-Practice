@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_DecalProjector
-  m_Shader: {fileID: 4800000, guid: 30697d4cc7393eb4ab3a4b8627afdaf3, type: 3}
+  m_Name: Unlit_TextureCube
+  m_Shader: {fileID: 4800000, guid: 8071ffb88fb7ccb4cb12e83609880af3, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -19,11 +19,14 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _CubeMap:
+        m_Texture: {fileID: 8900000, guid: f6c3dd5f3c2a6ef46a75f39e408076ab, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 672d803ed29c4524e86cde04e19b218a, type: 3}
-        m_Scale: {x: 4, y: 4}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats: []
-    m_Colors:
-    - _Color: {r: 0.2956123, g: 0.8584906, b: 0.40110195, a: 0.4627451}
+    m_Colors: []
   m_BuildTextureStacks: []

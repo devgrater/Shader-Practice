@@ -11,7 +11,7 @@ Shader "Unlit/DecalProjector"
              "RenderType"="Opaque" 
              "Queue"="Geometry+1"
         }
-        Blend DstColor Zero
+        Blend SrcAlpha OneMinusSrcAlpha
         ZTest Off
         Cull Off
         ZWrite Off

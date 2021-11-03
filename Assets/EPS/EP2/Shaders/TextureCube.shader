@@ -4,6 +4,7 @@ Shader "Unlit/TextureCube"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _CubeMap ("Cube Map", Cube) = "white" {}
+        _RoomOffset ("RoomOffset", Vector) = (0, 0, 0)
         [IntRange]_RoomCountH ("Room Count Horizontal", Range(1, 16)) = 1
         [IntRange]_RoomCountV ("Room Count Horizontal", Range(1, 16)) = 1
     }
@@ -46,28 +47,53 @@ Shader "Unlit/TextureCube"
             float3 Nz = float3(0, 0, 1);
             float _RoomCountH;
             float _RoomCountV;
+            float3 _RoomOffset;
 
-            float first_hit(float3 rayOrigin, float3 rayDirection, float hit_x, float hit_y){
+            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 roomCenter){
 
                 //test for ceilings:
                 float horizontalPlanePos;
-                float floorHeight = 1 / _RoomCountV;
+                float roomHeight = 1 / _RoomCountV;
+                float roomWidth = 1 / _RoomCountH;
+                hitPos *= 0.99;
+                hitPos += 0.005;
                 if(rayDirection.y < 0){
                     //is looking at the floor.
-                    horizontalPlanePos = 1 - (ceil(hit_y * _RoomCountV)) / _RoomCountV - 0.5;
+                    horizontalPlanePos = 1 - (ceil(hitPos.y * _RoomCountV)) * roomHeight - 0.5;
+                    roomCenter.y = horizontalPlanePos + roomHeight * 0.5;
                 }
                 else{
                     //is looking at the ceiling
-                    horizontalPlanePos = 1 - (floor(hit_y * _RoomCountV)) / _RoomCountV - 0.5;
+                    horizontalPlanePos = 1 - (ceil(hitPos.y * _RoomCountV) - 1) * roomHeight - 0.5;
+                    roomCenter.y = horizontalPlanePos - roomHeight * 0.5;
+                }
+
+                float xPlanePos;
+                if(rayDirection.x < 0){
+                    xPlanePos = 1 - (ceil(hitPos.x * _RoomCountH)) * roomWidth - 0.5;
+                    roomCenter.x = xPlanePos + roomWidth * 0.5;
+                }
+                else{
+                    xPlanePos = 1 - (ceil(hitPos.x * _RoomCountH) - 1) * roomWidth - 0.5;
+                    roomCenter.x = xPlanePos - roomWidth * 0.5;
+                }
+
+                float zPlanePos;
+                if(rayDirection.z < 0){
+                    zPlanePos = 1 - (ceil(hitPos.z * _RoomCountH)) * roomWidth - 0.5;
+                    roomCenter.z = zPlanePos + roomWidth * 0.5;
+                }
+                else{
+                    zPlanePos = 1 - (ceil(hitPos.z * _RoomCountH) - 1) * roomWidth - 0.5;
+                    roomCenter.z = zPlanePos - roomWidth * 0.5;
                 }
 
 
-                //test for collision on the x, y, z planes. 
-                float tx = (sign(rayDirection.x) * 0.5f - rayOrigin.x) / rayDirection.x;
-                float ty = (horizontalPlanePos - rayOrigin.y) / rayDirection.y;
-                float tz = (sign(rayDirection.z) * 0.5f - rayOrigin.z) / rayDirection.z;
+                float tx = ((xPlanePos + _RoomOffset.x) - rayOrigin.x) / rayDirection.x;
+                float ty = ((horizontalPlanePos + _RoomOffset.y) - rayOrigin.y) / rayDirection.y;
+                float tz = ((zPlanePos + _RoomOffset.z) - rayOrigin.z) / rayDirection.z;
 
-                if(ty < 0){ ty = 3.402823466e+38F; };
+
 
                 return min(min(tx, ty), tz); //find the first hit!
             }
@@ -102,16 +128,17 @@ Shader "Unlit/TextureCube"
                 float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
                 float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
                 //avoid stepping into the negative 
-                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), i.uv.x, pixelPosition.y + 0.5);
+                float3 roomCenter;
+                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, roomCenter);
                 float3 objectPos = -objectSpaceCameraPos + objectSpaceViewDir * hit_t;
+                float3 sampleDir = objectPos - roomCenter;
 
-                fixed4 col = texCUBElod(_CubeMap, normalize(float4(-objectPos, 0)));
-                //but this is what happens when we are outside the cube.
-                //what we want is to pretend that we are inside the cube, and texture it based on wj
-                
+                float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)))
+
+
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                return hit_t / 5;
+                return col;
             }
             ENDCG
         }

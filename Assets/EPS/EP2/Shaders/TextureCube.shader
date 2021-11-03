@@ -55,11 +55,11 @@ Shader "Unlit/TextureCube"
                 float horizontalPlanePos;
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
-                hitPos *= 0.99;
-                hitPos += 0.005;
+                //hitPos *= 0.99;
+                //hitPos += 0.005;
                 if(rayDirection.y < 0){
                     //is looking at the floor.
-                    horizontalPlanePos = 1 - (ceil(hitPos.y * _RoomCountV)) * roomHeight - 0.5;
+                    horizontalPlanePos = 1 - (floor(hitPos.y * _RoomCountV) + 1) * roomHeight - 0.5;
                     roomCenter.y = horizontalPlanePos + roomHeight * 0.5;
                 }
                 else{
@@ -70,7 +70,7 @@ Shader "Unlit/TextureCube"
 
                 float xPlanePos;
                 if(rayDirection.x < 0){
-                    xPlanePos = 1 - (ceil(hitPos.x * _RoomCountH)) * roomWidth - 0.5;
+                    xPlanePos = 1 - (floor(hitPos.x * _RoomCountH) + 1) * roomWidth - 0.5;
                     roomCenter.x = xPlanePos + roomWidth * 0.5;
                 }
                 else{
@@ -80,7 +80,7 @@ Shader "Unlit/TextureCube"
 
                 float zPlanePos;
                 if(rayDirection.z < 0){
-                    zPlanePos = 1 - (ceil(hitPos.z * _RoomCountH)) * roomWidth - 0.5;
+                    zPlanePos = 1 - (floor(hitPos.z * _RoomCountH) + 1) * roomWidth - 0.5;
                     roomCenter.z = zPlanePos + roomWidth * 0.5;
                 }
                 else{

@@ -13,9 +13,10 @@ Shader "Unlit/SphereTracing"
                 "RenderType"="Transparent"
                 "Queue"="Transparent+10"
             }
+            Blend SrcAlpha OneMinusSrcAlpha
             Cull Off
             //ZWrite Off
-            ZTest Off
+            ZTest Always
             LOD 100
 
             CGPROGRAM
@@ -72,7 +73,7 @@ Shader "Unlit/SphereTracing"
                 float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
                 float sceneDepth = tex2Dproj(_CameraDepthTexture, i.screenPos);
                 float corrected_depth = dot(normalize(i.worldViewDir), UNITY_MATRIX_V[2].xyz);
-                sceneDepth = LinearEyeDepth(sceneDepth) / corrected_depth;
+                sceneDepth = LinearEyeDepth(sceneDepth);
                 //convert stuff to object space coords
                 //trace it there
                 //solve:
@@ -103,8 +104,9 @@ Shader "Unlit/SphereTracing"
                         depth = -min(lesser_t, larger_t);
                         out_col = float4(1, 1, 0, 1);
                     }
-                    out_col.rgb *= depth;
-                    
+                    depth *= corrected_depth;
+                    depth *= unity_ObjectToWorld[0].x;
+                    //also need to increase...
                     if(depth > sceneDepth){
                         out_col.a = 0;
                     }
@@ -112,6 +114,7 @@ Shader "Unlit/SphereTracing"
                 
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 clip(out_col.a - 0.5);
+                out_col.a = depth_diff;
                 out_f.color = out_col;
                 out_f.depth = depth;
                 return out_f;

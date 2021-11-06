@@ -16,7 +16,7 @@ Shader "Unlit/SphereTracing"
                 "RenderType"="Transparent"
                 "Queue"="Transparent+1"
             }
-            Blend SrcAlpha OneMinusSrcAlpha 
+            Blend One OneMinusSrcAlpha
             Cull Off
             ZWrite Off
             ZTest Always
@@ -90,7 +90,7 @@ Shader "Unlit/SphereTracing"
                 float a_2 = a * 2;
                 float b_sqr_4ac = sqrt(b * b - 4 * a * c);
 
-                float4 out_col = float4(1, 0, 0, 0); 
+                float4 out_col = float4(0, 0, 0, 0); 
                 float3 pixel_pos;
                 float depth_diff;
                 float depth;
@@ -141,7 +141,7 @@ Shader "Unlit/SphereTracing"
                 
                 out_col.a = saturate(depth_diff * _FogDensity * fresnel);
                 //out_col.rgb *= saturate(out_col.a); //premultiply
-                out_f.color = out_col;
+                out_f.color = out_col * out_col.a;
                 out_f.depth = depth ;
                 return out_f;
             }

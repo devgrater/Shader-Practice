@@ -94,6 +94,7 @@ Shader "Unlit/SphereTracing"
                 float3 pixel_pos;
                 float depth_diff;
                 float depth;
+                bool is_inside = false;
 
 
                 if(a_2 != 0){
@@ -112,10 +113,15 @@ Shader "Unlit/SphereTracing"
                         depth_diff = abs(min(lesser_t, larger_t));
                         depth = -min(lesser_t, larger_t);
                         out_col = _FogColor;
+                        is_inside = true;
                     }
-                    pixel_pos = normalize(objectSpaceCameraPos - objectSpaceViewDir * depth);
+                    pixel_pos = objectSpaceCameraPos - objectSpaceViewDir * depth;
+                    float3 camera_dir = pixel_pos - objectSpaceCameraPos;
+                    camera_dir = mul(unity_ObjectToWorld, float4(camera_dir, 0));
+                    
+                    //depth *= unity_ObjectToWorld[0].x;
+                    depth = sqrt(dot(camera_dir, camera_dir));
                     depth *= corrected_depth;
-                    depth *= unity_ObjectToWorld[0].x;
                     depth_diff = min(depth_diff, -depth + sceneDepth);
                     
                     //also need to increase...
@@ -123,14 +129,16 @@ Shader "Unlit/SphereTracing"
                     if(depth > sceneDepth || depth < 0){
                         out_col.a = 0; //clip 
                     }
-
                 }
                 
+
+
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //clip(out_col.a - 0.5);
                 //fresnel
                 //just to make the density look a bit more natural
-                float fresnel = pow(dot(pixel_pos, normalize(objectSpaceViewDir)), _FresnelIntensity);
+                float fresnel = is_inside? 1 : pow(dot(pixel_pos, normalize(objectSpaceViewDir)), _FresnelIntensity);
+                
                 out_col.a = saturate(depth_diff * _FogDensity * fresnel);
                 //out_col.rgb *= saturate(out_col.a); //premultiply
                 out_f.color = out_col;

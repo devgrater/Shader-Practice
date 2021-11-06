@@ -13,7 +13,7 @@ Shader "Unlit/SphereTracing"
                 "RenderType"="Transparent"
                 "Queue"="Transparent+10"
             }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend SrcAlpha OneMinusSrcAlpha 
             Cull Off
             //ZWrite Off
             ZTest Always
@@ -92,9 +92,10 @@ Shader "Unlit/SphereTracing"
                     if(lesser_t <= 0 && larger_t <= 0){
                         //hit
                         //return max(lesser_t, larger_t);
-                        depth_diff = abs(lesser_t - larger_t);
+                        depth_diff = abs((lesser_t - larger_t));
                         depth = -(max(lesser_t, larger_t));
-                        out_col = float4(0, 1, 1, 1);
+                        
+                        out_col = float4(1, 1, 1, 1);
                         
                     }
                     else if(lesser_t > 0 || larger_t > 0){
@@ -106,17 +107,21 @@ Shader "Unlit/SphereTracing"
                     }
                     depth *= corrected_depth;
                     depth *= unity_ObjectToWorld[0].x;
+                    depth_diff = -depth + sceneDepth;
                     //also need to increase...
+                    //out_col.a = saturate(depth_diff);
                     if(depth > sceneDepth){
-                        out_col.a = 0;
+                        out_col.a = 0; //clip 
                     }
+
                 }
                 
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 clip(out_col.a - 0.5);
-                out_col.a = depth_diff;
-                out_f.color = out_col;
-                out_f.depth = depth;
+                out_col.a = saturate(depth_diff);
+                //out_col.rgb *= saturate(out_col.a); //premultiply
+                out_f.color = out_col;//out_col;
+                out_f.depth = depth ;
                 return out_f;
             }
             ENDCG

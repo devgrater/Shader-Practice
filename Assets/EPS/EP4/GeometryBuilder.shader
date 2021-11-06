@@ -21,7 +21,7 @@ Shader "Unlit/GeometryBuilder"
             #include "UnityCG.cginc"
 
 
-            struct g2v
+            struct g2f
             {
                 float4 pos : SV_POSITION;
             };
@@ -32,7 +32,7 @@ Shader "Unlit/GeometryBuilder"
                 float2 uv : TEXCOORD0;
             };
 
-            struct v2f
+            struct v2g
             {
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
@@ -42,9 +42,9 @@ Shader "Unlit/GeometryBuilder"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-                        [maxvertexcount(3)]
-            void geom (triangle float4 IN[3] : SV_POSITION, inout TriangleStream<g2v> triStream){
-                /*g2v o;
+            [maxvertexcount(3)]
+            void geom (triangle float4 IN[3] : SV_POSITION, inout TriangleStream<g2f> triStream){
+                /*g2f o;
                 o.pos = float4(0.5, 0, 0, 1);
                 triStream.Append(o);
 
@@ -56,9 +56,9 @@ Shader "Unlit/GeometryBuilder"
             }
 
 
-            v2f vert (appdata v)
+            v2g vert (appdata v)
             {
-                v2f o;
+                v2g o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
@@ -68,7 +68,7 @@ Shader "Unlit/GeometryBuilder"
 
 
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag (g2f i) : SV_Target
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);

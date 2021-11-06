@@ -4,6 +4,8 @@ Shader "Unlit/SphereTracing"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _SphereSize ("Sphere Radius", Range(0, 1)) = 0.5
+        _FogDensity ("Fog Density", Range(0, 1)) = 1.0
+        _FogColor ("Fog Color", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
@@ -11,11 +13,11 @@ Shader "Unlit/SphereTracing"
         {
             Tags { 
                 "RenderType"="Transparent"
-                "Queue"="Transparent+10"
+                "Queue"="Transparent+1"
             }
             Blend SrcAlpha OneMinusSrcAlpha 
-            Cull Off
-            //ZWrite Off
+            //Cull Off
+            ZWrite Off
             ZTest Always
             LOD 100
 
@@ -52,6 +54,8 @@ Shader "Unlit/SphereTracing"
             sampler2D _CameraDepthTexture;
             float4 _MainTex_ST;
             float _SphereSize;
+            float _FogDensity;
+            float4 _FogColor;
 
             v2f vert (appdata v)
             {
@@ -77,6 +81,7 @@ Shader "Unlit/SphereTracing"
                 //convert stuff to object space coords
                 //trace it there
                 //solve:
+
                 float a = dot(objectSpaceViewDir, objectSpaceViewDir);
                 float b = 2 * dot(objectSpaceCameraPos, objectSpaceViewDir);
                 float c = dot(objectSpaceCameraPos, objectSpaceCameraPos) - _SphereSize * _SphereSize;
@@ -86,6 +91,8 @@ Shader "Unlit/SphereTracing"
                 float4 out_col = float4(1, 0, 0, 0); 
                 float depth_diff;
                 float depth;
+
+
                 if(a_2 != 0){
                     float lesser_t = (-b - b_sqr_4ac) / a_2;
                     float larger_t = (-b + b_sqr_4ac) / a_2;
@@ -94,31 +101,29 @@ Shader "Unlit/SphereTracing"
                         //return max(lesser_t, larger_t);
                         depth_diff = abs((lesser_t - larger_t));
                         depth = -(max(lesser_t, larger_t));
-                        
-                        out_col = float4(1, 1, 1, 1);
+                        out_col = _FogColor;
                         
                     }
                     else if(lesser_t > 0 || larger_t > 0){
-                        //return float4(0, 1, 0, 0);
-                        //no hit
+                        //inside the sphere
                         depth_diff = abs(min(lesser_t, larger_t));
                         depth = -min(lesser_t, larger_t);
-                        out_col = float4(1, 1, 0, 1);
+                        out_col = _FogColor;
                     }
                     depth *= corrected_depth;
                     depth *= unity_ObjectToWorld[0].x;
                     depth_diff = -depth + sceneDepth;
                     //also need to increase...
                     //out_col.a = saturate(depth_diff);
-                    if(depth > sceneDepth){
+                    if(depth > sceneDepth || depth < 0){
                         out_col.a = 0; //clip 
                     }
 
                 }
                 
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                clip(out_col.a - 0.5);
-                out_col.a = saturate(depth_diff);
+                //clip(out_col.a - 0.5);
+                out_col.a = saturate(depth_diff * _FogDensity);
                 //out_col.rgb *= saturate(out_col.a); //premultiply
                 out_f.color = out_col;//out_col;
                 out_f.depth = depth ;

@@ -25,8 +25,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _FogDensity: 4
-    - _FogPower: 3.17
-    - _FresnelIntensity: 1.34
+    - _FogPower: 3.63
+    - _FresnelIntensity: 1.4
     - _SphereSize: 0.39
     m_Colors:
     - _FogColor: {r: 0.17181383, g: 0.9339623, b: 0.6129753, a: 1}

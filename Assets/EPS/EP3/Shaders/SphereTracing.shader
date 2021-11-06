@@ -136,7 +136,7 @@ Shader "Unlit/SphereTracing"
                         out_col.a = 0; //clip 
                     }
                     if(is_inside){
-                        depth_diff = log(sceneDepth / corrected_depth) / 16;
+                        depth_diff = log(sceneDepth / corrected_depth) / 16 * (1 - distance_from_center);
                     }
                 }
                 

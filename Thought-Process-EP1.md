@@ -42,7 +42,7 @@ fixed4 frag(...)
 	fixed4 screenDepth = tex2D(_CameraDepthTexture, i.screenPosition.xy / i.screenPosition.w);
 	float linearEyeDepth = LinearEyeDepth(screenDepth);
 	//求出世界坐标
-	float3 pixelWorldPos = cameraDirection / i.screenPosition.w * linearEyeDepth - _WorldSpaceCameraPos;
+	float3 pixelWorldPos = _WorldSpaceCameraPos - cameraDirection / i.screenPosition.w * linearEyeDepth;
 }
 ```
 ![Depth](./Blog/Images/EP1_2_1.jpg)
@@ -54,7 +54,7 @@ fixed4 frag(...)
 {
 	//inverse project to object space:
 	float3 objectSpacePos = mul(unity_WorldToObject, pixelWorldPos);
-	objectSpacePos.xz -= mul(unity_WorldToObject, float4(0, 0, 0, 1)).xz;
+	objectSpacePos.xz += mul(unity_WorldToObject, float4(0, 0, 0, 1)).xz;
 }
 ```
 

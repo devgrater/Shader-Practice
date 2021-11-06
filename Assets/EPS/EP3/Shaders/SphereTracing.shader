@@ -5,6 +5,7 @@ Shader "Unlit/SphereTracing"
         _MainTex ("Texture", 2D) = "white" {}
         _SphereSize ("Sphere Radius", Range(0, 1)) = 0.5
         _FogDensity ("Fog Density", Range(0, 1)) = 1.0
+        _FogPower ("Fog Power", Range(1, 8)) = 1.0
         _FresnelIntensity ("Fresnel Intensity", Range(0, 8)) = 1.0
         _FogColor ("Fog Color", Color) = (1, 1, 1, 1)
     }
@@ -57,6 +58,7 @@ Shader "Unlit/SphereTracing"
             float _SphereSize;
             float _FogDensity;
             float _FresnelIntensity;
+            float _FogPower;
             float4 _FogColor;
 
             v2f vert (appdata v)
@@ -140,6 +142,7 @@ Shader "Unlit/SphereTracing"
                 float fresnel = is_inside? 1 : pow(dot(pixel_pos, normalize(objectSpaceViewDir)), _FresnelIntensity);
                 
                 out_col.a = saturate(depth_diff * _FogDensity * fresnel);
+                out_col.a = pow(out_col.a, _FogPower);
                 //out_col.rgb *= saturate(out_col.a); //premultiply
                 out_f.color = out_col * out_col.a;
                 out_f.depth = depth ;

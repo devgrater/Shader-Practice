@@ -71,11 +71,11 @@ Shader "Unlit/DecalProjector"
                 fixed4 screenDepth = tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPosition));
                 float linearEyeDepth = LinearEyeDepth(screenDepth);
                 //with depth, we can compute world pos?
-                float3 pixelWorldPos = cameraDirection / i.screenPosition.w * linearEyeDepth - _WorldSpaceCameraPos;
+                float3 pixelWorldPos = -cameraDirection / i.screenPosition.w * linearEyeDepth + _WorldSpaceCameraPos;
 
                 //inverse project to object space:
                 float3 objectSpacePos = mul(unity_WorldToObject, pixelWorldPos);
-                objectSpacePos.xz -= mul(unity_WorldToObject, float4(0, 0, 0, 1)).xz;
+                objectSpacePos.xz += mul(unity_WorldToObject, float4(0, 0, 0, 1)).xz;
             
                 float4 sampledCol = tex2D(_MainTex, objectSpacePos.xz + 0.5);
                 // apply fog

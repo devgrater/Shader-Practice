@@ -55,8 +55,8 @@ Shader "Unlit/TextureCube"
                 float horizontalPlanePos;
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
-                //hitPos *= 0.99;
-                //hitPos += 0.005;
+                hitPos *= 0.999;
+                hitPos += 0.0005;
                 if(rayDirection.y < 0){
                     //is looking at the floor.
                     horizontalPlanePos = 1 - (floor(hitPos.y * _RoomCountV) + 1) * roomHeight - 0.5;
@@ -131,10 +131,10 @@ Shader "Unlit/TextureCube"
                 float3 roomCenter;
                 float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, roomCenter);
                 float3 objectPos = -objectSpaceCameraPos + objectSpaceViewDir * hit_t;
-                float3 sampleDir = objectPos - roomCenter;
+                float3 sampleDir = normalize(objectPos - roomCenter);
+                
 
-                float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)))
-
+                float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)));
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

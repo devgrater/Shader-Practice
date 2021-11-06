@@ -5,6 +5,7 @@ Shader "Unlit/SphereTracing"
         _MainTex ("Texture", 2D) = "white" {}
         _SphereSize ("Sphere Radius", Range(0, 1)) = 0.5
         _FogDensity ("Fog Density", Range(0, 1)) = 1.0
+        _FresnelIntensity ("Fresnel Intensity", Range(0, 8)) = 1.0
         _FogColor ("Fog Color", Color) = (1, 1, 1, 1)
     }
     SubShader
@@ -16,7 +17,7 @@ Shader "Unlit/SphereTracing"
                 "Queue"="Transparent+1"
             }
             Blend SrcAlpha OneMinusSrcAlpha 
-            //Cull Off
+            Cull Off
             ZWrite Off
             ZTest Always
             LOD 100
@@ -55,6 +56,7 @@ Shader "Unlit/SphereTracing"
             float4 _MainTex_ST;
             float _SphereSize;
             float _FogDensity;
+            float _FresnelIntensity;
             float4 _FogColor;
 
             v2f vert (appdata v)
@@ -89,6 +91,7 @@ Shader "Unlit/SphereTracing"
                 float b_sqr_4ac = sqrt(b * b - 4 * a * c);
 
                 float4 out_col = float4(1, 0, 0, 0); 
+                float3 pixel_pos;
                 float depth_diff;
                 float depth;
 
@@ -110,9 +113,11 @@ Shader "Unlit/SphereTracing"
                         depth = -min(lesser_t, larger_t);
                         out_col = _FogColor;
                     }
+                    pixel_pos = normalize(objectSpaceCameraPos - objectSpaceViewDir * depth);
                     depth *= corrected_depth;
                     depth *= unity_ObjectToWorld[0].x;
-                    depth_diff = -depth + sceneDepth;
+                    depth_diff = min(depth_diff, -depth + sceneDepth);
+                    
                     //also need to increase...
                     //out_col.a = saturate(depth_diff);
                     if(depth > sceneDepth || depth < 0){
@@ -123,9 +128,12 @@ Shader "Unlit/SphereTracing"
                 
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //clip(out_col.a - 0.5);
-                out_col.a = saturate(depth_diff * _FogDensity);
+                //fresnel
+                //just to make the density look a bit more natural
+                float fresnel = pow(dot(pixel_pos, normalize(objectSpaceViewDir)), _FresnelIntensity);
+                out_col.a = saturate(depth_diff * _FogDensity * fresnel);
                 //out_col.rgb *= saturate(out_col.a); //premultiply
-                out_f.color = out_col;//out_col;
+                out_f.color = out_col;
                 out_f.depth = depth ;
                 return out_f;
             }

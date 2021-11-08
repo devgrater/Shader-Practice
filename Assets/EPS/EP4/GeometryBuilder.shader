@@ -8,6 +8,7 @@ Shader "Unlit/GeometryBuilder"
     {
         Tags { "RenderType"="Opaque" }
         LOD 100
+        Cull Off
 
         Pass
         {
@@ -43,16 +44,28 @@ Shader "Unlit/GeometryBuilder"
             float4 _MainTex_ST;
 
             [maxvertexcount(3)]
-            void geom (triangle float4 IN[3] : SV_POSITION, inout TriangleStream<g2f> triStream){
-                /*g2f o;
-                o.pos = float4(0.5, 0, 0, 1);
+            void geom (triangle v2g IN[3] : SV_POSITION, inout TriangleStream<g2f> triStream){
+                //IN[0].vertex.xyz);
+                /*
+                g2f o;
+                o.pos = IN[0].vertex;
                 triStream.Append(o);
 
-                o.pos = float4(0.5, 0, 0, 1);
+                o.pos = IN[1].vertex;
                 triStream.Append(o);
 
-                o.pos = float4(0, 1, 0, 1);
+                o.pos = IN[2].vertex;
                 triStream.Append(o);*/
+                g2f o;
+
+                o.pos = UnityObjectToClipPos(float4(-0.25, 0, 0, 0)) + IN[0].vertex;
+                triStream.Append(o);
+
+                o.pos = UnityObjectToClipPos(float4(0.25, 0, 0, 0)) + IN[0].vertex;
+                triStream.Append(o);
+
+                o.pos = UnityObjectToClipPos(float4(0, 1, 0, 0)) + IN[0].vertex;
+                triStream.Append(o);
             }
 
 
@@ -71,10 +84,10 @@ Shader "Unlit/GeometryBuilder"
             fixed4 frag (g2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+                //fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return float4(0.5, 0.2, 0.1, 1);
+                //UNITY_APPLY_FOG(i.fogCoord, col);
+                return float4(0.2, 0.85, 0.4, 1);
             }
             ENDCG
         }

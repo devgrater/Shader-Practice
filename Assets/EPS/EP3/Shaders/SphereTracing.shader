@@ -94,8 +94,8 @@ Shader "Unlit/SphereTracing"
 
                 float4 out_col = float4(0, 0, 0, 0); 
                 float3 pixel_pos;
-                float depth_diff;
-                float depth;
+                float depth_diff = 0;
+                float depth = 0;
                 float distance_from_center;
                 bool is_inside = false;
 

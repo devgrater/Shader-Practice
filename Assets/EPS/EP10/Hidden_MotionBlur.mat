@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Hidden_EdgeDetect
-  m_Shader: {fileID: 4800000, guid: 6ddd38a858deed14ab9ff95dc34f51f1, type: 3}
+  m_Name: Hidden_MotionBlur
+  m_Shader: {fileID: 4800000, guid: 205e7cd410ca1964899d8774cc8f8a91, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -23,6 +23,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Floats: []
+    m_Floats:
+    - _BlurAmount: 0.5
     m_Colors: []
   m_BuildTextureStacks: []

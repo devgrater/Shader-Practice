@@ -109,13 +109,14 @@ Shader "Unlit/TwoPassTransparency"
             ENDCG
         }
 
+        /*
         Pass
         {
             //depth writing only, nothing else.
             Cull Back
             ZWrite On
             ColorMask 0
-        }
+        }*/
 
         Pass
         {

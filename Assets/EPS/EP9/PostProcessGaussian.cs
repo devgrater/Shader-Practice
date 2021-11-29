@@ -6,11 +6,11 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class PostProcessGaussian : MonoBehaviour
 {
-    [Range(0, 8)]
-    [SerializeField] private float blurAmount;
-    [Range(0, 8)]
-    [SerializeField] private int iterations;
+    [Range(0, 1)]
+    [SerializeField] private float blurAmount;  
     [Range(1, 8)]
+    [SerializeField] private int iterations;
+    [Range(1, 16)]
     [SerializeField] private int downSample;
     [SerializeField] private Material postProcess;
     void OnRenderImage(RenderTexture src, RenderTexture dest){

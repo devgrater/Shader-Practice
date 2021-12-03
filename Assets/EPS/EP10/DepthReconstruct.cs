@@ -29,7 +29,7 @@ public class DepthReconstruct : MonoBehaviour
             float fov = camera.fieldOfView;
             float aspect = camera.aspect;
 
-            float halfHeight = near * Mathf.Tan(fov * 0.5f * aspect);
+            float halfHeight = near * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
             //should compute a ray...
 
             //using this, we can compute screen width....
@@ -37,7 +37,7 @@ public class DepthReconstruct : MonoBehaviour
             Vector3 forwardDir = transform.forward * near;
             Vector3 upDir = transform.up * halfHeight;
             Vector3 rightDir = transform.right * screenHalfWidth;
-            Vector3 rayCoordsTL = forwardDir + upDir + rightDir;
+            Vector3 rayCoordsTL = forwardDir + upDir - rightDir;
             float scale = rayCoordsTL.magnitude / near;
             rayCoordsTL = rayCoordsTL.normalized * scale;
             
@@ -53,6 +53,7 @@ public class DepthReconstruct : MonoBehaviour
             //postProcess.SetFloat("_Near", camera.nearClipPlane);
             //postProcess.SetFloat("_Far", camera.farClipPlane);
             postProcess.SetMatrix("_FrustumCornersRay", frustumCorners);//and then just let the vertex shader interpolate
+            
             Graphics.Blit(src, dest, postProcess);
         }
         else{

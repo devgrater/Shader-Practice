@@ -31,6 +31,7 @@ Shader "Hidden/FogOverlay"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
             sampler2D _CameraDepthTexture;
             float4x4 _FrustumCornersRay;
 
@@ -56,11 +57,30 @@ Shader "Hidden/FogOverlay"
                         index = 1;
                     }
                     else{
-                        //whatever the remaining one is
+                        //top right
                         index = 2;
                     }
                 }
+                #if UNITY_UV_STARTS_AT_TOP
+                    if(_MainTex_TexelSize.y < 0){
+                        index = 3 - index;
+                    }
+                #endif
+
                 o.interpolatedRay = _FrustumCornersRay[index];
+
+                float tlarea = o.uv.x * o.uv.y;
+                float brarea = (1 - o.uv.x) * (1 - o.uv.y);
+
+                float sum_area = tlarea + brarea;
+                tlarea = tlarea / sum_area;
+                brarea = brarea / sum_area;
+
+                //o.interpolatedRay = tlarea * _FrustumCornersRay[3] + brarea * _FrustumCornersRay[1];
+
+
+                //interpolate...
+
                 return o;
             }
 
@@ -70,32 +90,12 @@ Shader "Hidden/FogOverlay"
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // just invert the colors
-                fixed depth = Linear01Depth(tex2D(_CameraDepthTexture, i.uv));
-
-                return float4(i.uv, 0, 1);
+                fixed depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
+                float3 worldPos = _WorldSpaceCameraPos + depth * i.interpolatedRay.xyz;
+                return float4(worldPos.xyz, 1);
             }
             ENDCG
         }
     }
 }
 
-
-
-class Circle{
-    public static float pi = 3.14159f;
-    public float radius;
-
-    public static void pi_equals_4(){
-        pi = 4;
-    }
-
-    public float getArea(){
-        return pi * this.radius * this.radius;
-    }
-}
-
-Circle a = new Circle(5);
-Circle b = new Circle(10);
-
-Circle.pi_equals_4() //这个可以
-a.getArea();

@@ -8,12 +8,7 @@ Shader "Hidden/FogOverlay"
     {
         // No culling or depth
         Cull Off ZWrite Off ZTest Always
-
-        Pass
-        {
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
+        CGINCLUDE
 
             #include "UnityCG.cginc"
 
@@ -35,6 +30,18 @@ Shader "Hidden/FogOverlay"
             sampler2D _CameraDepthTexture;
             float4x4 _FrustumCornersRay;
 
+            //fog related
+            float _FogStart;
+            float _FogEnd;
+            fixed4 _FogColor;
+            half _FogDensity;
+
+        ENDCG
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
             v2f vert (appdata v)
             {
                 v2f o;
@@ -92,7 +99,12 @@ Shader "Hidden/FogOverlay"
                 // just invert the colors
                 fixed depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
                 float3 worldPos = _WorldSpaceCameraPos + depth * i.interpolatedRay.xyz;
-                return float4(worldPos.xyz, 1);
+                //using the y coordinates..
+                float fogDensity = (_FogEnd - worldPos.y) / (_FogEnd - _FogStart);
+                fogDensity = saturate(fogDensity * _FogDensity);
+                col.rgb = lerp(col.rgb, _FogColor.rgb, fogDensity);
+
+                return col;
             }
             ENDCG
         }

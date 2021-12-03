@@ -19,6 +19,11 @@ public class DepthReconstruct : MonoBehaviour
         }
     }
 
+    [SerializeField] private float fogStart;
+    [SerializeField] private float fogEnd;
+    [SerializeField] private float fogDensity;
+    [SerializeField] private Color fogColor;
+
     void Awake(){
         camera = GetComponent<Camera>();
     }
@@ -53,7 +58,10 @@ public class DepthReconstruct : MonoBehaviour
             //postProcess.SetFloat("_Near", camera.nearClipPlane);
             //postProcess.SetFloat("_Far", camera.farClipPlane);
             postProcess.SetMatrix("_FrustumCornersRay", frustumCorners);//and then just let the vertex shader interpolate
-            
+            postProcess.SetColor("_FogColor", fogColor);
+            postProcess.SetFloat("_FogDensity", fogDensity);
+            postProcess.SetFloat("_FogStart", fogStart);
+            postProcess.SetFloat("_FogEnd", fogEnd);
             Graphics.Blit(src, dest, postProcess);
         }
         else{

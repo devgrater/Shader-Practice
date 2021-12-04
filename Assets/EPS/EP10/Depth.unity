@@ -212,8 +212,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 65701839}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.5, y: 39.8, z: -66.2}
-  m_LocalScale: {x: 13.855053, y: 13.855053, z: 13.855053}
+  m_LocalPosition: {x: 53.6, y: 13, z: -30.8}
+  m_LocalScale: {x: 39.190403, y: 39.190403, z: 39.190403}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 6
@@ -328,6 +328,7 @@ GameObject:
   - component: {fileID: 228848224}
   - component: {fileID: 228848225}
   - component: {fileID: 228848226}
+  - component: {fileID: 228848227}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -393,13 +394,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 228848219}
-  m_LocalRotation: {x: 0.22309253, y: -0, z: -0, w: 0.9747973}
-  m_LocalPosition: {x: 20.8, y: 52.3, z: -102}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.2, y: 52.3, z: -122.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 25.781, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &228848223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -494,7 +495,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 228848219}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7de9e1679a125a84e90941d64e3e22b7, type: 3}
   m_Name: 
@@ -503,7 +504,23 @@ MonoBehaviour:
   fogStart: 8.9
   fogEnd: 30.66
   fogDensity: 1
-  fogColor: {r: 0.65723264, g: 0.85249007, b: 1, a: 0}
+  fogColor: {r: 0.37706178, g: 0.5790046, b: 0.7735849, a: 0}
+--- !u!114 &228848227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228848219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d261933bd3e387849adc449930794ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  brightness: 0
+  saturation: 0
+  contrast: 0
+  postProcess: {fileID: 2100000, guid: 4c12b559396b69348aef9bcaf681c5b5, type: 2}
 --- !u!1 &259077291
 GameObject:
   m_ObjectHideFlags: 0

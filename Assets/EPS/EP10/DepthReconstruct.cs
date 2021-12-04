@@ -21,7 +21,7 @@ public class DepthReconstruct : MonoBehaviour
 
     [SerializeField] private float fogStart;
     [SerializeField] private float fogEnd;
-    [SerializeField] private float fogDensity;
+    [Range(0, 1)][SerializeField] private float fogDensity;
     [SerializeField] private Color fogColor;
 
     void Awake(){

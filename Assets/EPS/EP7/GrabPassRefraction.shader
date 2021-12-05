@@ -6,7 +6,10 @@ Shader "Unlit/GrabPassRefraction"
         _BumpMap ("Bump Map", 2D) = "bump" {}
         _CubeMap ("Cube Map", Cube) = "white" {}
         _ReflAmount ("Reflection Amount", Range(0, 1)) = 0.5 //half reflective
-        _BumpIntensity("Bump Intensity", Range(0, 1)) = 1.0
+        _BumpIntensity ("Bump Intensity", Range(0, 1)) = 1.0
+        _Distortion ("Distortion", Float) = 1.0
+        _Tint ("Tint", Color) = (1.0, 1.0, 1.0, 1.0)
+        _BlurDistance ("Blur Distance", Range(1, 2)) = 1.0
     }
     SubShader
     {
@@ -53,6 +56,9 @@ Shader "Unlit/GrabPassRefraction"
             samplerCUBE _CubeMap;
             fixed _BumpIntensity;
             fixed _ReflAmount;
+            float _Distortion;
+            fixed4 _Tint;
+            float _BlurDistance;
 
             v2f vert (appdata v)
             {
@@ -75,13 +81,33 @@ Shader "Unlit/GrabPassRefraction"
                 return o;
             }
 
+            fixed4 box_blur(float2 uv){
+                //offset the uv...
+                float2 uvOffsetX = (_CameraPass_TexelSize.x, 0);
+                float2 uvOffsetY = (0, _CameraPass_TexelSize.y);
+                float2 uvBase = uv;
+                float4 colorSum = float4(0, 0, 0, 0);
+                for(int i = -1; i <= 1; i++){
+                    for(int j = -1; j <= 1; j++){
+                        uvBase = uv + (i * uvOffsetX + j * uvOffsetY) * _BlurDistance;
+                        //using this info, we sample the texture
+                        colorSum += tex2D(_CameraPass, uvBase);
+                    }
+                }
+                return colorSum / 9;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv.xy);
                 float3 worldPos = float3(i.TtoW0.z, i.TtoW1.z, i.TtoW2.z);
+
+                
                 //convert normal from tangent space to world space
                 fixed3 bump = UnpackNormal(tex2D(_BumpMap, i.uv.zw));
+                
+
                 bump = lerp(fixed3(0, 0, 1), bump, _BumpIntensity);
                 bump = normalize(half3(
                     dot(i.TtoW0.xyz, bump),
@@ -89,6 +115,7 @@ Shader "Unlit/GrabPassRefraction"
                     dot(i.TtoW2.xyz, bump)
                 ));
 
+                float2 offset = bump.xy * _CameraPass_TexelSize * _Distortion;
                 
                 //compute fresnel
 
@@ -98,15 +125,19 @@ Shader "Unlit/GrabPassRefraction"
 
                 fixed3 reflCol = texCUBElod(_CubeMap, reflectionDir) * col.rgb;
 
-                fixed3 refrCol = tex2D(_CameraPass, i.screenPos.xy / i.screenPos.w).rgb;
+                fixed3 refrCol = box_blur((i.screenPos.xy + offset) / i.screenPos.w).rgb;//tex2D(_CameraPass, (i.screenPos.xy + offset) / i.screenPos.w).rgb;
                 //fixed reflInten = saturate(dot(reflCol, reflCol));
                 fixed fresnel = saturate(1 - dot(normalize(i.viewDir), bump));
                 fresnel = pow(fresnel, 1);
+                float4 finalCol = fixed4(lerp(refrCol, reflCol, _ReflAmount * fresnel), 1);
+                finalCol *= _Tint;
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                return fixed4(lerp(refrCol, reflCol, _ReflAmount * fresnel), 1);
+                return finalCol;
             }
             ENDCG
         }
+        
     }
+    Fallback "VertexLit"
 }

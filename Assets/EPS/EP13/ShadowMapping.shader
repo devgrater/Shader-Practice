@@ -1,8 +1,8 @@
-Shader "Unlit/DepthReplacement"
+Shader "Unlit/ShadowMapping"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("ShadowMap", 2D) = "white" {}
     }
     SubShader
     {
@@ -28,43 +28,41 @@ Shader "Unlit/DepthReplacement"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
+                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float4 worldPos : TEXCOORD1;
             };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float4 _cst_NearFar;
-            
+            float4 _cst_LightDir;
+            float4x4 _cst_WorldToCamera;
 
             v2f vert (appdata v)
             {
+                //construct world space coordinates:
                 v2f o;
+                
                 o.vertex = UnityObjectToClipPos(v.vertex);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex); //now we are in world pos...
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
-            //this we have 01 depth?
-            //to make it work with the depth buffer
-            //we need to store it differently.
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                //when we use i.vertex.w, the further away,
-                //the brighter. however, this wouldn't do the trick...
-                //because we run out of precision quickly.
-
-                //so the first thing we do is to compute 1/z.
-                //this gives us... a range from 0 to 1.
-                //but we wasted too much precision on the closer areas.
-                float wCoord = i.vertex.w;
-                //remap wCoord so that the near plane gives d = 1 and far plane gives d = 0;
-                //float nDF = _cst_NearFar.y / _cst_NearFar.x;
-                //wCoord = (wCoord - (1 / _cst_NearFar.y)) / ((1 - nDF) / (_cst_NearFar.y)); 
-                //lets assume that this worked...
-                return 1 / wCoord;
+                //using the world coordinates, convert to camera space...
+                float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
+                cameraSpaceCoords /= cameraSpaceCoords.w;
+                //using these...
+                //float z = cameraSpaceCoords.xy / cameraSpaceCoords.z;
+                
+                UNITY_APPLY_FOG(i.fogCoord, col);
+                return float4(cameraSpaceCoords.zzz, 1);
             }
             ENDCG
         }

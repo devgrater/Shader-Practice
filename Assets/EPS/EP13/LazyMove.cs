@@ -13,6 +13,7 @@ public class LazyMove : MonoBehaviour
     {
 
         //SetMouseLocked(true);
+        euler = transform.eulerAngles;
     }
 
     // Update is called once per frame

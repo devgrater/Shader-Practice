@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
-public class CameraReplacement : MonoBehaviour
+public class CameraProperties : MonoBehaviour
 {
     // Start is called before the first frame update
-    [SerializeField]private Shader shader;
+    private Camera camera;
     void Start()
     {
-        GetComponent<Camera>().SetReplacementShader(shader, "RenderType");
-        
+        camera = GetComponent<Camera>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //convert camera space coords to world space coords...
         
     }
 }

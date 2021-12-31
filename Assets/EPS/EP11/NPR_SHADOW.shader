@@ -1,4 +1,4 @@
-Shader "Unlit/ShadowReceiver"
+Shader "Unlit/OutlineNPR"
 {
     Properties
     {
@@ -35,16 +35,12 @@ Shader "Unlit/ShadowReceiver"
             {
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
-                float3 viewNormal : TEXCOORD0;
-                float3 viewNormal2 : TEXCOORD1;
-                float3 viewNormal3 : TEXCOORD2;
             };
 
             float _Outline;
 
             v2f vert (appdata v)
             {
-                v2f o;
                 float4 pos = mul(UNITY_MATRIX_MV, v.vertex);
                 //the normal is now in object space...
                 //need to have it in view space
@@ -53,9 +49,13 @@ Shader "Unlit/ShadowReceiver"
                 //when its orthogonal, IT_MV = MV
                 //when its not, IT_MV != MV
                 float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal);
+                //pos.z -= 0.5;
                 normal.z = -0.5;
-
-                pos = pos + float4(normalize(normal), 0) * _Outline;
+                normal = normalize(normal);
+                //put it back to object space
+                
+                v2f o;
+                pos = pos + float4(normal, 0) * _Outline;
                 o.vertex = mul(UNITY_MATRIX_P, pos);
                 //o.viewNormal = mul(v.normal);
                 UNITY_TRANSFER_FOG(o,o.vertex);

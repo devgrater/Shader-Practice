@@ -46,6 +46,7 @@ Shader "Unlit/ShadowMapping"
             float4 _MainTex_ST;
             sampler2D _DepthMap;
             float4 _DepthMap_ST;
+            float4 _DepthMap_TexelSize;
             float4 _cst_LightDir;
             float4 _cst_NearFar;
             float4x4 _cst_WorldToCamera;
@@ -85,6 +86,11 @@ Shader "Unlit/ShadowMapping"
                 return lightSpaceDepth - pixelDepth;
             }
 
+            float pcss_sample_depth_difference(float z, float averageDepth){
+                float pixelDepth = 1  / (z + _Bias);
+                return averageDepth - pixelDepth;
+            }
+
             float dot_lighting(float3 normal, float3 lightDirection){
                 return saturate(dot(normalize(normal), normalize(lightDirection)));
             }
@@ -93,25 +99,42 @@ Shader "Unlit/ShadowMapping"
                 return (shading + 1.0) / 2.0;
             }
 
+            float get_depth_average(float w, float2 uv){
+                //sample the shadow values around
+                //and filter it out...
+                float averageDepth = 0;
+                float2 uvOffset = _DepthMap_TexelSize.xy / 5 * w;
+                for(int i = -2; i <= 2; i++){
+                    for(int j = -2; j <= 2; j++){
+                        float2 offsetUV = float2(i, j) * uvOffset + uv;
+                        //sample depth map here...
+                        averageDepth += tex2D(_DepthMap, offsetUV);
+                    }
+                }
+                return averageDepth / 25;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 float4 baseTexture = tex2D(_MainTex, i.uv);
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
                 
-                float depthDifference = sample_depth_difference(cameraSpaceCoords.z, projectedUV);
+                float averageDepth = get_depth_average(cameraSpaceCoords.w, projectedUV);
+                float pcssDepth = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
+                float depthDifference = pcssDepth;//sample_depth_difference(cameraSpaceCoords.z, projectedUV);
                 float lightmapFade = lightmap_fadeout(projectedUV);
                 float shadow = saturate(depthDifference);
-                shadow = 1 - smoothstep(0.01, 0.01, shadow);
+                shadow = 1 - smoothstep(0.01, 0.03, shadow);
                 //shadow = saturate(1 - shadow); //now shadow is closer to 0 and light is closer to 1
                 
 
                 //fade out at the edge of the frustum
                 float nDotL = dot_lighting(i.worldNormal, -_cst_LightDir);
-                
                 float shading = saturate(shadow * nDotL);
                 shading = 1 - (1 - shading) * lightmapFade;
                 return shading * baseTexture * _Color;
+                //return averageDepth;
             }
             ENDCG
         }

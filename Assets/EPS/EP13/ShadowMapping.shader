@@ -2,6 +2,8 @@ Shader "Unlit/ShadowMapping"
 {
     Properties
     {
+        _LightColor ("Light Color", Color) = (1, 1, 1, 1)
+        _ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         _MainTex ("MainTex", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 1)
         _DepthMap ("ShadowMap", 2D) = "white" {}
@@ -44,6 +46,8 @@ Shader "Unlit/ShadowMapping"
 
 
             float4 _Color;
+            float4 _LightColor;
+            float4 _ShadowColor;
             sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _DepthMap;
@@ -126,7 +130,7 @@ Shader "Unlit/ShadowMapping"
                 float4 baseTexture = tex2D(_MainTex, i.uv);
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
-                float lightmapFade = pow(lightmap_fadeout(projectedUV), 0.5);
+                float lightmapFade = pow(lightmap_fadeout(projectedUV), 0.9);
                 
                 #ifdef PCSS
                     float averageDepth = get_depth_average(cameraSpaceCoords.z, projectedUV);
@@ -147,10 +151,11 @@ Shader "Unlit/ShadowMapping"
                 float nDotL = dot_lighting(i.worldNormal, -_cst_LightDir);
                 float shading = saturate(shadow * nDotL);
                 shading = 1 - (1 - shading) * lightmapFade;
-                return shading * baseTexture * _Color;
+                return lerp(_ShadowColor, _LightColor, shading) * baseTexture * _Color;
                 //return averageDepth;
             }
             ENDCG
         }
     }
+    Fallback "VertexLit"
 }

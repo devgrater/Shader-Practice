@@ -65,6 +65,7 @@ Shader "Unlit/DepthReplacement"
                 //float nDF = _cst_NearFar.y / _cst_NearFar.x;
                 //wCoord = (wCoord - (1 / _cst_NearFar.y)) / ((1 - nDF) / (_cst_NearFar.y)); 
                 //lets assume that this worked...
+                clip(col.a - 0.5f);
                 return 1 / wCoord;
             }
             ENDCG

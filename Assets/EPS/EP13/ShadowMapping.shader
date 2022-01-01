@@ -9,8 +9,8 @@ Shader "Unlit/ShadowMapping"
         _DepthMap ("ShadowMap", 2D) = "white" {}
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
-        _PCSSSampleDistance ("Light Size", Range(0, 2)) = 1
-        [IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
+        //_PCSSSampleDistance ("Light Size", Range(0, 2)) = 1
+        //[IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
 
     }
     SubShader

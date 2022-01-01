@@ -3,6 +3,8 @@ Shader "Unlit/ShadowMapping"
     Properties
     {
         _MainTex ("ShadowMap", 2D) = "white" {}
+        _Bias ("Shadow Bias", Range(0, 1)) = 0.0
+        _ShadowFade ("Shadow Fade", Range(0, 100)) = 1.0
     }
     SubShader
     {
@@ -40,6 +42,8 @@ Shader "Unlit/ShadowMapping"
             float4 _cst_LightDir;
             float4 _cst_NearFar;
             float4x4 _cst_WorldToCamera;
+            float _Bias;
+            float _ShadowFade;
 
             v2f vert (appdata v)
             {
@@ -67,19 +71,29 @@ Shader "Unlit/ShadowMapping"
                 //float z = cameraSpaceCoords.xy / cameraSpaceCoords.z;
                 
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                float depthCoord = (cameraSpaceCoords.z + 0.5);
+                float depthCoord = (cameraSpaceCoords.z + _Bias);
                 float oneOverDepth = 1 / depthCoord;
                 //sample the shadow texture:
                 float2 screenUV = cameraSpaceCoords.xy / cameraSpaceCoords.w;
                 screenUV = (screenUV + 1) / 2;
                 float depthTextureDepth = tex2D(_MainTex, screenUV);
                 float depthDiff = depthTextureDepth.rrr - oneOverDepth;
-                depthDiff = ((1 - smoothstep(0.01, 0.01, depthDiff)) + 1) / 2;
+                float shadow = ((1 - smoothstep(0.01, 0.01, depthDiff)));
+                
+
+                float shadowFadeCoeff = saturate(1 / (exp(depthDiff * _ShadowFade)));
+                shadow += shadowFadeCoeff;
+                shadow = saturate(shadow);
+                shadow = (shadow + 1) / 2; 
 
                 float atten = dot(normalize(i.worldNormal), normalize(-_cst_LightDir));
+                atten = saturate(shadow * atten);
                 atten = (atten + 1) / 2;
+                atten = atten * atten;
+                
+                //fade out closer depth...?
 
-                return float4((depthDiff * atten).rrr, 1);
+                return float4((atten).rrr, 1);
             }
             ENDCG
         }

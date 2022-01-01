@@ -7,7 +7,7 @@ Shader "Unlit/ShadowMapping"
         _DepthMap ("ShadowMap", 2D) = "white" {}
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
-        [IntRange]_LightMapFadeDistance ("LightMap Edge Fade", Range(1, 4)) = 2
+        _PCSSSampleDistance ("Light Size", Range(0, 2)) = 1
         [IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
 
     }
@@ -56,6 +56,7 @@ Shader "Unlit/ShadowMapping"
             float _ShadowFade;
             int _LightMapFadeDistance;
             int _PCSSIteration;
+            float _PCSSSampleDistance;
 
             v2f vert (appdata v)
             {
@@ -108,7 +109,7 @@ Shader "Unlit/ShadowMapping"
                 int sampleCount = _PCSSIteration * 2 + 1;
                 float pixelDepth = 1  / (z + _Bias);
                 float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z;
+                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z * _PCSSSampleDistance;
                 for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
                     for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
                         float2 offsetUV = float2(i, j) * uvOffset + uv;

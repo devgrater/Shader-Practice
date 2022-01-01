@@ -21,7 +21,7 @@ Shader "Unlit/ShadowMapping"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-
+            //#define PCSS
             #include "UnityCG.cginc"
 
             struct appdata
@@ -119,13 +119,19 @@ Shader "Unlit/ShadowMapping"
                 float4 baseTexture = tex2D(_MainTex, i.uv);
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
-                
-                float averageDepth = get_depth_average(cameraSpaceCoords.w, projectedUV);
-                float pcssDepth = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
-                float depthDifference = pcssDepth;//sample_depth_difference(cameraSpaceCoords.z, projectedUV);
                 float lightmapFade = lightmap_fadeout(projectedUV);
-                float shadow = saturate(depthDifference);
-                shadow = 1 - smoothstep(0.01, 0.03, shadow);
+
+                #ifdef PCSS
+                    //float averageDepth = get_depth_average(cameraSpaceCoords.w, projectedUV);
+                    //float pcssDepth = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
+                #else
+                    float depthDifference = sample_depth_difference(cameraSpaceCoords.z, projectedUV);
+                    
+                    float shadow = saturate(depthDifference);
+                    shadow = 1 - smoothstep(0.01, 0.01, shadow);
+                #endif
+
+
                 //shadow = saturate(1 - shadow); //now shadow is closer to 0 and light is closer to 1
                 
 

@@ -8,7 +8,7 @@ Shader "Unlit/ShadowMapping"
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
         [IntRange]_LightMapFadeDistance ("LightMap Edge Fade", Range(1, 4)) = 2
-        [IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
+        [IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 8)) = 2
 
     }
     SubShader
@@ -105,18 +105,19 @@ Shader "Unlit/ShadowMapping"
             float get_depth_average(float z, float2 uv){
                 //sample the shadow values around
                 //and filter it out...
+                int sampleCount = _PCSSIteration * 2 + 1;
                 float pixelDepth = 1  / (z + _Bias);
                 float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy / 5 * z;
-                for(int i = -2; i <= 2; i++){
-                    for(int j = -2; j <= 2; j++){
+                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z;
+                for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
+                    for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
                         float2 offsetUV = float2(i, j) * uvOffset + uv;
                         float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
                         //if pixel depth is greater than light space depth, then, the pixel is not occluded.
                         averageDepth += lightSpaceDepth < pixelDepth;
                     }
                 }
-                return averageDepth / 25;
+                return averageDepth / (sampleCount * sampleCount);
             }
 
             fixed4 frag (v2f i) : SV_Target
@@ -124,7 +125,7 @@ Shader "Unlit/ShadowMapping"
                 float4 baseTexture = tex2D(_MainTex, i.uv);
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
-                float lightmapFade = lightmap_fadeout(projectedUV);
+                float lightmapFade = pow(lightmap_fadeout(projectedUV), 0.5);
                 
                 #ifdef PCSS
                     float averageDepth = get_depth_average(cameraSpaceCoords.z, projectedUV);

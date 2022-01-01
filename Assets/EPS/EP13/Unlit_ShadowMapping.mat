@@ -30,7 +30,7 @@ Material:
     m_Floats:
     - _Bias: 0
     - _LightMapFadeDistance: 4
-    - _PCSSIteration: 4
+    - _PCSSIteration: 3
     - _ShadowFade: 5.91
     - _UsePCSS: 0
     m_Colors:

@@ -31,7 +31,7 @@ Material:
     - _Bias: 0
     - _LightMapFadeDistance: 1
     - _PCSSIteration: 3
-    - _PCSSSampleDistance: 1
+    - _PCSSSampleDistance: 0.5
     - _ShadowFade: 5.91
     - _UsePCSS: 0
     m_Colors:

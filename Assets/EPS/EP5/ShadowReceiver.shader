@@ -42,7 +42,6 @@ Shader "Unlit/ShadowReceiver"
                 SHADOW_COORDS(4)
                 float4 pos : SV_POSITION;
                 float3 worldNormal : TEXCOORD2;
-                float3 worldPos : TEXCOORD3;
             };
 
             sampler2D _MainTex;

@@ -59,6 +59,7 @@ Shader "Unlit/DepthReplacement"
                 //so the first thing we do is to compute 1/z.
                 //this gives us... a range from 0 to 1.
                 //but we wasted too much precision on the closer areas.
+                //in this case, w is in clip space.
                 float wCoord = i.vertex.w;
                 //remap wCoord so that the near plane gives d = 1 and far plane gives d = 0;
                 //float nDF = _cst_NearFar.y / _cst_NearFar.x;

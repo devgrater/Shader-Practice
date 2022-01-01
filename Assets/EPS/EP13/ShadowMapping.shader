@@ -8,6 +8,7 @@ Shader "Unlit/ShadowMapping"
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
         [IntRange]_LightMapFadeDistance ("LightMap Edge Fade", Range(1, 4)) = 2
+
     }
     SubShader
     {
@@ -21,7 +22,7 @@ Shader "Unlit/ShadowMapping"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-            //#define PCSS
+            #define PCSS
             #include "UnityCG.cginc"
 
             struct appdata
@@ -99,16 +100,18 @@ Shader "Unlit/ShadowMapping"
                 return (shading + 1.0) / 2.0;
             }
 
-            float get_depth_average(float w, float2 uv){
+            float get_depth_average(float z, float2 uv){
                 //sample the shadow values around
                 //and filter it out...
+                float pixelDepth = 1  / (z + _Bias);
                 float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy / 5 * w;
+                float2 uvOffset = _DepthMap_TexelSize.xy / 5 * z;
                 for(int i = -2; i <= 2; i++){
                     for(int j = -2; j <= 2; j++){
                         float2 offsetUV = float2(i, j) * uvOffset + uv;
-                        //sample depth map here...
-                        averageDepth += tex2D(_DepthMap, offsetUV);
+                        float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
+                        //if pixel depth is greater than light space depth, then, the pixel is not occluded.
+                        averageDepth += lightSpaceDepth < pixelDepth;
                     }
                 }
                 return averageDepth / 25;
@@ -120,10 +123,11 @@ Shader "Unlit/ShadowMapping"
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
                 float lightmapFade = lightmap_fadeout(projectedUV);
-
+                
                 #ifdef PCSS
-                    //float averageDepth = get_depth_average(cameraSpaceCoords.w, projectedUV);
-                    //float pcssDepth = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
+                    float averageDepth = get_depth_average(cameraSpaceCoords.z, projectedUV);
+                    //float pcssShadow = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
+                    float shadow = averageDepth;
                 #else
                     float depthDifference = sample_depth_difference(cameraSpaceCoords.z, projectedUV);
                     

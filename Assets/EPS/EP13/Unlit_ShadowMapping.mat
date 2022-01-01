@@ -24,12 +24,13 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: e1ce29812c44f6f458ddb3bfda352ff2, type: 2}
+        m_Texture: {fileID: 2800000, guid: b03fa475b5f1f0349bad93d7a590ad98, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Bias: 0.5
+    - _Bias: 0
     - _LightMapFadeDistance: 4
     - _ShadowFade: 5.91
-    m_Colors: []
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

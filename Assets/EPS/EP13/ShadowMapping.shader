@@ -8,6 +8,7 @@ Shader "Unlit/ShadowMapping"
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
         [IntRange]_LightMapFadeDistance ("LightMap Edge Fade", Range(1, 4)) = 2
+        [IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
 
     }
     SubShader
@@ -54,6 +55,7 @@ Shader "Unlit/ShadowMapping"
             float _Bias;
             float _ShadowFade;
             int _LightMapFadeDistance;
+            int _PCSSIteration;
 
             v2f vert (appdata v)
             {

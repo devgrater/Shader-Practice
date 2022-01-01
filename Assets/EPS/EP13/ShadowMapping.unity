@@ -472,6 +472,7 @@ GameObject:
   - component: {fileID: 330971154}
   - component: {fileID: 330971156}
   - component: {fileID: 330971157}
+  - component: {fileID: 330971153}
   m_Layer: 0
   m_Name: LightSpaceCamera
   m_TagString: Untagged
@@ -479,6 +480,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &330971153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330971152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d7db97da538954aa39c7c06d6ed085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  amplitudeX: 1
+  amplitudeY: 1
 --- !u!20 &330971154
 Camera:
   m_ObjectHideFlags: 0
@@ -530,7 +545,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330971152}
   m_LocalRotation: {x: 0.034079075, y: 0.8136869, z: -0.54137194, w: 0.20897083}
-  m_LocalPosition: {x: -8.77, y: 8.57, z: -2.63}
+  m_LocalPosition: {x: -5.07, y: 7.18, z: 0.16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

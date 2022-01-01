@@ -7,7 +7,7 @@ public class LightProperty : MonoBehaviour
 {
     // Start is called before the first frame update
 
-    [Range(0, 4)][SerializeField] private int pcssIteration;
+    [Range(0, 8)][SerializeField] private int pcssIteration;
     
     [Range(0.0f, 2.0f)][SerializeField] private float lightSize;
     private Camera mainCamera;

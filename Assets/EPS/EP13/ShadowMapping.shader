@@ -125,6 +125,24 @@ Shader "Unlit/ShadowMapping"
                 return averageDepth / (sampleCount * sampleCount);
             }
 
+            float get_depth_average_left(float z, float2 uv){
+                                //sample the shadow values around
+                //and filter it out...
+                int sampleCount = _PCSSIteration * 2 + 1;
+                float pixelDepth = 1  / (z + _Bias);
+                float averageDepth = 0;
+                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z * _PCSSSampleDistance;
+                for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
+                    for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
+                        float2 offsetUV = float2(i, j) * uvOffset + uv;
+                        float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
+                        //if pixel depth is greater than light space depth, then, the pixel is not occluded.
+                        averageDepth += lightSpaceDepth < pixelDepth;
+                    }
+                }
+                return averageDepth / (sampleCount * sampleCount);
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 float4 baseTexture = tex2D(_MainTex, i.uv);

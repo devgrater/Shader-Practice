@@ -108,7 +108,7 @@ Shader "Unlit/ShadowMapping"
             }
 
             float random_from_pos(float2 pos){
-                return frac(cos(dot(pos, float2(1.334f, 2.241f + _Time.w * 60 % 1919.3))) * 383.8438);
+                return frac(dot(pos, half2(1.334f, 2.241f + _Time.w * 60 % 1919.3)) * 383.8438);
             }
 
             float get_random_rotation(float2 pos){
@@ -123,14 +123,14 @@ Shader "Unlit/ShadowMapping"
                     sinx * vec.x + cosx * vec.y
                 );
             }
-
+        
             float get_depth_average(float z, float2 uv){
                 //sample the shadow values around
                 //and filter it out...
                 int sampleCount = _PCSSIteration * 2 + 1;
                 float pixelDepth = 1  / (z + _Bias);
                 float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z * _PCSSSampleDistance;
+                float2 uvOffset = _DepthMap_TexelSize.xy * z * _PCSSSampleDistance / sampleCount;
                 for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
                     for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
                         half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;

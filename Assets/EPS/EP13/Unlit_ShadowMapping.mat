@@ -28,11 +28,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Bias: 0
+    - _Bias: 1
     - _LightMapFadeDistance: 1
     - _PCSSIteration: 3
     - _PCSSSampleDistance: 1
-    - _ShadowFade: 5.91
+    - _ShadowFade: 8
     - _UsePCSS: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

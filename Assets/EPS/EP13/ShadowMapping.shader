@@ -107,6 +107,23 @@ Shader "Unlit/ShadowMapping"
                 return (shading + 1.0) / 2.0;
             }
 
+            float random_from_pos(float2 pos){
+                return frac(cos(dot(pos, float2(1.334f, 2.241f + _Time.w * 60 % 1919.3))) * 383.8438);
+            }
+
+            float get_random_rotation(float2 pos){
+                return random_from_pos(pos) * 6.29;
+            }
+
+            float2 rotate_vector(float2 vec, float angle){
+                float sinx = sin(angle);
+                float cosx = cos(angle);
+                return float2(
+                    -sinx * vec.y + cosx * vec.x,
+                    sinx * vec.x + cosx * vec.y
+                );
+            }
+
             float get_depth_average(float z, float2 uv){
                 //sample the shadow values around
                 //and filter it out...
@@ -116,7 +133,7 @@ Shader "Unlit/ShadowMapping"
                 float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z * _PCSSSampleDistance;
                 for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
                     for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
-                        float2 offsetUV = float2(i, j) * uvOffset + uv;
+                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
                         //if pixel depth is greater than light space depth, then, the pixel is not occluded.
                         averageDepth += lightSpaceDepth < pixelDepth;
@@ -125,23 +142,6 @@ Shader "Unlit/ShadowMapping"
                 return averageDepth / (sampleCount * sampleCount);
             }
 
-            float get_depth_average_left(float z, float2 uv){
-                                //sample the shadow values around
-                //and filter it out...
-                int sampleCount = _PCSSIteration * 2 + 1;
-                float pixelDepth = 1  / (z + _Bias);
-                float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy / sampleCount * z * _PCSSSampleDistance;
-                for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
-                    for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
-                        float2 offsetUV = float2(i, j) * uvOffset + uv;
-                        float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
-                        //if pixel depth is greater than light space depth, then, the pixel is not occluded.
-                        averageDepth += lightSpaceDepth < pixelDepth;
-                    }
-                }
-                return averageDepth / (sampleCount * sampleCount);
-            }
 
             fixed4 frag (v2f i) : SV_Target
             {

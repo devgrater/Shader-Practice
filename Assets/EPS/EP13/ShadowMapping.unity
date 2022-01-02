@@ -584,7 +584,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330971152}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 35d7db97da538954aa39c7c06d6ed085, type: 3}
   m_Name: 
@@ -673,8 +673,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287e3968226b9c040be73f5f324fe28b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pcssIteration: 4
-  lightSize: 1
+  pcssIteration: 2
+  lightSize: 0.8
 --- !u!1 &370938644
 GameObject:
   m_ObjectHideFlags: 0
@@ -1326,7 +1326,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1924945848}
   - component: {fileID: 1924945847}
-  - component: {fileID: 1924945846}
   - component: {fileID: 1924945845}
   - component: {fileID: 1924945844}
   m_Layer: 0
@@ -1409,14 +1408,6 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
---- !u!81 &1924945846
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1924945843}
-  m_Enabled: 1
 --- !u!20 &1924945847
 Camera:
   m_ObjectHideFlags: 0

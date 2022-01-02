@@ -22,7 +22,7 @@ public class LightProperty : MonoBehaviour
     void Update()
     {
         timeElapsed += Time.deltaTime;
-        lightSize = Mathf.Sin(timeElapsed * 1.5f) * 0.8f + 1;
+        //lightSize = Mathf.Sin(timeElapsed * 1.5f) * 0.8f + 1;
         if(!mainCamera){ mainCamera = GetComponent<Camera>(); }
         Shader.SetGlobalVector("_cst_NearFar", new Vector4(mainCamera.nearClipPlane, mainCamera.farClipPlane, 0, 0));
         Shader.SetGlobalVector("_cst_LightDir", transform.forward);

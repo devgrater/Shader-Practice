@@ -11,6 +11,7 @@ public class LightProperty : MonoBehaviour
     
     [Range(0.0f, 2.0f)][SerializeField] private float lightSize;
     private Camera mainCamera;
+    private float timeElapsed;
     void Start()
     {
         
@@ -20,6 +21,8 @@ public class LightProperty : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        timeElapsed += Time.deltaTime;
+        lightSize = Mathf.Sin(timeElapsed * 1.5f) * 0.8f + 1;
         if(!mainCamera){ mainCamera = GetComponent<Camera>(); }
         Shader.SetGlobalVector("_cst_NearFar", new Vector4(mainCamera.nearClipPlane, mainCamera.farClipPlane, 0, 0));
         Shader.SetGlobalVector("_cst_LightDir", transform.forward);

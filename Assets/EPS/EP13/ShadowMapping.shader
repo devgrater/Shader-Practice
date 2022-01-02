@@ -148,7 +148,7 @@ Shader "Unlit/ShadowMapping"
                 float4 baseTexture = tex2D(_MainTex, i.uv);
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
-                float lightmapFade = pow(lightmap_fadeout(projectedUV), 0.9);
+                float lightmapFade = lightmap_fadeout(projectedUV);
                 
                 #ifdef PCSS
                     float averageDepth = get_depth_average(cameraSpaceCoords.z, projectedUV);

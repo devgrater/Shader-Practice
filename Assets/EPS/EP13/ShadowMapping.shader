@@ -9,8 +9,8 @@ Shader "Unlit/ShadowMapping"
         _DepthMap ("ShadowMap", 2D) = "white" {}
         _Bias ("Shadow Bias", Range(0, 1)) = 0.0
         _ShadowFade ("Shadow Fade", Range(0, 8)) = 1.0
-        //_PCSSSampleDistance ("Light Size", Range(0, 2)) = 1
-        //[IntRange]_PCSSIteration ("PCSS Iteration", Range(1, 4)) = 2
+        //_PCFSampleDistance ("Light Size", Range(0, 2)) = 1
+        //[IntRange]_PCFIteration ("PCF Iteration", Range(1, 4)) = 2
 
     }
     SubShader
@@ -25,7 +25,7 @@ Shader "Unlit/ShadowMapping"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-            #define PCSS
+            #define PCF
             #include "UnityCG.cginc"
 
             struct appdata
@@ -59,8 +59,8 @@ Shader "Unlit/ShadowMapping"
             float _Bias;
             float _ShadowFade;
             int _LightMapFadeDistance;
-            int _PCSSIteration;
-            float _PCSSSampleDistance;
+            int _PCFIteration;
+            float _PCFSampleDistance;
 
             v2f vert (appdata v)
             {
@@ -94,7 +94,7 @@ Shader "Unlit/ShadowMapping"
                 return lightSpaceDepth - pixelDepth;
             }
 
-            float pcss_sample_depth_difference(float z, float averageDepth){
+            float PCF_sample_depth_difference(float z, float averageDepth){
                 float pixelDepth = 1  / (z + _Bias);
                 return averageDepth - pixelDepth;
             }
@@ -127,12 +127,12 @@ Shader "Unlit/ShadowMapping"
             float get_depth_average(float z, float2 uv){
                 //sample the shadow values around
                 //and filter it out...
-                int sampleCount = _PCSSIteration * 2 + 1;
+                int sampleCount = _PCFIteration * 2 + 1;
                 float pixelDepth = 1  / (z + _Bias);
                 float averageDepth = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy * z * _PCSSSampleDistance / sampleCount;
-                for(int i = -_PCSSIteration; i <= _PCSSIteration; i++){
-                    for(int j = -_PCSSIteration; j <= _PCSSIteration; j++){
+                float2 uvOffset = _DepthMap_TexelSize.xy * z * _PCFSampleDistance / sampleCount;
+                for(int i = -_PCFIteration; i <= _PCFIteration; i++){
+                    for(int j = -_PCFIteration; j <= _PCFIteration; j++){
                         half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
                         //if pixel depth is greater than light space depth, then, the pixel is not occluded.
@@ -150,9 +150,9 @@ Shader "Unlit/ShadowMapping"
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
                 float lightmapFade = lightmap_fadeout(projectedUV);
                 
-                #ifdef PCSS
+                #ifdef PCF
                     float averageDepth = get_depth_average(cameraSpaceCoords.z, projectedUV);
-                    //float pcssShadow = pcss_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
+                    //float PCFShadow = PCF_sample_depth_difference(cameraSpaceCoords.z, averageDepth);
                     float shadow = averageDepth;
                 #else
                     float depthDifference = sample_depth_difference(cameraSpaceCoords.z, projectedUV);

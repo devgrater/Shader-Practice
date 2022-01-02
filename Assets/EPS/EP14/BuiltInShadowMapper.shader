@@ -38,6 +38,12 @@ Shader "Unlit/BuiltInShadowMapper"
                 return o;
             }
 
+            float pcf_sample_shadowmap(){
+                //for spots
+
+                return 0.0;
+            }
+
         ENDCG
 
         Pass
@@ -54,14 +60,14 @@ Shader "Unlit/BuiltInShadowMapper"
             // make fog work
             #pragma multi_compile_fog
             #pragma multi_compile_fwdbase
-
+        
 
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                fixed shadow = LIGHT_ATTENUATION(i, float4(0, 0, 0, 0));//SHADOW_ATTEN_OFFSET(i, float4(_ShadowOffset, _ShadowOffset, 0, 0));
+                fixed shadow = LIGHT_ATTENUATION(i._LightCoord, i._ShadowCoord, float4(0, 0, 0, 0));//SHADOW_ATTEN_OFFSET(i, float4(_ShadowOffset, _ShadowOffset, 0, 0));
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return shadow * col;
             }
@@ -91,7 +97,10 @@ Shader "Unlit/BuiltInShadowMapper"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                fixed shadow = LIGHT_ATTENUATION(i, float4(0, 0, 0, 0));//SHADOW_ATTEN_OFFSET(i, float4(_ShadowOffset, _ShadowOffset, 0, 0));
+                float fadeout = LIGHT_FADEOUT(i._LightCoord);
+                float shadow = SHADOW_ATTENUATION(i._ShadowCoord, float4(0, 0, 0, 0));
+                shadow *= fadeout;
+                //fixed shadow = LIGHT_ATTENUATION(i._LightCoord, i._ShadowCoord, float4(0, 0, 0, 0));//SHADOW_ATTEN_OFFSET(i, float4(_ShadowOffset, _ShadowOffset, 0, 0));
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return shadow;
             }

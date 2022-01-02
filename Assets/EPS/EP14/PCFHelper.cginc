@@ -58,7 +58,7 @@
 
 		#endif
 
-		#define SHADOW_ATTENUATION(a, b) unitySampleShadow(a._ShadowCoord + b)
+		#define SHADOW_ATTENUATION(a, b) unitySampleShadow(a + b)
 
 	#endif
 
@@ -90,7 +90,7 @@
 		
 		#define SHADOW_COORDS(idx1) float4 _ShadowCoord : TEXCOORD##idx1;
 		#define TRANSFER_SHADOW(a) a._ShadowCoord = mul (unity_WorldToShadow[0], mul(unity_ObjectToWorld,v.vertex));
-		#define SHADOW_ATTENUATION(a, b) unitySampleShadow(a._ShadowCoord + b)
+		#define SHADOW_ATTENUATION(a, b) unitySampleShadow(a + b)
 
 	#endif
 
@@ -114,7 +114,7 @@
 		}
 		#define SHADOW_COORDS(idx1) float3 _ShadowCoord : TEXCOORD##idx1;
 		#define TRANSFER_SHADOW(a) a._ShadowCoord = mul(unity_ObjectToWorld, v.vertex).xyz - _LightPositionRange.xyz;
-		#define SHADOW_ATTENUATION(a, b) unityCubeShadow(a._ShadowCoord + b)
+		#define SHADOW_ATTENUATION(a, b) unityCubeShadow(a + b)
 
 	#endif
 
@@ -144,7 +144,8 @@
 		uniform sampler2D _LightTexture0;
 		uniform float4x4 unity_WorldToLight;
 		#define TRANSFER_VERTEX_TO_FRAGMENT(a) a._LightCoord = mul(unity_WorldToLight, mul(unity_ObjectToWorld, v.vertex)).xyz; TRANSFER_SHADOW(a)
-		#define LIGHT_ATTENUATION(a, b)	(tex2D(_LightTexture0, dot(a._LightCoord,a._LightCoord).rr).UNITY_ATTEN_CHANNEL * SHADOW_ATTENUATION(a, b))
+		#define LIGHT_ATTENUATION(lc, sc, b)	(tex2D(_LightTexture0, dot(lc, lc).rr).UNITY_ATTEN_CHANNEL * SHADOW_ATTENUATION(sc, b))
+        #define LIGHT_FADEOUT(lc) (tex2D(_LightTexture0, dot(lc, lc).rr).UNITY_ATTEN_CHANNEL)
 	#endif
 
 	#ifdef SPOT
@@ -161,14 +162,16 @@
 		{
 			return tex2D(_LightTextureB0, dot(LightCoord, LightCoord).xx).UNITY_ATTEN_CHANNEL;
 		}
-		#define LIGHT_ATTENUATION(a, b)	( (a._LightCoord.z > 0) * UnitySpotCookie(a._LightCoord) * UnitySpotAttenuate(a._LightCoord.xyz) * SHADOW_ATTENUATION(a, b) )
+		#define LIGHT_ATTENUATION(lc, sc, b)	( (lc.z > 0) * UnitySpotCookie(lc) * UnitySpotAttenuate(lc.xyz) * SHADOW_ATTENUATION(sc, b))
+        #define LIGHT_FADEOUT(lc) ((lc.z > 0) * UnitySpotCookie(lc) * UnitySpotAttenuate(lc.xyz))
 	#endif
 
 
 	#ifdef DIRECTIONAL
 		#define LIGHTING_COORDS(idx1,idx2) SHADOW_COORDS(idx1)
 		#define TRANSFER_VERTEX_TO_FRAGMENT(a) TRANSFER_SHADOW(a)
-		#define LIGHT_ATTENUATION(a, b)	SHADOW_ATTENUATION(a, b)
+		#define LIGHT_ATTENUATION(lc, sc, b) SHADOW_ATTENUATION(sc, b)
+        #define LIGHT_FADEOUT(lc) 1.0
 	#endif
 
 
@@ -178,7 +181,8 @@
 		uniform float4x4 unity_WorldToLight;
 		uniform sampler2D _LightTextureB0;
 		#define TRANSFER_VERTEX_TO_FRAGMENT(a) a._LightCoord = mul(unity_WorldToLight, mul(unity_ObjectToWorld, v.vertex)).xyz; TRANSFER_SHADOW(a)
-		#define LIGHT_ATTENUATION(a, b)	(tex2D(_LightTextureB0, dot(a._LightCoord,a._LightCoord).rr).UNITY_ATTEN_CHANNEL * texCUBE(_LightTexture0, a._LightCoord).w * SHADOW_ATTENUATION(a, b))
+		#define LIGHT_ATTENUATION(lc, sc, b)	(tex2D(_LightTextureB0, dot(lc,lc).rr).UNITY_ATTEN_CHANNEL * texCUBE(_LightTexture0, lc).w * SHADOW_ATTENUATION(sc, b))
+        #define LIGHT_FADEOUT(lc) (tex2D(_LightTextureB0, dot(lc,lc).rr).UNITY_ATTEN_CHANNEL * texCUBE(_LightTexture0, lc).w)
 	#endif
 
 	#ifdef DIRECTIONAL_COOKIE
@@ -186,6 +190,25 @@
 		uniform sampler2D _LightTexture0;
 		uniform float4x4 unity_WorldToLight;
 		#define TRANSFER_VERTEX_TO_FRAGMENT(a) a._LightCoord = mul(unity_WorldToLight, mul(unity_ObjectToWorld, v.vertex)).xy; TRANSFER_SHADOW(a)
-		#define LIGHT_ATTENUATION(a, b)	(tex2D(_LightTexture0, a._LightCoord).w * SHADOW_ATTENUATION(a, b))
+		#define LIGHT_ATTENUATION(lc, sc, b)	(tex2D(_LightTexture0, lc).w * SHADOW_ATTENUATION(sc, b))
+        #define LIGHT_FADEOUT(lc) (tex2D(_LightTexture0, lc).w)
 	#endif
+    /*
+    inline float PCF_SampleShadowMap(float2 lc, float4 sc, float4 offset){
+        float shadow = SHADOW_ATTENUATION(sc, offset);
+        float fade = LIGHT_FADEOUT(lc);
+        return fade * shadow;
+    }
+
+    inline float PCF_SampleShadowMap(float3 lc, float4 sc, float4 offset){
+        float shadow = SHADOW_ATTENUATION(sc, offset);
+        float fade = LIGHT_FADEOUT(lc);
+        return fade * shadow;
+    }
+
+    inline float PCF_SampleShadowMap(float4 lc, float4 sc, float4 offset){
+        float shadow = SHADOW_ATTENUATION(sc, offset);
+        float fade = LIGHT_FADEOUT(lc);
+        return fade * shadow;
+    }*/
 #endif

@@ -37,12 +37,52 @@ Shader "Unlit/BuiltInShadowMapper"
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
-
-            float pcf_sample_shadowmap(){
-                //for spots
-
-                return 0.0;
+            
+            float random_from_pos(float2 pos){
+                return frac(dot(pos, half2(1.334f, 2.241f + _Time.w * 60 % 1919.3)) * 383.8438);
             }
+
+            float get_random_rotation(float2 pos){
+                return random_from_pos(pos) * 6.29;
+            }
+
+            float2 rotate_vector(float2 vec, float angle){
+                float sinx = sin(angle);
+                float cosx = cos(angle);
+                return float2(
+                    -sinx * vec.y + cosx * vec.x,
+                    sinx * vec.x + cosx * vec.y
+                );
+            }
+            float2 _ShadowMapTexture_TexelSize;
+            float pcf_sample_shadowmap(float4 shadowCoords){
+                //for spots
+                //sample the shadow values around
+                //and filter it out...
+                int sampleCount = 5;
+                float averageDepth = 0;
+                
+                for(int i = -2; i <= 2; i++){
+                    for(int j = -2; j <= 2; j++){
+                        
+                        #if defined (SHADOWS_CUBE)
+                            float offset = shadowCoords.z * _ShadowMapTexture_TexelSize.xy / sampleCount * 2048;
+                            float brightness = SHADOW_ATTENUATION(shadowCoords.xyz, half4(offset, offset, offset,  0));
+                        #else
+                            float2 uvOffset = shadowCoords.z * _ShadowMapTexture_TexelSize.xy / sampleCount * 2048;
+                            half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(shadowCoords.xy));
+                            float brightness = SHADOW_ATTENUATION(shadowCoords, half4(offsetUV, 0, 0));
+
+                        #endif
+                        
+                        averageDepth += brightness;
+                    }
+                }
+                return averageDepth / (sampleCount * sampleCount);
+            }
+
+
+            #define PCF_SAMPLE(x) (pcf_sample_shadowmap(x))
 
         ENDCG
 
@@ -98,7 +138,14 @@ Shader "Unlit/BuiltInShadowMapper"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 float fadeout = LIGHT_FADEOUT(i._LightCoord);
-                float shadow = SHADOW_ATTENUATION(i._ShadowCoord, float4(0, 0, 0, 0));
+                
+                #if defined (SHADOWS_CUBE)
+                    float4 shadowCoord = float4(i._ShadowCoord.xyz, 0);
+                #else
+                    float4 shadowCoord = i._ShadowCoord.xyzw;
+                #endif
+
+                float shadow = PCF_SAMPLE(shadowCoord);//SHADOW_ATTENUATION(i._ShadowCoord, float4(0, 0, 0, 0));
                 shadow *= fadeout;
                 //fixed shadow = LIGHT_ATTENUATION(i._LightCoord, i._ShadowCoord, float4(0, 0, 0, 0));//SHADOW_ATTEN_OFFSET(i, float4(_ShadowOffset, _ShadowOffset, 0, 0));
                 UNITY_APPLY_FOG(i.fogCoord, col);

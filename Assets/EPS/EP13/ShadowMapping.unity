@@ -513,8 +513,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287e3968226b9c040be73f5f324fe28b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pcssIteration: 2
-  lightSize: 0.55
+  PCFIteration: 1
+  lightSize: 0.83
 --- !u!1 &396486381
 GameObject:
   m_ObjectHideFlags: 0

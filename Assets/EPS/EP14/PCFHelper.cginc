@@ -17,8 +17,10 @@
 
 		#if defined(SHADOWS_NATIVE)
 			UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
+            uniform float2 _ShadowMapTexture_TexelSize;
 		#else
 			uniform sampler2D _ShadowMapTexture;
+            uniform float2 _ShadowMapTexture_TexelSize;
 		#endif
 
 		#define SHADOW_COORDS(idx1) float4 _ShadowCoord : TEXCOORD##idx1;
@@ -123,8 +125,8 @@
 	// ---- Shadows off
 	#if !defined (SHADOWS_SCREEN) && !defined (SHADOWS_DEPTH) && !defined (SHADOWS_CUBE)
 
-		#define SHADOW_COORDS(idx1)
-		#define TRANSFER_SHADOW(a)
+		#define SHADOW_COORDS(idx1) float4 _ShadowCoord : TEXCOORD##idx1;
+		#define TRANSFER_SHADOW(a) a._ShadowCoord = float4(0, 0, 0, 0);
 		#define SHADOW_ATTENUATION(a, b) 1.0
 
 	#endif

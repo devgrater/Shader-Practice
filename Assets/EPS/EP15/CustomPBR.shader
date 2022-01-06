@@ -3,7 +3,8 @@ Shader "Unlit/CustomPBR"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Roughness ("Metallic", Range(0, 1)) = 1.0
+        _Roughness ("Roughness", Range(0, 1)) = 1.0
+        _Metallic ("Metallic", Range(0, 1)) = 1.0
     }
     SubShader
     {
@@ -39,7 +40,8 @@ Shader "Unlit/CustomPBR"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _Roughness;
+            fixed _Roughness;
+            fixed _Metallic;
             //float3 _WorldSpaceLightPos0;
 
             v2f vert (appdata v)
@@ -76,6 +78,7 @@ Shader "Unlit/CustomPBR"
 
             float l(float3 normal, float3 lightDir){
                 //we don't know what this will return yet.
+                
                 return dot(normal, lightDir);
             }
             
@@ -89,39 +92,51 @@ Shader "Unlit/CustomPBR"
                 
             }
 
-            float dfg_d(float normal, float halfVector){
+            float dfg_d(float normal, float halfVector, float roughness){
+                fixed alpha2 = roughness * roughness;
+                fixed nDotH2 = max(dot(normal, halfVector), 0.0);
+                nDotH2 *= nDotH2;
+                float denom = nDotH2 * (alpha2 - 1) + 1;
+                denom = denom * denom * PI;
+                return alpha2 / denom;
+            }
+
+            float3 dfg_f(fixed3 normal, fixed3 viewDir, float3 f0){
+                fixed cosTheta = saturate(dot(normal, viewDir));
+                return (f0) + (1.0 - f0) * pow(1.0 - cosTheta, 5.0);
+            }
+        
+            float dfg_g(float normal, float halfVector){
                 float roughnessSquared = _Roughness * _Roughness;
             }
 
-            float schlick_ggx(){
-
-            }
-
-            float schlick_fresnel(){
-
+            float schlick_ggx(float3 n, float3 dir, float3 k){
+                fixed nDotDir = saturate(dot(n, dir));
+                return nDotDir / (nDotDir * (1.0 - k) + k);
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                //so, compute ks and kd
-                //s -> scatter,
-                //d -> diffuse
-                float ks = _Roughness;
-                float kd = 1.0 - ks;
-                float3 halfVector = normalize(normalize(i.viewDir) + normalize(_WorldSpaceLightPos0));
-
-                //well, why not?
-                //if you are summing stuff up anyways, why not just do it here too?
-
-
-                float res = saturate(dot(i.normal, normalize(halfVector)));
-                float phong = saturate(dot(normalize(i.normal), normalize(_WorldSpaceLightPos0)));
-                res = pow(res, 128);
-                // sample the texture
+                ///////////// SAMPLING TEXTURES ////////////////
                 fixed4 col = tex2D(_MainTex, i.uv);
-                // apply fog
+
+                ///////////// BASE COMPUTATIONS /////////////////
+                fixed3 worldNormal = normalize(i.normal);
+                fixed3 viewDir = normalize(i.viewDir);
+                fixed3 lightDir = normalize(_WorldSpaceLightPos0);
+                fixed3 halfVector = normalize(viewDir + lightDir);
+
+                fixed3 f0 = fixed3(0.04, 0.04, 0.04);
+                f0 = lerp(f0, col, _Metallic);
+                
+
+                ///////////// UNITY OPERATIONS ///////////////////
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                return res + phong;//float4(halfVector, 1);
+                //return saturate(dot(halfVector, worldNormal));
+                //return dfg_d(worldNormal, halfVector, _Roughness);
+                //return dot(worldNormal, viewDir);
+                return float4(dfg_f(worldNormal, viewDir, f0), 1);
+                //return float4(halfVector, 1);
             }
             ENDCG
         }

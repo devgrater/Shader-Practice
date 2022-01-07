@@ -61,7 +61,7 @@ Shader "Unlit/CustomPBR"
                 nDotH2 *= nDotH2;
                 float denom = nDotH2 * (alpha2 - 1) + 1;
                 denom = denom * denom * PI;
-                return alpha2 / denom;
+                return alpha2 / max(denom, 0.001);
             }
 
             float3 dfg_f(fixed3 halfVector, fixed3 viewVector, float3 f0){
@@ -100,9 +100,10 @@ Shader "Unlit/CustomPBR"
                 kd *= 1.0 - _Metallic;
                 
                 float3 kd_cpi = (kd * baseColor / PI);
-                fixed ks_denom = 4.0 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal)) + 0.001;
+                fixed ks_denom = 4.0 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal));
+                ks_denom = max(ks_denom, 0.001);
                 float3 ks_dfg = d * f * g / ks_denom;
-                return (kd_cpi + ks_dfg);
+                return (kd_cpi + ks_dfg) * PI; 
                 //return kd_cpi;
             }
 
@@ -136,13 +137,14 @@ Shader "Unlit/CustomPBR"
                 f0 = lerp(f0, col, _Metallic);
 
                 ///////////// UNITY OPERATIONS ///////////////////
+                fixed NdotL = max(dot(worldNormal, lightDir), 0.0);
                 fixed lighting = LIGHT_ATTENUATION(i);
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
-                fixed NdotL = max(dot(worldNormal, lightDir), 0.0);
+                
                 float3 Lo = cookTorraceInfluence * min(NdotL, lighting) * _LightColor0;
                 float3 ambient = float3(0.03, 0.03, 0.03) * col;
                 return float4(Lo + ambient, 1.0);
@@ -180,13 +182,13 @@ Shader "Unlit/CustomPBR"
                 f0 = lerp(f0, col, _Metallic);
 
                 ///////////// UNITY OPERATIONS ///////////////////
+                fixed NdotL = max(dot(worldNormal, lightDir), 0.0);
                 fixed lighting = LIGHT_ATTENUATION(i);
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
-                fixed NdotL = max(dot(worldNormal, lightDir), 0.0);
                 float3 Lo = cookTorraceInfluence * min(NdotL, lighting) * _LightColor0;
                 return float4(Lo, 1.0);
             }

@@ -150,7 +150,7 @@ Shader "Unlit/PBR"
                
                 float3 diffuse = Kd * Albedo;
                 float3 specular = BRDFspecular(LH,NH,NV,NL,F0);
-                return float4(specular, 1.0);
+                //return float4(diffuse, 1.0);
                 float3 Lo = (diffuse + specular * UNITY_PI) * _LightColor0.rgb * NL;
 
                 float3 ambient = 0.03 * Albedo;//计算基础的环境光
@@ -161,7 +161,7 @@ Shader "Unlit/PBR"
                 iblDiffuse *= Kd * Albedo;//最后乘上漫反射系数和兰伯特定值
                 //注意这里同样跟直接光一样把反射方程简化了出来 通过采样代替积分计算，所以不需要除系数π
 
-                /*
+                
                 float3 reflectDir = normalize(reflect(-V,N));//计算反射向量 使用该方向对CubeMap进行取样
                 float percetualRoughness = Roughness * (1.7 - 0.7 * Roughness);//因为粗糙度和mipmap的等级关系不是线性的 所以我们需要进行处理
                 float mip = percetualRoughness * 6;// 把数值范围映射到0到6之间，Unity默认的mip层级为6，也可以改为内置宏UNITY_SPECCUBE_LOD_STEPS
@@ -180,7 +180,7 @@ Shader "Unlit/PBR"
                 float ao = tex2D(_Occlusion,i.uv).r;//计算Ao环境光遮罩效果
                 float3 color = Lo + (iblSpecular + iblDiffuse) * ao;//Lo为直接计算的直接光部分，后面为IBL间接光部分，需要注意的是要乘上Ao贴图的系数
                 
-                return fixed4(color,1.0); */
+                return fixed4(color,1.0); 
 
             }
             ENDCG

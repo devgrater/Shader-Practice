@@ -88,11 +88,9 @@ Shader "Unlit/CustomPBR"
                 return 0;
             }
 
-            float3 cook_torrace(){
-                
-            }
 
-            float dfg_d(float normal, float halfVector, float roughness){
+
+            float dfg_d(fixed3 normal, fixed3 halfVector, float roughness){
                 fixed alpha2 = roughness * roughness;
                 fixed nDotH2 = max(dot(normal, halfVector), 0.0);
                 nDotH2 *= nDotH2;
@@ -106,14 +104,26 @@ Shader "Unlit/CustomPBR"
                 return (f0) + (1.0 - f0) * pow(1.0 - cosTheta, 5.0);
             }
         
-            float dfg_g(float normal, float halfVector){
-                float roughnessSquared = _Roughness * _Roughness;
-            }
-
-            float schlick_ggx(float3 n, float3 dir, float3 k){
+            float schlick_ggx(fixed3 n, fixed3 dir, fixed k){
                 fixed nDotDir = saturate(dot(n, dir));
                 return nDotDir / (nDotDir * (1.0 - k) + k);
             }
+
+            float dfg_g(fixed3 normal, fixed3 viewVector, fixed3 lightVector, fixed a){
+                #ifdef IMAGE_BASED_LIGHTING
+                    //pretty much guarantted to use ibl at this stage
+                    fixed k = a * a / 2;
+                #else
+                    fixed k = (a + 1.0) * (a + 1.0) / 8.0;
+                #endif
+                return schlick_ggx(normal, viewVector, k) * schlick_ggx(normal, lightVector, k);
+            }
+
+            float3 cook_torrace(fixed3 normal, fixed3 inDir, fixed3 outDir){
+                
+            }
+
+
 
             fixed4 frag (v2f i) : SV_Target
             {
@@ -133,9 +143,10 @@ Shader "Unlit/CustomPBR"
                 ///////////// UNITY OPERATIONS ///////////////////
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return saturate(dot(halfVector, worldNormal));
-                //return dfg_d(worldNormal, halfVector, _Roughness);
+                return dfg_d(worldNormal, halfVector, _Roughness);
                 //return dot(worldNormal, viewDir);
-                return float4(dfg_f(worldNormal, viewDir, f0), 1);
+                //return float4(dfg_f(worldNormal, viewDir, f0), 1);
+                //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 //return float4(halfVector, 1);
             }
             ENDCG

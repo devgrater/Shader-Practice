@@ -59,34 +59,7 @@ Shader "Unlit/CustomPBR"
                 return float3(0, 0, 0);
             }
 
-            float3 monteCarloEstimate(float2 uv, float3 normal, float3 lightDir, float3 viewDir){
-                int steps = 256;
-                fixed dW = 1.0 / steps;
-                float sum = 0.0f;
-                for(int i = 0; i < steps; i++){
-                    //get a random direction from the uv,
-                    float3 randomDir = getRandomDirection();
-                    //do something...
-                    //well, why not just sample a random direction?
-                    //you can easily do that from the given uv direction...
-                    //and just pick a random direction to sample in
-                    //sum += fr() * l(normal, lightDir) * dot(normal, randomDir);
-                }
-                sum *= dW;
-                return float3(0, 0, 0);
-            }
 
-            float l(float3 normal, float3 lightDir){
-                //we don't know what this will return yet.
-                
-                return dot(normal, lightDir);
-            }
-            
-            float3 fr(fixed kd, float3 surfaceColor){
-                fixed ks = 1.0 - kd;
-                //return surfaceColor * kd / PI + ks * cook_torrace();
-                return 0;
-            }
 
             ////////////////////// BRDF /////////////////////////
 
@@ -135,7 +108,24 @@ Shader "Unlit/CustomPBR"
                 return kd_cpi + ks_dfg;
             }
 
+            ///////////////////////// COMPOSITION ///////////////////////////
 
+            float3 monteCarloEstimate(float2 uv, float3 normal, float3 lightDir, float3 viewDir){
+                int steps = 256;
+                fixed dW = 1.0 / steps;
+                float sum = 0.0f;
+                for(int i = 0; i < steps; i++){
+                    //get a random direction from the uv,
+                    float3 randomDir = getRandomDirection();
+                    //do something...
+                    //well, why not just sample a random direction?
+                    //you can easily do that from the given uv direction...
+                    //and just pick a random direction to sample in
+                    //sum += fr() * l(normal, lightDir) * dot(normal, randomDir);
+                }
+                sum *= dW;
+                return float3(0, 0, 0);
+            }
 
             fixed4 frag (v2f i) : SV_Target
             {

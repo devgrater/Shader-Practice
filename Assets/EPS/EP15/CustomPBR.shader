@@ -88,7 +88,7 @@ Shader "Unlit/CustomPBR"
                 return 0;
             }
 
-
+            ////////////////////// BRDF /////////////////////////
 
             float dfg_d(fixed3 normal, fixed3 halfVector, float roughness){
                 fixed alpha2 = roughness * roughness;
@@ -106,7 +106,7 @@ Shader "Unlit/CustomPBR"
         
             float schlick_ggx(fixed3 n, fixed3 dir, fixed k){
                 fixed nDotDir = saturate(dot(n, dir));
-                return nDotDir / (nDotDir * (1.0 - k) + k);
+                return saturate(nDotDir / (nDotDir * (1.0 - k) + k));
             }
 
             float dfg_g(fixed3 normal, fixed3 viewVector, fixed3 lightVector, fixed a){
@@ -119,8 +119,20 @@ Shader "Unlit/CustomPBR"
                 return schlick_ggx(normal, viewVector, k) * schlick_ggx(normal, lightVector, k);
             }
 
-            float3 cook_torrace(fixed3 normal, fixed3 inDir, fixed3 outDir){
-                
+            float3 cook_torrace(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed kd, fixed roughness){
+                //omega_o - viewDir
+                //omega_i - lightDir
+                fixed3 halfVector = normalize(viewDir + lightDir);
+                fixed3 f0 = fixed3(0.04, 0.04, 0.04);
+                f0 = lerp(f0, baseColor, _Metallic);
+                fixed ks = 1.0 - kd;
+                float d = dfg_d(normal, halfVector, roughness);
+                float3 f = dfg_f(normal, viewDir, f0);
+                float g = dfg_g(normal, viewDir, lightDir, roughness);
+                float3 kd_cpi = (kd * baseColor / PI);
+                fixed ks_denom = 4 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal)) + 0.001;
+                float3 ks_dfg = ks * d * f * g / ks_denom;
+                return kd_cpi + ks_dfg;
             }
 
 
@@ -136,18 +148,21 @@ Shader "Unlit/CustomPBR"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
+                
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
                 f0 = lerp(f0, col, _Metallic);
-                
 
                 ///////////// UNITY OPERATIONS ///////////////////
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return saturate(dot(halfVector, worldNormal));
-                return dfg_d(worldNormal, halfVector, _Roughness);
+                //return float4(dfg_f(worldNormal, viewDir, f0), 1.0);
+                //VPOSreturn dfg_d(worldNormal, halfVector, _Roughness) * col;
                 //return dot(worldNormal, viewDir);
                 //return float4(dfg_f(worldNormal, viewDir, f0), 1);
-                //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
+                //return dfg_g(worldNormal, viewDir, lightDir, _Roughness) * col;
                 //return float4(halfVector, 1);
+                float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, 0.5, _Roughness);
+                return float4(cookTorraceInfluence * saturate(dot(worldNormal, lightDir)), 1.0);
             }
             ENDCG
         }

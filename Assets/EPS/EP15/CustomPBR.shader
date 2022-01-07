@@ -61,11 +61,11 @@ Shader "Unlit/CustomPBR"
                 nDotH2 *= nDotH2;
                 float denom = nDotH2 * (alpha2 - 1) + 1;
                 denom = denom * denom * PI;
-                return alpha2 / max(denom, 0.001);
+                return alpha2 / denom;
             }
 
-            float3 dfg_f(fixed3 halfVector, fixed3 viewVector, float3 f0){
-                fixed cosTheta = saturate(dot(halfVector, viewVector));
+            float3 dfg_f(fixed3 d1, fixed3 d2, float3 f0){
+                fixed cosTheta = saturate(dot(d1, d2));
                 return (f0) + (1.0 - f0) * pow(saturate(1.0 - cosTheta), 5.0);
             }
         
@@ -93,8 +93,9 @@ Shader "Unlit/CustomPBR"
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
                 f0 = lerp(f0, baseColor, _Metallic);
                 float d = dfg_d(normal, halfVector, roughness);
+                float3 f = dfg_f(viewDir, normal, f0);
                 float g = dfg_g(normal, viewDir, lightDir, roughness);
-                float3 f = dfg_f(halfVector, lightDir, f0);
+                
                 float3 ks = f;
                 float3 kd = 1.0 - ks;
                 kd *= 1.0 - _Metallic;
@@ -141,7 +142,7 @@ Shader "Unlit/CustomPBR"
                 fixed lighting = LIGHT_ATTENUATION(i);
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
-                //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
+                //return float4(dfg_f(worldNormal, halfVector, f0), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
                 

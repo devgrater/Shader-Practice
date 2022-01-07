@@ -110,6 +110,12 @@ Shader "Unlit/CustomPBR"
                 //return kd_cpi;
             }
 
+            fixed4 gamma_space_color(fixed4 color){
+                color = pow(color, 2.2);
+                color *= (color + 1.0);
+                return color;
+            }
+
         ENDCG
         Pass
         {
@@ -127,7 +133,10 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = gamma_space_color(tex2D(_MainTex, i.uv) * _Color);
+
+                //since everything is in gamma space...
+                //we should probably convert the color to gamma space too...
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = normalize(i.normal);
@@ -178,7 +187,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = gamma_space_color(tex2D(_MainTex, i.uv) * _Color);
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = normalize(i.normal);

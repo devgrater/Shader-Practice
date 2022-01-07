@@ -95,7 +95,7 @@ Shader "Unlit/CustomPBR"
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
                 f0 = lerp(f0, baseColor, _Metallic);
                 float d = dfg_d(normal, halfVector, roughness);
-                float3 f = dfg_f(viewDir, normal, f0);
+                float3 f = dfg_f(halfVector, normal, f0);
                 float g = dfg_g(normal, viewDir, lightDir, roughness);
                 
                 float3 ks = f;
@@ -110,11 +110,12 @@ Shader "Unlit/CustomPBR"
                 //return kd_cpi;
             }
 
-            fixed4 gamma_space_color(fixed4 color){
+            fixed4 linear_space_color(fixed4 color){
                 color = pow(color, 2.2);
                 color *= (color + 1.0);
                 return color;
             }
+
 
         ENDCG
         Pass
@@ -133,7 +134,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = gamma_space_color(tex2D(_MainTex, i.uv) * _Color);
+                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
 
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
@@ -157,13 +158,13 @@ Shader "Unlit/CustomPBR"
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
                 
-                float3 Lo = cookTorraceInfluence * min(NdotL, lighting) * _LightColor0;
+                float3 Lo = cookTorraceInfluence * _LightColor0 * min(NdotL, lighting);
                 float3 ambient = 0.03 * col;
 
                 //everything is in gamma space...
                 float3 color = Lo + ambient;
-                color = color / (color + 1.0);
-                color = pow(color, 1.0 / 2.2);
+                //color = color / (color + 1.0);
+                //color = pow(color, 1.0 / 2.2);
 
                 return float4(color, 1.0);
             }
@@ -187,7 +188,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = gamma_space_color(tex2D(_MainTex, i.uv) * _Color);
+                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = normalize(i.normal);
@@ -207,7 +208,7 @@ Shader "Unlit/CustomPBR"
                 //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
-                float3 Lo = cookTorraceInfluence * min(NdotL, lighting) * _LightColor0;
+                float3 Lo = cookTorraceInfluence * _LightColor0 * min(NdotL, lighting);
                 float3 color = Lo;
                 color = color / (color + 1.0);
                 color = pow(color, 1.0 / 2.2);

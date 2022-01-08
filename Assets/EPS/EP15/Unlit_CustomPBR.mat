@@ -19,14 +19,18 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BRDF_Lut:
+        m_Texture: {fileID: 2800000, guid: a3b2d649b8aa7e44b82de5862daa2b2f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Metallic: 0
+    - _Metallic: 1
     - _Roughness: 1
-    - _Smoothness: 0
+    - _Smoothness: 0.653
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -6,6 +6,7 @@ Shader "Unlit/CustomPBR"
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _Smoothness ("_Smoothness", Range(0, 1)) = 1.0
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
+        _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
     }
     SubShader
     {
@@ -15,8 +16,12 @@ Shader "Unlit/CustomPBR"
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
             #include "AutoLight.cginc"
+            #include "UnityImageBasedLighting.cginc"
             #define PI 3.1415926
             //#define IMAGE_BASED_LIGHTING
+ 
+            ////////////// REFLECTION PROBE STUFF /////////////////
+            
             
             struct appdata
             {
@@ -37,10 +42,13 @@ Shader "Unlit/CustomPBR"
             };
 
             sampler2D _MainTex;
+            sampler2D _BRDF_Lut;
             float4 _MainTex_ST;
             fixed _Smoothness;
             fixed _Metallic;
             fixed4 _Color;
+            //UNITY_DECLARE_TEXCUBE(_CubeMap);
+            //half4 _CubeMap_HDR;
             //float3 _WorldSpaceLightPos0;
 
             v2f vert (appdata v)
@@ -68,45 +76,77 @@ Shader "Unlit/CustomPBR"
                 return alpha2 / denom;
             }
 
-            float3 dfg_f(fixed3 d1, fixed3 d2, float3 f0){
+            float3 dfg_f(fixed3 d1, fixed3 d2, float3 f0, fixed roughness){
                 fixed cosTheta = saturate(dot(d1, d2));
-                return (f0) + (1.0 - f0) * pow(saturate(1.0 - cosTheta), 5.0);
+                fixed omRoughness = 1.0 - roughness;
+                return (f0) + (max(fixed3(omRoughness, omRoughness, omRoughness), f0) - f0) * pow(saturate(1.0 - cosTheta), 5.0);
             }
         
-            float schlick_ggx(fixed3 n, fixed3 dir, fixed k){
-                fixed nDotDir = saturate(dot(n, dir));
+            float schlick_ggx(fixed nDotDir, fixed k){
                 return saturate(nDotDir / (nDotDir * (1.0 - k) + k));
             }
 
-            float dfg_g_direct(fixed3 normal, fixed3 viewVector, fixed3 lightVector, fixed a){
+            float dfg_g_direct(fixed nDotV, fixed nDotL, fixed a){
                 
                 float r = a + 1.0;
                 fixed k = r * r / 8.0;
-                return schlick_ggx(normal, viewVector, k) * schlick_ggx(normal, lightVector, k);
+                return schlick_ggx(nDotV, k) * schlick_ggx(nDotL, k);
             }
 
-            float3 cook_torrace(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed roughness){
+            float get_lod_from_roughness(fixed roughness){
+                return roughness * 6 + 1;
+            }
+
+            float3 direct_lighting(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed roughness){
                 //omega_o - viewDir
                 //omega_i - lightDir
+
+                ///////////////////// PRE COMPUTATIONS /////////////////////////
+                fixed nDotV = saturate(dot(normal, viewDir));
+                float nDotL = saturate(dot(normal, lightDir));
                 fixed3 halfVector = normalize(viewDir + lightDir);
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
                 f0 = lerp(f0, baseColor, _Metallic);
                 float d = dfg_d(normal, halfVector, roughness);
-                float3 f = dfg_f(halfVector, normal, f0);
-                float g = dfg_g_direct(normal, viewDir, lightDir, roughness);
+                float3 f = dfg_f(halfVector, normal, f0, roughness);
+                float g = dfg_g_direct(nDotV, nDotL, roughness);
                 
                 float3 ks = f;
                 float3 kd = 1.0 - ks;
                 kd *= 1.0 - _Metallic;
+
+                ////////////////// INDIRECT IRRADIANCE ///////////////////////////////
+                half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, normal, 5);
+                half3 indirectColor = DecodeHDR(rgbm, unity_SpecCube0_HDR);
+
+                ///////////////// INDIRECT REFLECTION ///////////////////////////////
+                float2 environmentBrdf = tex2D(_BRDF_Lut, float2(nDotV, roughness)).xy;
+                float lod = get_lod_from_roughness(roughness);
+                rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflect(-viewDir, normal), lod);
+                half3 indirectSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
+                indirectSpecular = indirectSpecular * (f * environmentBrdf.x + environmentBrdf.y);
+                return indirectSpecular;
+
+                //return reflColor;
+
                 //According to unity, we don't divide pi here.
-                float3 kd_cpi = (kd * baseColor);
+                float3 diffuse = (kd * baseColor * indirectColor);
                 fixed ks_denom = 4.0 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal));
                 ks_denom = max(ks_denom, 0.001);
                 //ks is multiplied here (ks is f)
-                float3 ks_dfg = d * f * g / ks_denom;
-                return (kd_cpi + ks_dfg * PI); 
+                float3 reflection = d * f * g / ks_denom;
+                return (diffuse + reflection * PI); 
                 //return kd_cpi;
             }
+            /*
+            float3 indirect_lighting(float3 normal){
+                ////////////////// SAMPLING SKYBOX/REFL PROBE ///////////////////////////
+                //Unity_GlossyEnvironmentData glossiness = UnityGlossyEnvironmentSetup(_Smoothness, viewDir, normal, f);
+                //half3 reflColor = Unity_GlossyEnvironment(UNITY_PASS_TEXCUBE(_CubeMap), _CubeMap_HDR, glossiness);
+                
+                ////////////////// INDIRECT_REFL ////////////////////////////////////
+                return indirectColor;
+            }*/
 
             fixed4 linear_space_color(fixed4 color){
                 color = pow(color, 2.2);
@@ -155,11 +195,12 @@ Shader "Unlit/CustomPBR"
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(worldNormal, halfVector, f0), 1.0);
                 //return dfg_g_direct(worldNormal, viewDir, lightDir, _Roughness);
-                float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, roughness);
+                float3 cookTorraceInfluence = direct_lighting(col, worldNormal, lightDir, viewDir, roughness);
                 
                 float3 Lo = cookTorraceInfluence * _LightColor0.rgb * NdotL;//min(NdotL, lighting);
                 float3 ambient = 0.03 * col;
                 float3 color = Lo;
+
                 //color = color / (color + 1.0);
                 //color = pow(color, 1.0 / 2.2);
                 //everything is in gamma space...
@@ -167,7 +208,7 @@ Shader "Unlit/CustomPBR"
             }
             ENDCG
         }
-        /*
+        
         Pass
         {
             Tags {
@@ -199,8 +240,8 @@ Shader "Unlit/CustomPBR"
                 else{
                     lightDir = normalize(_WorldSpaceLightPos0 - i.worldPos);
                 }
-                
                 fixed3 halfVector = normalize(viewDir + lightDir);
+                fixed roughness = 1 - _Smoothness;
 
                 
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
@@ -213,7 +254,7 @@ Shader "Unlit/CustomPBR"
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
                 //return dfg_g_direct(worldNormal, viewDir, lightDir, _Roughness);
-                float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
+                float3 cookTorraceInfluence = direct_lighting(col, worldNormal, lightDir, viewDir, roughness);
                 float3 Lo = cookTorraceInfluence * _LightColor0 * min(NdotL, lighting);
                 float3 color = Lo;
                 //color = color / (color + 1.0);
@@ -222,7 +263,7 @@ Shader "Unlit/CustomPBR"
                 return float4(color, 1.0);
             }
             ENDCG
-        }*/
+        }
     }
     Fallback "VertexLit"
 }

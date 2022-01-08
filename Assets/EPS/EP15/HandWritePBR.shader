@@ -121,7 +121,7 @@ Shader "Arc/ArcHandWritePbr"
 				float3 specColor = SpecularResult * lightColor * nl * FresnelTerm(1, lh) * UNITY_PI;
 				float3 diffColor = kd * Albedo * lightColor * nl;
 				float3 DirectLightResult = diffColor + specColor;
-                return float4(DirectLightResult, 1.0);
+                //return float4(DirectLightResult, 1.0);
 				
 				//ibl部分
 				half3 ambient_contrib = ShadeSH9(float4(i.normal, 1));

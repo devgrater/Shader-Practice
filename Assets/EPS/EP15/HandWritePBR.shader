@@ -125,6 +125,7 @@ Shader "Arc/ArcHandWritePbr"
 				
 				//ibl部分
 				half3 ambient_contrib = ShadeSH9(float4(i.normal, 1));
+                //return float4(ambient_contrib, 1.0);
 				/*
 				half3 ambient_contrib = 0.0;
 				ambient_contrib.r = dot(unity_SHAr, half4(i.normal, 1.0));
@@ -150,6 +151,7 @@ Shader "Arc/ArcHandWritePbr"
 				float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
 				float3 iblSpecularResult = iblSpecular * (Flast * envBDRF.r + envBDRF.g);
 				float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
+                return float4(IndirectResult, 1.0);
 				
 				/*
 				float surfaceReduction = 1.0 / (roughness*roughness + 1.0); //Liner空间

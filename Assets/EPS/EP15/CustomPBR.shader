@@ -94,7 +94,7 @@ Shader "Unlit/CustomPBR"
             }
 
             float get_lod_from_roughness(fixed roughness){
-                return roughness * (1.7 - 0.7 * roughness);
+                return roughness * (1.7 - 0.7 * roughness) * UNITY_SPECCUBE_LOD_STEPS;
             }
 
             
@@ -203,13 +203,15 @@ Shader "Unlit/CustomPBR"
                 pbs_lighting(col, worldNormal, lightDir, viewDir, roughness, direct, indirect);
                 
                 //float3 Lo = cookTorraceInfluence * _LightColor0.rgb * NdotL;
-                //float3 ambient = 0.03 * col;
+                float3 ambient = 0.03 * col;
                 //float3 color = Lo;
+                direct += ambient;
+                float3 lightAmount =_LightColor0.rgb * min(NdotL, lighting);
 
                 //color = color / (color + 1.0);
                 //color = pow(color, 1.0 / 2.2);
                 //everything is in gamma space...
-                return float4(indirect, 1.0);
+                return float4(direct * lightAmount + indirect, 1.0);
             }
             ENDCG
         }

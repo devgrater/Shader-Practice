@@ -4,8 +4,8 @@ Shader "Unlit/CustomPBR"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
-        _Roughness ("Roughness", Range(0, 1)) = 1.0
-        _Metallic ("Metallic", Range(0, 1)) = 1.0
+        _Smoothness ("_Smoothness", Range(0, 1)) = 1.0
+        [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
     }
     SubShader
     {
@@ -38,7 +38,7 @@ Shader "Unlit/CustomPBR"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            fixed _Roughness;
+            fixed _Smoothness;
             fixed _Metallic;
             fixed4 _Color;
             //float3 _WorldSpaceLightPos0;
@@ -78,15 +78,10 @@ Shader "Unlit/CustomPBR"
                 return saturate(nDotDir / (nDotDir * (1.0 - k) + k));
             }
 
-            float dfg_g(fixed3 normal, fixed3 viewVector, fixed3 lightVector, fixed a){
+            float dfg_g_direct(fixed3 normal, fixed3 viewVector, fixed3 lightVector, fixed a){
                 
-                #ifdef IMAGE_BASED_LIGHTING
-                    //pretty much guarantted to use ibl at this stage
-                    fixed k = a * a / 2;
-                #else
-                    float r = a + 1.0;
-                    fixed k = r * r / 8.0;
-                #endif
+                float r = a + 1.0;
+                fixed k = r * r / 8.0;
                 return schlick_ggx(normal, viewVector, k) * schlick_ggx(normal, lightVector, k);
             }
 
@@ -98,17 +93,18 @@ Shader "Unlit/CustomPBR"
                 f0 = lerp(f0, baseColor, _Metallic);
                 float d = dfg_d(normal, halfVector, roughness);
                 float3 f = dfg_f(halfVector, normal, f0);
-                float g = dfg_g(normal, viewDir, lightDir, roughness);
+                float g = dfg_g_direct(normal, viewDir, lightDir, roughness);
                 
                 float3 ks = f;
                 float3 kd = 1.0 - ks;
                 kd *= 1.0 - _Metallic;
-                
-                float3 kd_cpi = (kd * baseColor / PI);
+                //According to unity, we don't divide pi here.
+                float3 kd_cpi = (kd * baseColor);
                 fixed ks_denom = 4.0 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal));
                 ks_denom = max(ks_denom, 0.001);
+                //ks is multiplied here (ks is f)
                 float3 ks_dfg = d * f * g / ks_denom;
-                return (kd_cpi + ks_dfg); 
+                return (kd_cpi + ks_dfg * PI); 
                 //return kd_cpi;
             }
 
@@ -136,7 +132,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = linear_space_color(tex2D(_MainTex, i.uv)) * _Color;
+                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
 
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
@@ -146,6 +142,7 @@ Shader "Unlit/CustomPBR"
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
+                fixed roughness = 1 - _Smoothness;
 
                 
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
@@ -157,22 +154,20 @@ Shader "Unlit/CustomPBR"
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(worldNormal, halfVector, f0), 1.0);
-                //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
-                float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
+                //return dfg_g_direct(worldNormal, viewDir, lightDir, _Roughness);
+                float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, roughness);
                 
-                float3 Lo = cookTorraceInfluence * _LightColor0 * min(NdotL, lighting);
+                float3 Lo = cookTorraceInfluence * _LightColor0.rgb * NdotL;//min(NdotL, lighting);
                 float3 ambient = 0.03 * col;
-
+                float3 color = Lo;
+                //color = color / (color + 1.0);
+                //color = pow(color, 1.0 / 2.2);
                 //everything is in gamma space...
-                float3 color = Lo + ambient;
-                color = color / (color + 1.0);
-                color = pow(color, 1.0 / 2.2);
-
                 return float4(color, 1.0);
             }
             ENDCG
         }
-        
+        /*
         Pass
         {
             Tags {
@@ -190,7 +185,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = linear_space_color(tex2D(_MainTex, i.uv)) * _Color;
+                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = normalize(i.normal);
@@ -217,17 +212,17 @@ Shader "Unlit/CustomPBR"
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(lightDir, worldNormal, f0), 1.0);
-                //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
+                //return dfg_g_direct(worldNormal, viewDir, lightDir, _Roughness);
                 float3 cookTorraceInfluence = cook_torrace(col, worldNormal, lightDir, viewDir, _Roughness);
                 float3 Lo = cookTorraceInfluence * _LightColor0 * min(NdotL, lighting);
                 float3 color = Lo;
-                color = color / (color + 1.0);
-                color = pow(color, 1.0 / 2.2);
+                //color = color / (color + 1.0);
+                //color = pow(color, 1.0 / 2.2);
 
                 return float4(color, 1.0);
             }
             ENDCG
-        }
+        }*/
     }
     Fallback "VertexLit"
 }

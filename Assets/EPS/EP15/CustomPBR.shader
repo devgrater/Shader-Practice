@@ -116,7 +116,7 @@ Shader "Unlit/CustomPBR"
                 kd *= 1.0 - _Metallic;
 
                 ////////////////// INDIRECT IRRADIANCE ///////////////////////////////
-                half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, normal, 5);
+                half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, normal, 7);
                 half3 indirectColor = DecodeHDR(rgbm, unity_SpecCube0_HDR);
 
                 ///////////////// INDIRECT REFLECTION ///////////////////////////////
@@ -125,12 +125,12 @@ Shader "Unlit/CustomPBR"
                 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflect(-viewDir, normal), lod);
                 half3 indirectSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
                 indirectSpecular = indirectSpecular * (f * environmentBrdf.x + environmentBrdf.y);
-                return indirectSpecular;
+                //return indirectSpecular;
 
                 //return reflColor;
 
                 //According to unity, we don't divide pi here.
-                float3 diffuse = (kd * baseColor * indirectColor);
+                float3 diffuse = (kd * baseColor * indirectColor + indirectSpecular);
                 fixed ks_denom = 4.0 * saturate(dot(viewDir, normal)) * saturate(dot(lightDir, normal));
                 ks_denom = max(ks_denom, 0.001);
                 //ks is multiplied here (ks is f)

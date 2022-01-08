@@ -4,8 +4,9 @@ Shader "Unlit/CustomPBR"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
-        _Smoothness ("_Smoothness", Range(0, 1)) = 1.0
+        
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
+        _Smoothness ("Smoothness", Range(0, 1)) = 1.0
         _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
     }
     SubShader
@@ -99,7 +100,7 @@ Shader "Unlit/CustomPBR"
 
             
             float3 indirect_lighting(float3 albedo, float3 normal, float3 viewDir, fixed3 f0, fixed roughness){
-                fixed nDotV = saturate(dot(normal, viewDir));
+                float nDotV = lerp(0, 0.99, saturate(dot(normal, viewDir)));
                 
                 ////////////////// INDIRECT IRRADIANCE ///////////////////////////////
                 half3 indirectColor = ShadeSH9(float4(normal, 1));
@@ -110,6 +111,7 @@ Shader "Unlit/CustomPBR"
                 
                 ///////////////// INDIRECT REFLECTION ///////////////////////////////
                 float2 environmentBrdf = tex2D(_BRDF_Lut, float2(nDotV, roughness)).xy;
+                return float3(environmentBrdf, 0);
                 float lod = get_lod_from_roughness(roughness);
                 half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflect(-viewDir, normal), lod);
                 half3 indirectSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
@@ -117,7 +119,8 @@ Shader "Unlit/CustomPBR"
                 
                 
                 indirectSpecular = indirectSpecular * (f * environmentBrdf.x + environmentBrdf.y);
-                return indirectDiffuse + indirectSpecular;
+                //return (f * environmentBrdf.x + environmentBrdf.y);
+                return indirectDiffuse;// + indirectSpecular;
             }
 
             void pbs_lighting(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed roughness, out float3 direct, out float3 indirect){
@@ -135,8 +138,7 @@ Shader "Unlit/CustomPBR"
                 float g = dfg_g_direct(nDotV, nDotL, roughness);
                 
                 float3 ks = f;
-                float3 kd = 1.0 - ks;
-                kd *= 1.0 - _Metallic;
+                float3 kd = (1.0 - f) * (1.0 - _Metallic);
 
 
 
@@ -187,6 +189,7 @@ Shader "Unlit/CustomPBR"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
                 fixed roughness = 1 - _Smoothness;
+                roughness = lerp(0.02, 0.98, roughness);
 
                 
                 fixed3 f0 = fixed3(0.04, 0.04, 0.04);
@@ -197,7 +200,7 @@ Shader "Unlit/CustomPBR"
                 fixed lighting = LIGHT_ATTENUATION(i);
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return dfg_d(worldNormal, halfVector, _Roughness);
-                //return float4(dfg_f(worldNormal, halfVector, f0), 1.0);
+                //return float4(dfg_f(worldNormal, viewDir, f0, roughness), 1.0);
                 //return dfg_g_direct(worldNormal, viewDir, lightDir, _Roughness);
                 float3 direct, indirect;
                 pbs_lighting(col, worldNormal, lightDir, viewDir, roughness, direct, indirect);
@@ -211,7 +214,8 @@ Shader "Unlit/CustomPBR"
                 //color = color / (color + 1.0);
                 //color = pow(color, 1.0 / 2.2);
                 //everything is in gamma space...
-                return float4(direct * lightAmount + indirect, 1.0);
+                float3 composite = direct * lightAmount + indirect;
+                return float4(indirect, 1.0);
             }
             ENDCG
         }

@@ -33,6 +33,7 @@ Shader "Unlit/CustomPBR"
                 float3 normal : NORMAL;
                 float3 viewDir : TEXCOORD2;
                 LIGHTING_COORDS(3, 4)
+                float4 worldPos : TEXCOORD5;
             };
 
             sampler2D _MainTex;
@@ -50,6 +51,7 @@ Shader "Unlit/CustomPBR"
                 UNITY_TRANSFER_FOG(o,o.pos);
                 o.normal = UnityObjectToWorldNormal(v.normal);
                 o.viewDir = WorldSpaceViewDir(v.vertex);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
@@ -134,7 +136,7 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = linear_space_color(tex2D(_MainTex, i.uv)) * _Color;
 
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
@@ -163,8 +165,8 @@ Shader "Unlit/CustomPBR"
 
                 //everything is in gamma space...
                 float3 color = Lo + ambient;
-                //color = color / (color + 1.0);
-                //color = pow(color, 1.0 / 2.2);
+                color = color / (color + 1.0);
+                color = pow(color, 1.0 / 2.2);
 
                 return float4(color, 1.0);
             }
@@ -188,12 +190,21 @@ Shader "Unlit/CustomPBR"
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = linear_space_color(tex2D(_MainTex, i.uv)) * _Color;
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = normalize(i.normal);
                 fixed3 viewDir = normalize(i.viewDir);
-                fixed3 lightDir = normalize(_WorldSpaceLightPos0);
+                //////////// DIRECTIONAL OR POINT? ///////////////
+                fixed3 lightDir;
+                if(_WorldSpaceLightPos0.w == 0){
+                    //directional light
+                    lightDir = normalize(_WorldSpaceLightPos0);
+                }
+                else{
+                    lightDir = normalize(_WorldSpaceLightPos0 - i.worldPos);
+                }
+                
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
                 

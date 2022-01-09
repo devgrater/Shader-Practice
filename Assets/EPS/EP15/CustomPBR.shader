@@ -178,7 +178,7 @@ Shader "Grater/CustomPBR"
                     tangent.y, bitangent.y, normal.y,
                     tangent.z, bitangent.z, normal.z
                 );
-                return mul(tbn, tangentSpaceNormal);
+                return normalize(mul(tbn, tangentSpaceNormal));
             }
 
             void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){

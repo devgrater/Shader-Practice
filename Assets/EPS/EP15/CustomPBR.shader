@@ -4,8 +4,9 @@ Shader "Unlit/CustomPBR"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
-        
+        _MetallicTex ("Metallic Texture", 2D) = "white" {} //default to white, so we can multiply thsi with the metallic value
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
+        _SmoothnessTex ("Smoothness Texture", 2D) = "white" {} // same as above
         _Smoothness ("Smoothness", Range(0, 1)) = 1.0
         _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
     }
@@ -43,6 +44,8 @@ Shader "Unlit/CustomPBR"
             };
 
             sampler2D _MainTex;
+            sampler2D _MetallicTex;
+            sampler2D _SmoothnessTex;
             sampler2D _BRDF_Lut;
             float4 _MainTex_ST;
             fixed _Smoothness;
@@ -138,6 +141,11 @@ Shader "Unlit/CustomPBR"
                 return color;
             }
 
+            void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){
+                smoothness = tex2D(_SmoothnessTex, uv) * _Smoothness;
+                metallic = tex2D(_MetallicTex, uv) * _Metallic;
+            }
+
 
         ENDCG
         Pass
@@ -157,7 +165,8 @@ Shader "Unlit/CustomPBR"
             {
                 ///////////// SAMPLING TEXTURES ////////////////
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color;
-
+                fixed smoothness, metallic;
+                sample_smoothness_metallic(i.uv, smoothness, metallic);
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
 
@@ -167,10 +176,10 @@ Shader "Unlit/CustomPBR"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
-                fixed roughness = 1 - _Smoothness;
+                fixed roughness = 1 - smoothness;
                 roughness *= roughness;
                 roughness = lerp(0.02, 0.98, roughness);
-                fixed metallic = lerp(0.02, 0.98, _Metallic);
+                metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));
                 fixed nDotL = saturate(dot(worldNormal, lightDir));
@@ -178,7 +187,7 @@ Shader "Unlit/CustomPBR"
                 fixed vDotH = saturate(dot(viewDir, halfVector));
 
                 fixed3 f0 = unity_ColorSpaceDielectricSpec.rgb;
-                f0 = lerp(f0, col, _Metallic);
+                f0 = lerp(f0, col, metallic);
 
                 ///////////// UNITY OPERATIONS ///////////////////
                 fixed lighting = LIGHT_ATTENUATION(i);
@@ -188,7 +197,7 @@ Shader "Unlit/CustomPBR"
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 
                 ///////////// COMPOSITION ////////////////////////
-                float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, _Metallic, f0);
+                float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, metallic, f0);
                 float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness);
                 float3 ambient = 0.03 * col;
                 direct += ambient;
@@ -218,7 +227,8 @@ Shader "Unlit/CustomPBR"
             {
                 ///////////// SAMPLING TEXTURES ////////////////
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color;
-
+                fixed smoothness, metallic;
+                sample_smoothness_metallic(i.uv, smoothness, metallic);
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
 
@@ -237,10 +247,10 @@ Shader "Unlit/CustomPBR"
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
-                fixed roughness = 1 - _Smoothness;
+                fixed roughness = 1 - smoothness;
                 roughness *= roughness;
                 roughness = lerp(0.02, 0.98, roughness);
-                fixed metallic = lerp(0.02, 0.98, _Metallic);
+                metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));
                 fixed nDotL = saturate(dot(worldNormal, lightDir));
@@ -248,7 +258,7 @@ Shader "Unlit/CustomPBR"
                 fixed vDotH = saturate(dot(viewDir, halfVector));
 
                 fixed3 f0 = unity_ColorSpaceDielectricSpec.rgb;
-                f0 = lerp(f0, col, _Metallic);
+                f0 = lerp(f0, col, metallic);
 
 
 
@@ -260,7 +270,7 @@ Shader "Unlit/CustomPBR"
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
                 
                 ///////////// COMPOSITION ////////////////////////
-                float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, _Metallic, f0);
+                float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, metallic, f0);
                 float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
                 /*
                 float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness);

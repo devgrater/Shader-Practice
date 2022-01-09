@@ -122,6 +122,10 @@ Shader "Unlit/CustomPBR"
                 return indirectDiffuse + indirectSpecular;
             }
 
+            float3 direct_lighting(){
+
+            }
+
             void pbs_lighting(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed roughness, out float3 direct, out float3 indirect){
                 //omega_o - viewDir
                 //omega_i - lightDir
@@ -130,7 +134,7 @@ Shader "Unlit/CustomPBR"
                 fixed nDotV = saturate(dot(normal, viewDir));
                 float nDotL = saturate(dot(normal, lightDir));
                 fixed3 halfVector = normalize(viewDir + lightDir);
-                fixed3 f0 = fixed3(0.04, 0.04, 0.04);
+                fixed3 f0 = unity_ColorSpaceDielectricSpec.rgb;
                 f0 = lerp(f0, baseColor, _Metallic);
                 float d = dfg_d(normal, halfVector, roughness);
                 float3 f = dfg_f(halfVector, viewDir, f0, roughness);
@@ -188,10 +192,11 @@ Shader "Unlit/CustomPBR"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
                 fixed roughness = 1 - _Smoothness;
+                roughness *= roughness;
                 roughness = lerp(0.02, 0.98, roughness);
 
                 
-                fixed3 f0 = fixed3(0.04, 0.04, 0.04);
+                fixed3 f0 = unity_ColorSpaceDielectricSpec.rgb;
                 f0 = lerp(f0, col, _Metallic);
 
                 ///////////// UNITY OPERATIONS ///////////////////

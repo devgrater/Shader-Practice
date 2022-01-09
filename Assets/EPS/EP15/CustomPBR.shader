@@ -261,14 +261,16 @@ Shader "Unlit/CustomPBR"
                 
                 ///////////// COMPOSITION ////////////////////////
                 float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, _Metallic, f0);
-                
+                float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
+                /*
                 float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness);
                 float3 ambient = 0.03 * col;
                 direct += ambient;
-                float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
+                
 
                 float3 composite = direct * lightAmount + indirect;
-                return float4(composite, 1.0);
+                */
+                return float4(direct * lightAmount, 1.0);
             }
             ENDCG
         }

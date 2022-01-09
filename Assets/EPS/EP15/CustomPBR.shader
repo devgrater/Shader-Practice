@@ -1,14 +1,16 @@
-Shader "Unlit/CustomPBR"
+Shader "Grater/CustomPBR"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Normal ("Normal Map", 2D) = "bump" {}
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _MetallicTex ("Metallic Texture", 2D) = "white" {} //default to white, so we can multiply thsi with the metallic value
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
         _SmoothnessTex ("Smoothness Texture", 2D) = "white" {} // same as above
         _Smoothness ("Smoothness", Range(0, 1)) = 1.0
         _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
+        [Toggle]_RoughnessWorflow("Use Roughness Workflow", Float) = 0.0
     }
     SubShader
     {
@@ -30,6 +32,7 @@ Shader "Unlit/CustomPBR"
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
+                float4 tangent : TANGENT; //we'll deal with you later...
             };
 
             struct v2f
@@ -38,12 +41,16 @@ Shader "Unlit/CustomPBR"
                 UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
                 float3 normal : NORMAL;
+                float3 tangent : TANGENT;
+                float3 bitangent : BINORMAL;
                 float3 viewDir : TEXCOORD2;
                 LIGHTING_COORDS(3, 4)
                 float4 worldPos : TEXCOORD5;
+                
             };
 
             sampler2D _MainTex;
+            sampler2D _Normal;
             sampler2D _MetallicTex;
             sampler2D _SmoothnessTex;
             sampler2D _BRDF_Lut;
@@ -51,6 +58,7 @@ Shader "Unlit/CustomPBR"
             fixed _Smoothness;
             fixed _Metallic;
             fixed4 _Color;
+            int _RoughnessWorflow;
             //UNITY_DECLARE_TEXCUBE(_CubeMap);
             //half4 _CubeMap_HDR;
             //float3 _WorldSpaceLightPos0;
@@ -61,7 +69,14 @@ Shader "Unlit/CustomPBR"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.pos);
+
+                float3 normal = UnityObjectToWorldNormal(v.normal);
+                float3 tangent = UnityObjectToWorldDir(v.tangent.xyz);
+                float3 bitangent = cross(normal, tangent) * v.tangent.w;
+
                 o.normal = UnityObjectToWorldNormal(v.normal);
+                o.bitangent = bitangent;
+                o.tangent = tangent;
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
@@ -141,6 +156,16 @@ Shader "Unlit/CustomPBR"
                 return color;
             }
 
+            fixed3 map_normal(float2 uv, fixed3 normal, fixed3 tangent, fixed3 bitangent){
+                fixed3 tangentSpaceNormal = UnpackNormal(tex2D(_Normal, uv));
+                float3x3 tbn = float3x3(
+                    tangent.x, bitangent.x, normal.x,
+                    tangent.y, bitangent.y, normal.y,
+                    tangent.z, bitangent.z, normal.z
+                );
+                return mul(tbn, tangentSpaceNormal);
+            }
+
             void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){
                 smoothness = tex2D(_SmoothnessTex, uv) * _Smoothness;
                 metallic = tex2D(_MetallicTex, uv) * _Metallic;
@@ -171,14 +196,20 @@ Shader "Unlit/CustomPBR"
                 //we should probably convert the color to gamma space too...
 
                 ///////////// BASE COMPUTATIONS /////////////////
-                fixed3 worldNormal = normalize(i.normal);
+                fixed3 worldNormal = map_normal(i.uv, normalize(i.normal), normalize(i.tangent), normalize(i.bitangent));//normalize(i.normal);
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
-
-                fixed roughness = 1 - smoothness;
-                roughness *= roughness;
-                roughness = lerp(0.02, 0.98, roughness);
+                
+                fixed roughness;
+                if(_RoughnessWorflow){
+                    roughness = smoothness;
+                }
+                else{
+                    roughness = 1 - smoothness;
+                    roughness *= roughness;
+                    roughness = lerp(0.02, 0.98, roughness);
+                }
                 metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));
@@ -243,13 +274,19 @@ Shader "Unlit/CustomPBR"
                 }
 
                 ///////////// BASE COMPUTATIONS /////////////////
-                fixed3 worldNormal = normalize(i.normal);
+                fixed3 worldNormal = map_normal(i.uv, normalize(i.normal), normalize(i.tangent), normalize(i.bitangent));
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
-                fixed roughness = 1 - smoothness;
-                roughness *= roughness;
-                roughness = lerp(0.02, 0.98, roughness);
+                fixed roughness;
+                if(_RoughnessWorflow){
+                    roughness = smoothness;
+                }
+                else{
+                    roughness = 1 - smoothness;
+                    roughness *= roughness;
+                    roughness = lerp(0.02, 0.98, roughness);
+                }
                 metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));

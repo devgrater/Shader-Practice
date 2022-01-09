@@ -144,14 +144,15 @@ Shader "Arc/ArcHandWritePbr"
 				float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
 
 				float2 envBDRF = tex2D(_LUT, float2(lerp(0, 0.99 ,nv), lerp(0, 0.99, roughness))).rg; // LUT采样
-				return float4(envBDRF, 0, 1);
+				
 				float3 Flast = fresnelSchlickRoughness(max(nv, 0.0), F0, roughness);
 				float kdLast = (1 - Flast) * (1 - _Metallic);
 				
 				float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
 				float3 iblSpecularResult = iblSpecular * (Flast * envBDRF.r + envBDRF.g);
+				//return float4(Flast * envBDRF.r + envBDRF.g, 1);
 				float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
-                return float4(iblDiffuseResult, 1.0);
+                //return float4(iblDiffuseResult, 1.0);
 				
 				/*
 				float surfaceReduction = 1.0 / (roughness*roughness + 1.0); //Liner空间

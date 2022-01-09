@@ -104,23 +104,22 @@ Shader "Unlit/CustomPBR"
                 
                 ////////////////// INDIRECT IRRADIANCE ///////////////////////////////
                 half3 indirectColor = ShadeSH9(float4(normal, 1));
-                float f = dfg_f(normal, viewDir, f0, roughness);
+                float3 f = dfg_f(normal, viewDir, f0, roughness);
                 float kd = (1 - f) * (1 - _Metallic);
 
                 float3 indirectDiffuse = indirectColor * kd * albedo;
                 
                 ///////////////// INDIRECT REFLECTION ///////////////////////////////
                 float2 environmentBrdf = tex2D(_BRDF_Lut, float2(nDotV, roughness)).xy;
-                return float3(environmentBrdf, 0);
+                //return float3(environmentBrdf, 0);
                 float lod = get_lod_from_roughness(roughness);
                 half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflect(-viewDir, normal), lod);
                 half3 indirectSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
-
                 
                 
                 indirectSpecular = indirectSpecular * (f * environmentBrdf.x + environmentBrdf.y);
                 //return (f * environmentBrdf.x + environmentBrdf.y);
-                return indirectDiffuse;// + indirectSpecular;
+                return indirectDiffuse + indirectSpecular;
             }
 
             void pbs_lighting(float3 baseColor, fixed3 normal, fixed3 lightDir, fixed3 viewDir, fixed roughness, out float3 direct, out float3 indirect){
@@ -215,7 +214,7 @@ Shader "Unlit/CustomPBR"
                 //color = pow(color, 1.0 / 2.2);
                 //everything is in gamma space...
                 float3 composite = direct * lightAmount + indirect;
-                return float4(indirect, 1.0);
+                return float4(composite, 1.0);
             }
             ENDCG
         }

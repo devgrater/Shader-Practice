@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Cerberus
   m_Shader: {fileID: 4800000, guid: c0fa240a1a52b544e879b5268b7651f6, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _ROUGHNESSWORFLOW_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -41,7 +41,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Metallic: 1
-    - _RoughnessWorflow: 0
+    - _RoughnessWorflow: 1
     - _Smoothness: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

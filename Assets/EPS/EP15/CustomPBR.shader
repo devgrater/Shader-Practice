@@ -7,10 +7,11 @@ Shader "Grater/CustomPBR"
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _MetallicTex ("Metallic Texture", 2D) = "white" {} //default to white, so we can multiply thsi with the metallic value
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
-        _SmoothnessTex ("Smoothness Texture", 2D) = "white" {} // same as above
-        _Smoothness ("Smoothness", Range(0, 1)) = 1.0
+        _SmoothnessTex ("Smoothness (Roughness) Texture", 2D) = "white" {} // same as above
+        _Smoothness ("Smoothness (Roughness)", Range(0, 1)) = 1.0
         _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
         [Toggle]_RoughnessWorflow("Use Roughness Workflow", Float) = 0.0
+        [Toggle]_AlphaIsSmoothness("Alpha is Smoothness (Roughness)", Float) = 0.0
     }
     SubShader
     {
@@ -59,6 +60,7 @@ Shader "Grater/CustomPBR"
             fixed _Metallic;
             fixed4 _Color;
             int _RoughnessWorflow;
+            int _AlphaIsSmoothness;
             //UNITY_DECLARE_TEXCUBE(_CubeMap);
             //half4 _CubeMap_HDR;
             //float3 _WorldSpaceLightPos0;
@@ -156,6 +158,19 @@ Shader "Grater/CustomPBR"
                 return color;
             }
 
+            fixed decode_roughness(fixed value){
+                fixed roughness;
+                if(_RoughnessWorflow){
+                    roughness = value * _Smoothness;
+                }
+                else{
+                    roughness = 1.0 - value * _Smoothness;
+                }
+                roughness *= roughness;
+                roughness = lerp(0.02, 0.98, roughness);
+                return roughness;
+            }
+
             fixed3 map_normal(float2 uv, fixed3 normal, fixed3 tangent, fixed3 bitangent){
                 fixed3 tangentSpaceNormal = UnpackNormal(tex2D(_Normal, uv));
                 float3x3 tbn = float3x3(
@@ -167,8 +182,16 @@ Shader "Grater/CustomPBR"
             }
 
             void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){
-                smoothness = tex2D(_SmoothnessTex, uv) * _Smoothness;
-                metallic = tex2D(_MetallicTex, uv) * _Metallic;
+
+                
+                fixed4 metallic_val = tex2D(_MetallicTex, uv) * _Metallic;
+                metallic = metallic_val.r;
+                if(_AlphaIsSmoothness){
+                    smoothness = metallic_val.a;
+                }
+                else{
+                    smoothness = tex2D(_SmoothnessTex, uv);
+                }
             }
 
 
@@ -201,15 +224,7 @@ Shader "Grater/CustomPBR"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);
                 
-                fixed roughness;
-                if(_RoughnessWorflow){
-                    roughness = smoothness;
-                }
-                else{
-                    roughness = 1 - smoothness;
-                    roughness *= roughness;
-                    roughness = lerp(0.02, 0.98, roughness);
-                }
+                fixed roughness = decode_roughness(smoothness);
                 metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));
@@ -278,15 +293,7 @@ Shader "Grater/CustomPBR"
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
-                fixed roughness;
-                if(_RoughnessWorflow){
-                    roughness = smoothness;
-                }
-                else{
-                    roughness = 1 - smoothness;
-                    roughness *= roughness;
-                    roughness = lerp(0.02, 0.98, roughness);
-                }
+                fixed roughness = decode_roughness(smoothness);
                 metallic = lerp(0.02, 0.98, metallic);
 
                 fixed nDotV = saturate(dot(worldNormal, viewDir));

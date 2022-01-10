@@ -8,7 +8,7 @@ Shader "Grater/CustomPBR"
         _MetallicTex ("Metallic Texture", 2D) = "white" {} //default to white, so we can multiply thsi with the metallic value
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
         _SmoothnessTex ("Smoothness (Roughness) Texture", 2D) = "white" {} // same as above
-        _Smoothness ("Smoothness (Roughness)", Range(0, 1)) = 1.0
+        _Smoothness ("Smoothness Multiplier)", Range(0, 1)) = 1.0
         _BRDF_Lut("BRDF Lookup", 2D) = "white" {}
         [Toggle]_RoughnessWorflow("Use Roughness Workflow", Float) = 0.0
         [Toggle]_AlphaIsSmoothness("Alpha is Smoothness (Roughness)", Float) = 0.0
@@ -148,7 +148,7 @@ Shader "Grater/CustomPBR"
                 fixed ks_denom = 4 * nDotV * nDotL;
                 ks_denom = max(ks_denom, 0.001);
                 float3 reflection = d * f * g / ks_denom;
-                return diffuse / PI + reflection;
+                return diffuse + reflection * PI;
             }
 
 
@@ -161,7 +161,7 @@ Shader "Grater/CustomPBR"
             fixed decode_roughness(fixed value){
                 fixed roughness;
                 if(_RoughnessWorflow){
-                    roughness = value * _Smoothness;
+                    roughness = 1.0 - ((1.0 - value) * (_Smoothness));
                 }
                 else{
                     roughness = 1.0 - value * _Smoothness;
@@ -237,7 +237,7 @@ Shader "Grater/CustomPBR"
 
                 ///////////// UNITY OPERATIONS ///////////////////
                 fixed lighting = LIGHT_ATTENUATION(i);
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(worldNormal, viewDir, f0, roughness), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
@@ -249,8 +249,9 @@ Shader "Grater/CustomPBR"
                 direct += ambient;
                 float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
 
-                float3 composite = direct * lightAmount + indirect;
-                return float4(composite, 1.0);
+                float4 composite = float4(direct * lightAmount + indirect, 1.0);
+                UNITY_APPLY_FOG(i.fogCoord, composite);
+                return composite;
             }
             ENDCG
         }
@@ -308,7 +309,7 @@ Shader "Grater/CustomPBR"
 
                 ///////////// UNITY OPERATIONS ///////////////////
                 fixed lighting = LIGHT_ATTENUATION(i);
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                
                 //return dfg_d(worldNormal, halfVector, _Roughness);
                 //return float4(dfg_f(worldNormal, viewDir, f0, roughness), 1.0);
                 //return dfg_g(worldNormal, viewDir, lightDir, _Roughness);
@@ -316,15 +317,9 @@ Shader "Grater/CustomPBR"
                 ///////////// COMPOSITION ////////////////////////
                 float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, metallic, f0);
                 float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
-                /*
-                float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness);
-                float3 ambient = 0.03 * col;
-                direct += ambient;
-                
-
-                float3 composite = direct * lightAmount + indirect;
-                */
-                return float4(direct * lightAmount, 1.0);
+                float4 color = float4(direct * lightAmount, 1.0);
+                //UNITY_APPLY_FOG(i.fogCoord, color);
+                return color;
             }
             ENDCG
         }

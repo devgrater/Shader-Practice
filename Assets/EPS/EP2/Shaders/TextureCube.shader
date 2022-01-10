@@ -57,6 +57,7 @@ Shader "Unlit/TextureCube"
                 float roomWidth = 1 / _RoomCountH;
                 hitPos *= 0.999;
                 hitPos += 0.0005;
+                int direction = sign(rayDirection.y);
                 if(rayDirection.y < 0){
                     //is looking at the floor.
                     horizontalPlanePos = 1 - (floor(hitPos.y * _RoomCountV) + 1) * roomHeight - 0.5;

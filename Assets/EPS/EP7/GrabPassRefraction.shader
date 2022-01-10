@@ -9,7 +9,7 @@ Shader "Unlit/GrabPassRefraction"
         _BumpIntensity ("Bump Intensity", Range(0, 1)) = 1.0
         _Distortion ("Distortion", Float) = 1.0
         _Tint ("Tint", Color) = (1.0, 1.0, 1.0, 1.0)
-        _BlurDistance ("Blur Distance", Range(1, 2)) = 1.0
+        _BlurDistance ("Blur Distance", Range(1, 4)) = 1.0
     }
     SubShader
     {
@@ -87,14 +87,14 @@ Shader "Unlit/GrabPassRefraction"
                 float2 uvOffsetY = (0, _CameraPass_TexelSize.y);
                 float2 uvBase = uv;
                 float4 colorSum = float4(0, 0, 0, 0);
-                for(int i = -1; i <= 1; i++){
-                    for(int j = -1; j <= 1; j++){
+                for(int i = -2; i <= 2; i++){
+                    for(int j = -2; j <= 2; j++){
                         uvBase = uv + (i * uvOffsetX + j * uvOffsetY) * _BlurDistance;
                         //using this info, we sample the texture
                         colorSum += tex2D(_CameraPass, uvBase);
                     }
                 }
-                return colorSum / 9;
+                return colorSum / 25;
             }
 
             fixed4 frag (v2f i) : SV_Target

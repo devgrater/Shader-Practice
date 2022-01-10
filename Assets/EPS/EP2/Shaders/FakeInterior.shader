@@ -7,7 +7,8 @@ Shader "Grater/Parallax"
         _FadeToColor("Fade To Color", Color) = (0, 0, 0, 0)
         _RoomDepth ("Room Depth", Range(0, 0.5)) = 0.25
         _HeightMap ("Height Map", 2D) = "white" {}
-        [IntRange]_StepCount ("Step Count", Range(0, 64)) = 16
+        _AmbientOcclusion ("Ambient Occlusion", 2D) = "white" {}
+        _Intensity ("AO Intensity", Range(0, 1)) = 0.2
     }
     SubShader
     {
@@ -57,11 +58,14 @@ Shader "Grater/Parallax"
 
             sampler2D _MainTex;
             sampler2D _HeightMap;
+            sampler2D _AmbientOcclusion;
             float4 _MainTex_ST;
             fixed _RoomDepth;
             float _StepCount;
+            fixed _Intensity;
             fixed3 _FadeToColor;
             fixed3 _Tint;
+            
             
 
             
@@ -123,7 +127,8 @@ Shader "Grater/Parallax"
                     float2 uv = i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
                     fixed4 col = tex2D(_MainTex, uv);
                     fixed height = 1 - tex2D(_HeightMap, uv).r;
-                    averageColor = lerp(averageColor, lerp(col.rgb * _Tint, _FadeToColor, height), pow(weight, 0.5) > height);
+                    fixed ao = tex2D(_AmbientOcclusion, uv).r;
+                    averageColor = lerp(averageColor, lerp(col.rgb * _Tint, _FadeToColor, height) * 1 - (1 - ao) * _Intensity, pow(weight, 0.5) > height);
                 }
                 //averageColor /= 16;
 

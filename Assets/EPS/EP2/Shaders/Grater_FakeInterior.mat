@@ -19,6 +19,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AmbientOcclusion:
+        m_Texture: {fileID: 2800000, guid: bc9cfea92d62e3d4fa6aa4acd91288ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _HeightMap:
         m_Texture: {fileID: 2800000, guid: dfb5d887d175fec48bbc6a4dcb2a1009, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -28,9 +32,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _RoomDepth: 0.119
+    - _Intensity: 0.133
+    - _RoomDepth: 0.158
     - _StepCount: 16
     m_Colors:
-    - _FadeToColor: {r: 0.113761224, g: 0.083704166, b: 0.1792453, a: 0}
+    - _FadeToColor: {r: 0.25657892, g: 0.20305268, b: 0.3679245, a: 0}
     - _Tint: {r: 1, g: 0.99172235, b: 0.759434, a: 1}
   m_BuildTextureStacks: []

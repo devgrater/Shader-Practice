@@ -1,21 +1,16 @@
-Shader "Grater/Parallax"
+Shader "Grater/FakeInterior"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Tint("Tint", Color) = (1, 1, 1, 1)
-        _FadeToColor("Fade To Color", Color) = (0, 0, 0, 0)
-        _RoomDepth ("Room Depth", Range(0, 0.5)) = 0.25
-        _HeightMap ("Height Map", 2D) = "white" {}
-        _AmbientOcclusion ("Ambient Occlusion", 2D) = "white" {}
-        _Intensity ("AO Intensity", Range(0, 1)) = 0.2
+        _CubeMap ("Cube Map", Cube) = "white" {}
+        _RoomOffset ("RoomOffset", Vector) = (0, 0, 0)
+        [IntRange]_RoomCountH ("Room Count Horizontal", Range(1, 16)) = 1
+        [IntRange]_RoomCountV ("Room Count Horizontal", Range(1, 16)) = 1
     }
     SubShader
     {
-        Tags {
-             "RenderType"="Opaque" 
-             "LightMode"="ForwardBase"
-        }
+        Tags { "RenderType"="Opaque" }
         LOD 100
 
         Pass
@@ -25,20 +20,13 @@ Shader "Grater/Parallax"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-            #pragma multi_compile_fwdbase
 
             #include "UnityCG.cginc"
-            #include "UnityLightingCommon.cginc"
-            #include "AutoLight.cginc"
-            #include "UnityImageBasedLighting.cginc"
-            
 
             struct appdata
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
-                float3 normal : NORMAL;
-                float4 tangent : TANGENT;
             };
 
             struct v2f
@@ -46,98 +34,109 @@ Shader "Grater/Parallax"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
-                /////////// OBJECT SPACE STUFF FOR PLANE TRACING /////////////
-                float4 objectSpaceVertex : TEXCOORD2;
-                float3 objectSpaceViewDir : TEXCOORD3;
-                float3 objectSpaceCamPos : TEXCOORD4;
-                float3 objectSpaceNormal : NORMAL;
-                float3 objectSpaceTangent : TANGENT;
-                float3 objectSpaceBinormal : BINORMAL;
-                float3 worldSpaceNormal : TEXCOORD5;
+                float3 viewDir : TEXCOORD2;
+                float4 screenPos : TEXCOORD3;
+                float4 objectSpaceVertex : TEXCOORD4;
             };
 
             sampler2D _MainTex;
-            sampler2D _HeightMap;
-            sampler2D _AmbientOcclusion;
+            samplerCUBE _CubeMap;
             float4 _MainTex_ST;
-            fixed _RoomDepth;
-            float _StepCount;
-            fixed _Intensity;
-            fixed3 _FadeToColor;
-            fixed3 _Tint;
-            
-            
+            float3 Nx = float3(1, 0, 0);
+            float3 Ny = float3(0, 1, 0);
+            float3 Nz = float3(0, 0, 1);
+            float _RoomCountH;
+            float _RoomCountV;
+            float3 _RoomOffset;
 
-            
+            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 roomCenter){
 
+                //test for ceilings:
+                float roomHeight = 1 / _RoomCountV;
+                float roomWidth = 1 / _RoomCountH;
+                hitPos *= 0.999;
+                hitPos += 0.0005;
+                float direction = sign(rayDirection.y);
+                float offset = max(direction, 0.0); //no negative directions
+
+                float horizontalPlanePos = 1 - (floor(hitPos.y * _RoomCountV + offset) - direction) * roomHeight - 0.5;
+                roomCenter.y = horizontalPlanePos - direction * roomHeight * 0.5;
+
+                direction = sign(rayDirection.x);
+                offset = max(direction, 0.0);
+
+                float xPlanePos = 1 - (floor(hitPos.x * _RoomCountH + offset) - direction) * roomWidth - 0.5;
+                roomCenter.x = xPlanePos - direction * roomWidth * 0.5;
+
+                direction = sign(rayDirection.z);
+                offset = max(direction, 0.0);
+
+                float zPlanePos = 1 - (floor(hitPos.z * _RoomCountH + offset) - direction) * roomWidth - 0.5;
+                roomCenter.z = zPlanePos - direction * roomWidth * 0.5;
+                /*
+                float zPlanePos;
+                if(rayDirection.z < 0){
+                    zPlanePos = 1 - (floor(hitPos.z * _RoomCountH) + 1) * roomWidth - 0.5;
+                    roomCenter.z = zPlanePos + roomWidth * 0.5;
+                }
+                else{
+                    zPlanePos = 1 - (ceil(hitPos.z * _RoomCountH) - 1) * roomWidth - 0.5;
+                    roomCenter.z = zPlanePos - roomWidth * 0.5;
+                }*/
+
+
+                float tx = ((xPlanePos + _RoomOffset.x) - rayOrigin.x) / rayDirection.x;
+                float ty = ((horizontalPlanePos + _RoomOffset.y) - rayOrigin.y) / rayDirection.y;
+                float tz = ((zPlanePos + _RoomOffset.z) - rayOrigin.z) / rayDirection.z;
+
+
+
+                return min(min(tx, ty), tz); //find the first hit!
+            }
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-
-                //some of them are just constant!
-                //constant, you hear me?
-                o.objectSpaceCamPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
-                o.objectSpaceViewDir = ObjSpaceViewDir(v.vertex); //don't normalize first! otherwise the interpolation goes wrong
-                o.objectSpaceVertex = v.vertex;
-                o.objectSpaceNormal = v.normal;
-                //mainly we need tangent and binormal to offset stuff..
-                o.objectSpaceTangent = v.tangent;
-                o.objectSpaceBinormal = cross(v.normal, v.tangent.xyz) * v.tangent.w;
-                o.worldSpaceNormal = UnityObjectToWorldNormal(v.normal);
-
                 UNITY_TRANSFER_FOG(o,o.vertex);
+                //compute the view direct:
+                o.viewDir = WorldSpaceViewDir(v.vertex);
+                o.screenPos = ComputeScreenPos(o.vertex);
+                o.objectSpaceVertex = v.vertex;
                 return o;
-            }
-
-            float3 trace_backplane(float3 vertexPos, fixed3 normal, float3 camPos, fixed3 viewDir){
-                //using the view direciton, dot with the normal:
-                float offsetDirection = dot(viewDir, normal);
-                vertexPos += _RoomDepth * normal;
-                return vertexPos;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                fixed3 normal = normalize(i.objectSpaceNormal);
-                fixed3 viewDir = normalize(i.objectSpaceViewDir);
+                //1. translate stuff to object space.
+                //but don't do it yet
+                //lets test our  theory in world space.
 
+                //float x_diff = 0.5f;
+                //float sinx = abs(dot(normalize(i.viewDir), float3(1, 0, 0)));
+                //float dist = x_diff / sinx;
+
+                //this is accurate for this case specifically.
+                //now, lets project things back to the object space:    
+
+                //float3 rayDir = normalize(i.viewDir / i.screenPos.w);
+                float3 pixelPosition = i.objectSpaceVertex;
+                float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
+                float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
+                //avoid stepping into the negative 
+                float3 roomCenter;
+                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, roomCenter);
+                float3 objectPos = -objectSpaceCameraPos + objectSpaceViewDir * hit_t;
+                float3 sampleDir = normalize(objectPos - roomCenter);
                 
-                
-                float3 objectSpaceLightPos = mul(unity_WorldToObject, float4(_WorldSpaceLightPos0.xyz, 0)).xyz;
-                objectSpaceLightPos = normalize(objectSpaceLightPos);
 
-                fixed atten = saturate(dot(normal, objectSpaceLightPos));
-                atten = ((atten + 1.0) * 0.5);
-                atten *= atten;
+                float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)));
 
-                fixed3 lighting = atten * _LightColor0.rgb;
-                half3 indirectColor = ShadeSH9(normalize(float4(i.worldSpaceNormal, 1)));
-                
-                //col.rgb *= lighting + indirectColor;
-
-                //step for n times
-                float3 averageColor = fixed3(0, 0, 0);
-                for(float id = 0; id < 32; id += 1.0){
-                    float weight = (1 - id / 32);
-                    float stepDistance = weight * _RoomDepth;
-                    float tangentOffset = stepDistance * dot(viewDir, i.objectSpaceTangent);
-                    float binormalOffset = stepDistance * dot(viewDir, i.objectSpaceBinormal);
-                    float2 uv = i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
-                    fixed4 col = tex2D(_MainTex, uv);
-                    fixed height = 1 - tex2D(_HeightMap, uv).r;
-                    fixed ao = tex2D(_AmbientOcclusion, uv).r;
-                    averageColor = lerp(averageColor, lerp(col.rgb * _Tint, _FadeToColor, height) * 1 - (1 - ao) * _Intensity, pow(weight, 0.5) > height);
-                }
-                //averageColor /= 16;
-
-
-                //UNITY_APPLY_FOG(i.fogCoord, col);
-                return float4(averageColor, 1.0);
+                // apply fog
+                UNITY_APPLY_FOG(i.fogCoord, col);
+                return col;
             }
             ENDCG
         }
     }
-    Fallback "VertexLit"
 }

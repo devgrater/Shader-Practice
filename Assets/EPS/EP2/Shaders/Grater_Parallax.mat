@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_TextureCube
-  m_Shader: {fileID: 4800000, guid: 8071ffb88fb7ccb4cb12e83609880af3, type: 3}
+  m_Name: Grater_Parallax
+  m_Shader: {fileID: 4800000, guid: d5e575fa35a581c419784cacbcba395f, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -19,8 +19,12 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _CubeMap:
-        m_Texture: {fileID: 8900000, guid: f6c3dd5f3c2a6ef46a75f39e408076ab, type: 3}
+    - _AmbientOcclusion:
+        m_Texture: {fileID: 2800000, guid: bc9cfea92d62e3d4fa6aa4acd91288ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HeightMap:
+        m_Texture: {fileID: 2800000, guid: dfb5d887d175fec48bbc6a4dcb2a1009, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -28,8 +32,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _RoomCountH: 5
-    - _RoomCountV: 5
+    - _Intensity: 0.133
+    - _RoomDepth: 0.158
+    - _StepCount: 16
     m_Colors:
-    - _RoomOffset: {r: 0, g: 0, b: 0, a: 1}
+    - _FadeToColor: {r: 0.25657892, g: 0.20305268, b: 0.3679245, a: 0}
+    - _Tint: {r: 1, g: 0.99172235, b: 0.759434, a: 1}
   m_BuildTextureStacks: []

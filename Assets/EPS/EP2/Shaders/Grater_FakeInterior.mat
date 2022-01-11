@@ -34,8 +34,8 @@ Material:
     m_Floats:
     - _AOIntensity: 0.567
     - _AOPower: 7.15
-    - _RoomCountH: 5
-    - _RoomCountV: 5
+    - _RoomCountH: 6
+    - _RoomCountV: 6
     - _RoomOffset: 0
     - _TexCol: 8
     - _TexRow: 8

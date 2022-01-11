@@ -71,7 +71,7 @@ Shader "Grater/FakeInterior"
                 //////////////////////// WHICH SIDE OF THE PLANE WE NEED TO HIT //////////////////////////
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
-                hitPos *= 0.999;
+                hitPos *= 0.998;
                 hitPos += 0.0005;
 
                 float yDirection = sign(rayDirection.y);

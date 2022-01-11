@@ -48,6 +48,8 @@ Shader "Grater/FakeInterior"
             };
 
             sampler2D _RoomTex;
+            float _TexRow;
+            float _TexCol;
             samplerCUBE _CubeMap;
             float3 Nx = float3(1, 0, 0);
             float3 Ny = float3(0, 1, 0);
@@ -168,10 +170,15 @@ Shader "Grater/FakeInterior"
                 //////////////////////// RANDOMIZE PROPERTIES /////////////////////////////
 
                 float roomProperty = random_from_pos(roomCenter + float3(wallID, 0, wallID));
-                return roomProperty;
+                float roomTextureSize = _TexRow * _TexCol;
+                float roomUV = floor(roomProperty * roomTextureSize); //extract the uv coordinates
+                float xOffset = (roomUV % _TexRow);
+                float yOffset = (roomUV - xOffset) / _TexRow;
+                fixed2 uvOffset = fixed2(xOffset / _TexCol, yOffset / _TexCol);
+                //return float4(uvOffset, 0, 1);
 
                 //////////////////////// SAMPLING TEXTURES /////////////////////////////
-                float4 col = tex2D(_RoomTex, uv);
+                float4 col = tex2D(_RoomTex, uv / float2(_TexRow, _TexCol) + uvOffset);
                 fixed atten = dot(normalize(surfaceNormal), normalize(_WorldSpaceLightPos0.xyz));
                 atten = half_lambert_atten(atten);
                 fixed3 worldNormal = UnityObjectToWorldNormal(surfaceNormal);

@@ -27,10 +27,18 @@ Material:
         m_Texture: {fileID: 2800000, guid: e7515d05cb8e8ca4aa79f0a126e3a394, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _AOIntensity: 0.43
+    - _AOPower: 3.77
     - _RoomCountH: 5
     - _RoomCountV: 5
     - _RoomOffset: 0
+    - _TexCol: 4
+    - _TexRow: 4
     m_Colors:
     - _RoomOffset: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

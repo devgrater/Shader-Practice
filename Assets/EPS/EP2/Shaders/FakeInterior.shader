@@ -2,8 +2,9 @@ Shader "Grater/FakeInterior"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
-        _CubeMap ("Cube Map", Cube) = "white" {}
+        _RoomTex ("Random Room Texture", 2D) = "white" {}
+        [IntRange]_TexRow ("Room Texture Row", Range(1, 8)) = 4
+        [IntRange]_TexCol ("Room Texture Column", Range(1, 8)) = 4
         _RoomOffset ("RoomOffset", Float) = 0
         _AOIntensity ("AO Intensity", Range(0, 1)) = 0.5
         _AOPower ("AO Power", Range(1, 16)) = 4
@@ -46,9 +47,8 @@ Shader "Grater/FakeInterior"
                 float4 objectSpaceVertex : TEXCOORD3;
             };
 
-            sampler2D _MainTex;
+            sampler2D _RoomTex;
             samplerCUBE _CubeMap;
-            float4 _MainTex_ST;
             float3 Nx = float3(1, 0, 0);
             float3 Ny = float3(0, 1, 0);
             float3 Nz = float3(0, 0, 1);
@@ -59,14 +59,13 @@ Shader "Grater/FakeInterior"
             float _AOPower;
 
             static const float3 random_vector = float3(1.334f, 2.241f, 3.919f);
-            static const float random_amount = 3838438.66411;
-            inline float random_from_pos(float3 pos){
+
+            float random_from_pos(float3 pos){
                 return frac(dot(pos, random_vector) * 383.8438);
             }
 
-            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 surfaceNormal, out fixed2 uv){
+            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 surfaceNormal, out fixed2 uv, out float3 roomCenter, out float wallID){
                 
-                float3 roomCenter;
                 //////////////////////// WHICH SIDE OF THE PLANE WE NEED TO HIT //////////////////////////
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
@@ -98,22 +97,25 @@ Shader "Grater/FakeInterior"
                 float tz = ((zPlanePos) - rayOrigin.z) / rayDirection.z;
 
                 ////////////////////// EXTRACT SURFACE NORMAL DIRECTION ////////////////////////////
-                float3 roomSpacePos = min(tz, min(ty, tx)) * rayDirection + rayOrigin - roomCenter;
+                float3 objectSpacePos = min(tz, min(ty, tx)) * rayDirection + rayOrigin;
+                float3 roomSpacePos = objectSpacePos - roomCenter;
 
                 float min_t = tz;
                 uv = -roomSpacePos.xy * fixed2(_RoomCountH, _RoomCountV);
-                
+                wallID = 1 * zDirection + roomCenter.x;
                 //fixed2 worldUV = fixed2();
                 surfaceNormal = zNormal;
                 if(tx < min_t){
                     min_t = tx;
                     surfaceNormal = xNormal;
                     uv = -roomSpacePos.zy * fixed2(_RoomCountH, _RoomCountV);
+                    wallID = -5 * xDirection + roomCenter.y;
                 }
                 if(ty < min_t){
                     min_t = ty;
                     surfaceNormal = yNormal;
                     uv = roomSpacePos.xz * _RoomCountH;
+                    wallID = 3 * yDirection + roomCenter.z;
                 }
                 uv = saturate(frac(uv - 0.5));
                 
@@ -139,10 +141,10 @@ Shader "Grater/FakeInterior"
                 o.objectSpaceVertex = v.vertex;
                 return o;
             }
-
+            
             fixed ambient_occlusion(float2 uv){
-                fixed ao = saturate(1 - pow(uv.x * 2.0 - 1.0, 4));
-                ao *= saturate(1 - pow(uv.y * 2.0 - 1.0, 8));
+                fixed ao = saturate(1 - pow(abs(uv.x * 2.0 - 1.0), _AOPower));
+                ao *= saturate(1 - pow(abs(uv.y * 2.0 - 1.0), _AOPower));
                 ao = 1 - ((1 - ao) * _AOIntensity);
                 //return half_lambert_atten(ao);
                 //float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)));
@@ -151,36 +153,33 @@ Shader "Grater/FakeInterior"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                //1. translate stuff to object space.
-                //but don't do it yet
-                //lets test our  theory in world space.
 
-                //float x_diff = 0.5f;
-                //float sinx = abs(dot(normalize(i.viewDir), float3(1, 0, 0)));
-                //float dist = x_diff / sinx;
-
-                //this is accurate for this case specifically.
-                //now, lets project things back to the object space:    
-
-                //float3 rayDir = normalize(i.viewDir / i.screenPos.w);
                 float3 pixelPosition = i.objectSpaceVertex;
                 float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
                 float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
 
                 ///////////////////////// ACTUAL TRACING /////////////////////////////
                 //avoid stepping into the negative 
-                float3 surfaceNormal;
+                float3 surfaceNormal, roomCenter;
                 fixed2 uv;
-                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv);
-                //float3 objectPos = -objectSpaceCameraPos + objectSpaceViewDir * hit_t;
-                //float3 sampleDir = normalize(objectPos - roomCenter);
+                float wallID;
+                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv, roomCenter, wallID);
+
+                //////////////////////// RANDOMIZE PROPERTIES /////////////////////////////
+
+                float roomProperty = random_from_pos(roomCenter + float3(wallID, 0, wallID));
+                return roomProperty;
 
                 //////////////////////// SAMPLING TEXTURES /////////////////////////////
-                float4 col = tex2D(_MainTex, uv);
+                float4 col = tex2D(_RoomTex, uv);
                 fixed atten = dot(normalize(surfaceNormal), normalize(_WorldSpaceLightPos0.xyz));
                 atten = half_lambert_atten(atten);
-                fixed3 environmentLight = ShadeSH9(float4(surfaceNormal, 1));
+                fixed3 worldNormal = UnityObjectToWorldNormal(surfaceNormal);
+                fixed3 environmentLight = ShadeSH9(float4(worldNormal, 1));
                 fixed3 worldLighting = atten * _LightColor0.rgb + environmentLight * 0.5;
+
+
+                
 
                 //////////////////////// FAKE AMBIENT OCCLUSION ///////////////////////////
                 fixed ao = ambient_occlusion(uv);

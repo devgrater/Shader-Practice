@@ -10,7 +10,10 @@ Shader "Grater/FakeInterior"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags {
+             "RenderType"="Opaque" 
+             "LightMode"="ForwardBase"
+        }
         LOD 100
 
         Pass
@@ -22,6 +25,8 @@ Shader "Grater/FakeInterior"
             #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc"
+            #include "UnityImageBasedLighting.cginc"
 
             struct appdata
             {
@@ -49,50 +54,54 @@ Shader "Grater/FakeInterior"
             float _RoomCountV;
             float3 _RoomOffset;
 
-            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 roomCenter){
+            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 roomCenter, out float3 surfaceNormal){
 
-                //test for ceilings:
+                //////////////////////// WHICH SIDE OF THE PLANE WE NEED TO HIT //////////////////////////
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
                 hitPos *= 0.999;
                 hitPos += 0.0005;
-                float direction = sign(rayDirection.y);
-                float offset = max(direction, 0.0); //no negative directions
 
-                float horizontalPlanePos = 1 - (floor(hitPos.y * _RoomCountV + offset) - direction) * roomHeight - 0.5;
-                roomCenter.y = horizontalPlanePos - direction * roomHeight * 0.5;
+                float yDirection = sign(rayDirection.y);
+                float offset = max(yDirection, 0.0); //no negative directions
+                float yPlanePos = 1 - (floor(hitPos.y * _RoomCountV + offset) - yDirection) * roomHeight - 0.5;
+                roomCenter.y = yPlanePos - yDirection * roomHeight * 0.5;
 
-                direction = sign(rayDirection.x);
-                offset = max(direction, 0.0);
+                float xDirection = sign(rayDirection.x);
+                offset = max(xDirection, 0.0);
+                float xPlanePos = 1 - (floor(hitPos.x * _RoomCountH + offset) - xDirection) * roomWidth - 0.5;
+                roomCenter.x = xPlanePos - xDirection * roomWidth * 0.5;
 
-                float xPlanePos = 1 - (floor(hitPos.x * _RoomCountH + offset) - direction) * roomWidth - 0.5;
-                roomCenter.x = xPlanePos - direction * roomWidth * 0.5;
+                float zDirection = sign(rayDirection.z);
+                offset = max(zDirection, 0.0);
+                float zPlanePos = 1 - (floor(hitPos.z * _RoomCountH + offset) - zDirection) * roomWidth - 0.5;
+                roomCenter.z = zPlanePos - zDirection * roomWidth * 0.5;
 
-                direction = sign(rayDirection.z);
-                offset = max(direction, 0.0);
-
-                float zPlanePos = 1 - (floor(hitPos.z * _RoomCountH + offset) - direction) * roomWidth - 0.5;
-                roomCenter.z = zPlanePos - direction * roomWidth * 0.5;
-                /*
-                float zPlanePos;
-                if(rayDirection.z < 0){
-                    zPlanePos = 1 - (floor(hitPos.z * _RoomCountH) + 1) * roomWidth - 0.5;
-                    roomCenter.z = zPlanePos + roomWidth * 0.5;
-                }
-                else{
-                    zPlanePos = 1 - (ceil(hitPos.z * _RoomCountH) - 1) * roomWidth - 0.5;
-                    roomCenter.z = zPlanePos - roomWidth * 0.5;
-                }*/
-
-
+                //////////////////////// HOW LONG DOES IT TAKE TO HIT THIS PLANE? ////////////////////////
                 float tx = ((xPlanePos + _RoomOffset.x) - rayOrigin.x) / rayDirection.x;
-                float ty = ((horizontalPlanePos + _RoomOffset.y) - rayOrigin.y) / rayDirection.y;
+                float ty = ((yPlanePos + _RoomOffset.y) - rayOrigin.y) / rayDirection.y;
                 float tz = ((zPlanePos + _RoomOffset.z) - rayOrigin.z) / rayDirection.z;
 
+                ////////////////////// EXTRACT SURFACE NORMAL DIRECTION ////////////////////////////
+                float min_t = tz;
+                surfaceNormal = fixed3(0, 0, zDirection);
+                if(tx < min_t){
+                    min_t = tx;
+                    surfaceNormal = fixed3(xDirection, 0, 0);
+                }
+                if(ty < min_t){
+                    min_t = ty;
+                    surfaceNormal = fixed3(0, yDirection, 0);
+                }
 
-
-                return min(min(tx, ty), tz); //find the first hit!
+                ////////////////////// FIRST HIT /////////////////////////////////////
+                return min_t; //find the first hit!
             }
+            float half_lambert_atten(float attenuation){
+                attenuation = saturate((attenuation + 1) / 2);
+                return attenuation * attenuation;
+            }
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -123,14 +132,20 @@ Shader "Grater/FakeInterior"
                 float3 pixelPosition = i.objectSpaceVertex;
                 float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
                 float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
+
+                ///////////////////////// ACTUAL TRACING /////////////////////////////
                 //avoid stepping into the negative 
-                float3 roomCenter;
-                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, roomCenter);
+                float3 roomCenter, surfaceNormal;
+                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, roomCenter, surfaceNormal);
                 float3 objectPos = -objectSpaceCameraPos + objectSpaceViewDir * hit_t;
                 float3 sampleDir = normalize(objectPos - roomCenter);
                 
-
+                fixed atten = dot(normalize(surfaceNormal), normalize(_WorldSpaceLightPos0.xyz));
+                atten = half_lambert_atten(atten);
+                fixed3 environmentLight = ShadeSH9(float4(surfaceNormal, 1));
+                fixed3 worldLighting = atten * _LightColor0.rgb + environmentLight * 0.5;
                 float4 col = texCUBElod(_CubeMap, normalize(float4(-sampleDir, 1)));
+                col.rgb *= worldLighting;
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

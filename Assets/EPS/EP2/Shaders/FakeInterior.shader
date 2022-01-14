@@ -34,12 +34,12 @@ Shader "Grater/FakeInterior"
             struct appdata
             {
                 float4 vertex : POSITION;
-                //float2 uv : TEXCOORD0;
+                float2 uv : TEXCOORD0;
             };
 
             struct v2f
             {
-                //float2 uv : TEXCOORD0;
+                float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
                 float3 viewDir : TEXCOORD2;
@@ -48,6 +48,7 @@ Shader "Grater/FakeInterior"
             };
 
             sampler2D _RoomTex;
+            float4 _RoomTex_ST;
             float _TexRow;
             float _TexCol;
             samplerCUBE _CubeMap;
@@ -66,12 +67,12 @@ Shader "Grater/FakeInterior"
                 return frac(dot(pos, random_vector) * 383.8438);
             }
 
-            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 surfaceNormal, out fixed2 uv, out float3 roomCenter, out float wallID){
+            float first_hit(float3 rayOrigin, float3 rayDirection, float3 hitPos, out float3 surfaceNormal, out fixed2 uv, out float3 roomCenter){
                 
                 //////////////////////// WHICH SIDE OF THE PLANE WE NEED TO HIT //////////////////////////
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
-                hitPos *= 0.998;
+                hitPos *= 0.996;
                 hitPos += 0.0005;
 
                 float yDirection = sign(rayDirection.y);
@@ -104,20 +105,17 @@ Shader "Grater/FakeInterior"
 
                 float min_t = tz;
                 uv = -roomSpacePos.xy * fixed2(_RoomCountH, _RoomCountV);
-                wallID = 1 * zDirection + roomCenter.x;
                 //fixed2 worldUV = fixed2();
                 surfaceNormal = zNormal;
                 if(tx < min_t){
                     min_t = tx;
                     surfaceNormal = xNormal;
                     uv = -roomSpacePos.zy * fixed2(_RoomCountH, _RoomCountV);
-                    wallID = -5 * xDirection + roomCenter.y;
                 }
                 if(ty < min_t){
                     min_t = ty;
                     surfaceNormal = yNormal;
                     uv = roomSpacePos.xz * _RoomCountH;
-                    wallID = 3 * yDirection + roomCenter.z;
                 }
                 uv = saturate(frac(uv - 0.5));
                 
@@ -135,7 +133,7 @@ Shader "Grater/FakeInterior"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                //o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = TRANSFORM_TEX(v.uv, _RoomTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 //compute the view direct:
                 o.viewDir = WorldSpaceViewDir(v.vertex);
@@ -164,12 +162,12 @@ Shader "Grater/FakeInterior"
                 //avoid stepping into the negative 
                 float3 surfaceNormal, roomCenter;
                 fixed2 uv;
-                float wallID;
-                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv, roomCenter, wallID);
-
+                float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv, roomCenter);
+                ///////////// HOW ABOUT...? ///////////////////
+                //uv = i.uv * float2(_RoomCountH, _RoomCountV);
                 //////////////////////// RANDOMIZE PROPERTIES /////////////////////////////
 
-                float roomProperty = random_from_pos(roomCenter + float3(wallID, 0, wallID));
+                float roomProperty = random_from_pos(roomCenter);
                 float roomTextureSize = _TexRow * _TexCol;
                 float roomUV = floor(roomProperty * roomTextureSize); //extract the uv coordinates
                 float xOffset = (roomUV % _TexRow);
@@ -179,9 +177,10 @@ Shader "Grater/FakeInterior"
 
                 //////////////////////// SAMPLING TEXTURES /////////////////////////////
                 float4 col = tex2D(_RoomTex, uv / float2(_TexRow, _TexCol) + uvOffset);
-                fixed atten = dot(normalize(surfaceNormal), normalize(_WorldSpaceLightPos0.xyz));
-                atten = half_lambert_atten(atten);
+                
                 fixed3 worldNormal = UnityObjectToWorldNormal(surfaceNormal);
+                fixed atten = dot(normalize(worldNormal), normalize(_WorldSpaceLightPos0.xyz));
+                atten = half_lambert_atten(atten);
                 fixed3 environmentLight = ShadeSH9(float4(worldNormal, 1));
                 fixed3 worldLighting = atten * _LightColor0.rgb + environmentLight * 0.5;
 

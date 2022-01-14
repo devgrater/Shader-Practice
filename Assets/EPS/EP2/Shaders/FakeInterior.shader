@@ -73,7 +73,7 @@ Shader "Grater/FakeInterior"
                 float roomHeight = 1 / _RoomCountV;
                 float roomWidth = 1 / _RoomCountH;
                 hitPos *= 0.996;
-                hitPos += 0.0005;
+                hitPos += 0.002;
 
                 float yDirection = sign(rayDirection.y);
                 float offset = max(yDirection, 0.0); //no negative directions
@@ -198,4 +198,5 @@ Shader "Grater/FakeInterior"
             ENDCG
         }
     }
+    Fallback "VertexLit"
 }

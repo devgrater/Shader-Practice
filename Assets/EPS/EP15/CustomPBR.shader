@@ -22,7 +22,8 @@ Shader "Grater/CustomPBR"
             #include "UnityLightingCommon.cginc"
             #include "AutoLight.cginc"
             #include "UnityImageBasedLighting.cginc"
-            #define PI 3.1415926
+            #include "GraterPBR.cginc"
+            
             //#define IMAGE_BASED_LIGHTING
  
             ////////////// REFLECTION PROBE STUFF /////////////////
@@ -85,44 +86,51 @@ Shader "Grater/CustomPBR"
                 return o;
             }
             
-            ////////////////////// BRDF /////////////////////////
-
-            float dfg_d(fixed nDotH, float roughness){
-                fixed a = roughness * roughness;
-                fixed alpha2 = a * a;
-                fixed nDotH2 = nDotH * nDotH;
-                float denom = nDotH2 * (alpha2 - 1) + 1;
-                denom = denom * denom * PI;
-                return alpha2 / denom;
-            }
-
-            float3 dfg_f(fixed cosTheta, float3 f0, fixed roughness){
-                fixed omRoughness = 1.0 - roughness;
-                return (f0) + (max(fixed3(omRoughness, omRoughness, omRoughness), f0) - f0) * pow(saturate(1.0 - cosTheta), 5.0);
-            }
-        
-            float schlick_ggx(fixed nDotDir, fixed k){
-                return saturate(nDotDir / (nDotDir * (1.0 - k) + k));
-            }
-
-            float dfg_g(fixed nDotV, fixed nDotL, fixed roughness){
-                float r = roughness + 1.0;
-                fixed k = r * r / 8.0;
-                return schlick_ggx(nDotV, k) * schlick_ggx(nDotL, k);
-            }
-
-            float get_lod_from_roughness(fixed roughness){
-                return roughness * (1.7 - 0.7 * roughness) * UNITY_SPECCUBE_LOD_STEPS;
-            }
-
             
-            float3 indirect_lighting(float3 albedo, float3 normal, float nDotV, float3 reflDir, fixed3 f0, fixed roughness){
+            inline fixed decode_roughness(fixed value){
+                fixed roughness;
+                if(_RoughnessWorflow){
+                    roughness = 1.0 - ((1.0 - value) * (_Smoothness));
+                }
+                else{
+                    roughness = 1.0 - value * _Smoothness;
+                }
+                roughness *= roughness;
+                roughness = lerp(0.02, 0.98, roughness);
+                return roughness;
+            }
+
+            inline fixed3 map_normal(float2 uv, fixed3 normal, fixed3 tangent, fixed3 bitangent){
+                fixed3 tangentSpaceNormal = UnpackNormal(tex2D(_Normal, uv));
+                float3x3 tbn = float3x3(
+                    tangent.x, bitangent.x, normal.x,
+                    tangent.y, bitangent.y, normal.y,
+                    tangent.z, bitangent.z, normal.z
+                );
+                return normalize(mul(tbn, tangentSpaceNormal));
+            }
+
+            inline void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){
+
+                
+                fixed4 metallic_val = tex2D(_MetallicTex, uv) * _Metallic;
+                metallic = metallic_val.r;
+                if(_AlphaIsSmoothness){
+                    smoothness = metallic_val.a;
+                }
+                else{
+                    smoothness = tex2D(_SmoothnessTex, uv);
+                }
+            }
+
+
+            inline float3 indirect_lighting(float3 albedo, float3 normal, float nDotV, float3 reflDir, fixed3 f0, fixed roughness, fixed metallic){
                 nDotV = lerp(0, 0.99, nDotV);
                 
                 ////////////////// INDIRECT IRRADIANCE ///////////////////////////////
                 half3 indirectColor = ShadeSH9(float4(normal, 1));
                 float3 f = dfg_f(nDotV, f0, roughness);
-                float kd = (1 - f) * (1 - _Metallic);
+                float kd = (1 - f) * (1 - metallic);
 
                 float3 indirectDiffuse = indirectColor * kd * albedo;
                 
@@ -137,9 +145,9 @@ Shader "Grater/CustomPBR"
                 return indirectDiffuse + indirectSpecular;
             }
 
-            float3 direct_lighting(half3 albedo, fixed nDotV, fixed nDotL, fixed nDotH, fixed vDotH, fixed roughness, fixed metallic, fixed f0){
+            inline float3 direct_lighting(half3 albedo, fixed nDotV, fixed nDotL, fixed nDotH, fixed vDotH, fixed roughness, fixed metallic, fixed f0){
                 float d = dfg_d(nDotH, roughness);
-                float3 f = dfg_f(vDotH, f0, roughness);
+                float3 f = dfg_f_roughless(vDotH, f0, roughness);
                 float g = dfg_g(nDotV, nDotL, roughness);
 
                 float3 ks = f;
@@ -150,50 +158,6 @@ Shader "Grater/CustomPBR"
                 float3 reflection = d * f * g / ks_denom;
                 return diffuse + reflection * PI;
             }
-
-
-            fixed4 linear_space_color(fixed4 color){
-                color = pow(color, 2.2);
-                color *= (color + 1.0);
-                return color;
-            }
-
-            fixed decode_roughness(fixed value){
-                fixed roughness;
-                if(_RoughnessWorflow){
-                    roughness = 1.0 - ((1.0 - value) * (_Smoothness));
-                }
-                else{
-                    roughness = 1.0 - value * _Smoothness;
-                }
-                roughness *= roughness;
-                roughness = lerp(0.02, 0.98, roughness);
-                return roughness;
-            }
-
-            fixed3 map_normal(float2 uv, fixed3 normal, fixed3 tangent, fixed3 bitangent){
-                fixed3 tangentSpaceNormal = UnpackNormal(tex2D(_Normal, uv));
-                float3x3 tbn = float3x3(
-                    tangent.x, bitangent.x, normal.x,
-                    tangent.y, bitangent.y, normal.y,
-                    tangent.z, bitangent.z, normal.z
-                );
-                return normalize(mul(tbn, tangentSpaceNormal));
-            }
-
-            void sample_smoothness_metallic(float2 uv, out fixed smoothness, out fixed metallic){
-
-                
-                fixed4 metallic_val = tex2D(_MetallicTex, uv) * _Metallic;
-                metallic = metallic_val.r;
-                if(_AlphaIsSmoothness){
-                    smoothness = metallic_val.a;
-                }
-                else{
-                    smoothness = tex2D(_SmoothnessTex, uv);
-                }
-            }
-
 
         ENDCG
         Pass
@@ -244,12 +208,12 @@ Shader "Grater/CustomPBR"
                 
                 ///////////// COMPOSITION ////////////////////////
                 float3 direct = direct_lighting(col, nDotV, nDotL, nDotH, vDotH, roughness, metallic, f0);
-                float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness);
+                float3 indirect = indirect_lighting(col, worldNormal, nDotV, reflect(-viewDir, worldNormal), f0, roughness, metallic);
                 float3 ambient = 0.03 * col;
                 direct += ambient;
                 float3 lightAmount =_LightColor0.rgb * min(nDotL, lighting);
 
-                float4 composite = float4(direct * lightAmount + indirect, 1.0);
+                float4 composite = float4(direct * lightAmount + indirect + saturate(pow(1.0 - nDotV, 6) * (1 - vDotH)), 1.0);
                 UNITY_APPLY_FOG(i.fogCoord, composite);
                 //return float4(ShadeSH9(float4(worldNormal, 1)), 1);
                 return composite;

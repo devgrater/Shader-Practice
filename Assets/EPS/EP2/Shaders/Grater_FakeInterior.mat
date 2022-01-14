@@ -28,7 +28,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoomTex:
-        m_Texture: {fileID: 2800000, guid: ab3a402910af51c4abb9b43e1373451f, type: 3}
+        m_Texture: {fileID: 2800000, guid: ba887c596f2b08b468e316a0c4c4aec0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
@@ -36,9 +36,9 @@ Material:
     - _AOPower: 7.15
     - _RoomCountH: 6
     - _RoomCountV: 6
-    - _RoomOffset: 0
-    - _TexCol: 4
-    - _TexRow: 4
+    - _RoomOffset: 0.04
+    - _TexCol: 8
+    - _TexRow: 8
     m_Colors:
     - _RoomOffset: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

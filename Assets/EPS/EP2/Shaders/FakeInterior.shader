@@ -136,7 +136,7 @@ Shader "Grater/FakeInterior"
                 o.uv = TRANSFORM_TEX(v.uv, _RoomTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 //compute the view direct:
-                o.viewDir = WorldSpaceViewDir(v.vertex);
+                o.viewDir = ObjSpaceViewDir(v.vertex);
                 //o.screenPos = ComputeScreenPos(o.vertex);
                 o.objectSpaceVertex = v.vertex;
                 return o;
@@ -156,13 +156,15 @@ Shader "Grater/FakeInterior"
 
                 float3 pixelPosition = i.objectSpaceVertex;
                 float3 objectSpaceCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
-                float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
+               // float3 objectSpaceViewDir = normalize(mul(unity_WorldToObject, float4(i.viewDir, 0)));
+               float3 objectSpaceViewDir = i.viewDir;
 
                 ///////////////////////// ACTUAL TRACING /////////////////////////////
                 //avoid stepping into the negative 
                 float3 surfaceNormal, roomCenter;
                 fixed2 uv;
                 float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv, roomCenter);
+                return 0.1 / hit_t;
                 ///////////// HOW ABOUT...? ///////////////////
                 //uv = i.uv * float2(_RoomCountH, _RoomCountV);
                 //////////////////////// RANDOMIZE PROPERTIES /////////////////////////////

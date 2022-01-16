@@ -5,6 +5,7 @@ Shader "Grater/Experimental/VLBox"
         _MainTex ("Texture", 2D) = "white" {}
         _Depth ("Depth", Float) = 0.5
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
+        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.1)) = 0.1
     }
 
     
@@ -57,6 +58,7 @@ Shader "Grater/Experimental/VLBox"
             sampler2D _GrabTexture;
             float _Depth;
             float4 _FogColor;
+            fixed _FogDensity;
 
             v2f vert (appdata v)
             {
@@ -136,7 +138,7 @@ Shader "Grater/Experimental/VLBox"
 
                 //now we can ask the basic question.
                 float depthDifference = abs(i.screenPos.w - minDepth) * perspectiveCorrection;
-                fixed fogAmount = 1 / exp(depthDifference * 0.1);
+                fixed fogAmount = 1 / exp(depthDifference * _FogDensity);
                 return lerp(_FogColor, screenColor, saturate(fogAmount));
 
                 return 10 / i.screenPos.w;

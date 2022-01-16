@@ -25,6 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Depth: -0.5
+    - _FogDensity: 0.1
     m_Colors:
     - _FogColor: {r: 1.4290168, g: 3.2406504, b: 3.4822018, a: 1}
   m_BuildTextureStacks: []

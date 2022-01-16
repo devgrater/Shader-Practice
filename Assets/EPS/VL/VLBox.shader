@@ -166,7 +166,7 @@ Shader "Grater/Experimental/VLBox"
                 //now we can ask the basic question.
                 float depthDifference = (minDepth - i.screenPos.w) * perspectiveCorrection;
                 fixed fogAmount = 1 / exp(depthDifference * _FogDensity * (lightAmount));
-                return lerp(_FogColor, screenColor, saturate(fogAmount));
+                return lerp(_LightColor0 * 2.2, screenColor, saturate(fogAmount));
 
 
                 //return 10 / minDepth;

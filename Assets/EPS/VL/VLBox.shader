@@ -5,7 +5,8 @@ Shader "Grater/Experimental/VLBox"
         _MainTex ("Texture", 2D) = "white" {}
         _Depth ("Depth", Float) = 0.5
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
-        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.1)) = 0.1
+        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
+        [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
     }
 
     
@@ -35,7 +36,7 @@ Shader "Grater/Experimental/VLBox"
 
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
-            #include "GraterVLight.cginc"
+            #include "Shadows.cginc"
 
             struct appdata
             {
@@ -47,14 +48,15 @@ Shader "Grater/Experimental/VLBox"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
+                //UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
                 
                 float4 screenPos : TEXCOORD2;
                 float3 normal : NORMAL;
                 float3 osViewDir : TEXCOORD1;
-                //float3 osVertex : TEXCOORD3;
                 float3 camDir : TEXCOORD3;
+
+                //CAM_COORDS(4, 5)
                 
             };
 
@@ -65,10 +67,14 @@ Shader "Grater/Experimental/VLBox"
             float _Depth;
             float4 _FogColor;
             fixed _FogDensity;
+            float _StepCount;
+            //sampler2D _SunCascadedShadowMap; //thanks, my hero!
 
             v2f vert (appdata v)
             {
                 v2f o;
+                //o.pos = mul(unity_ObjectToWorld, v.pos);
+                //o.pos = mul(UNITY_MATRIX_VP, o.pos);
                 o.pos = UnityObjectToClipPos(v.pos);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 
@@ -77,8 +83,8 @@ Shader "Grater/Experimental/VLBox"
                 //o.osVertex = v.vertex;
                 
                 o.osViewDir = ObjSpaceViewDir(v.pos);
-
-                UNITY_TRANSFER_FOG(o,o.pos);
+                //question:
+                //UNITY_TRANSFER_FOG(o,o.pos);
                 return o;
             }
 
@@ -119,35 +125,47 @@ Shader "Grater/Experimental/VLBox"
 
                 fixed3 xPlaneNormal = sign(viewDir.x) * fixed3(1, 0, 0);
                 float maxXPlane = trace_one_plane(xPlaneNormal, viewDir, camPos, _Depth);
-
-
-                float maxDepth = max(max(maxZPlane, maxYPlane), maxXPlane);
+                
+                float backPlaneDepth = max(max(maxZPlane, maxYPlane), maxXPlane);
 
                 fixed2 screenUV = i.screenPos.xy / i.screenPos.w;
-                float depthBehind = LinearEyeDepth(tex2D(_CameraDepthTexture, screenUV).r);
+                float existingDepth = LinearEyeDepth(tex2D(_CameraDepthTexture, screenUV).r);
                 //perspective correct
                 
                 //convert object space to world space,
                 //and take the union with the existing depth map.
-                float3 objectSpacePos = (maxDepth * viewDir);
-                float3 worldSpaceDepthDiff = mul(unity_ObjectToWorld, float4(objectSpacePos, 0.0));
-                //using this....
-                float3 worldSpaceVector = worldSpaceDepthDiff;
+                float3 objectSpacePos = (backPlaneDepth * viewDir);
+                float3 worldSpaceVector = mul(unity_ObjectToWorld, float4(objectSpacePos, 0.0));
 
-                float3 viewForward = unity_CameraToWorld._m02_m12_m22;
-                float perspectiveCorrectDepth = dot(worldSpaceVector, normalize(viewForward));
-                float minDepth = min(depthBehind, perspectiveCorrectDepth);
+                fixed3 wsViewDir = normalize(worldSpaceVector);
+                fixed3 viewForward = normalize(unity_CameraToWorld._m02_m12_m22);
+                float perspectiveCorrection = dot(wsViewDir, viewForward);
+                
+                float perspectiveCorrectDepth = sqrt(dot(worldSpaceVector, worldSpaceVector)) * perspectiveCorrection;//dot(worldSpaceVector, normalize(viewForward));
+                float minDepth = min(existingDepth, perspectiveCorrectDepth);
 
-                float perspectiveCorrection = dot(normalize(worldSpaceVector), normalize(viewForward));
+                float depthDiff = (minDepth - i.screenPos.w);
+                float depthColumnWidth = depthDiff / _StepCount;
+
+                float lightAmount = 0.0;
+                
+                for(float step = 0; step < _StepCount; step++){
+                    float depthStep = (depthColumnWidth * step + i.screenPos.w) / perspectiveCorrection;
+                    float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep;
+                    //using this, sample the shadowmap.
+                    lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
+                    //using this, we can sample the shadow map.
+                }
+
+                lightAmount = lightAmount / _StepCount;
+
+                
 
                 float4 screenColor = tex2D(_GrabTexture, screenUV);
 
                 //now we can ask the basic question.
-                float depthDifference = abs(i.screenPos.w - minDepth) * perspectiveCorrection;
-                //fixed frontFogAmount = 1 / exp(i.screenPos.w * perspectiveCorrection * _FogDensity);
-                //fixed backFogAmount = 1 / exp(minDepth * perspectiveCorrection * _FogDensity);
-                fixed fogAmount = 1 / exp(depthDifference * _FogDensity);
-                //fixed fogAmount = -backFogAmount + frontFogAmount;
+                float depthDifference = (minDepth - i.screenPos.w) * perspectiveCorrection;
+                fixed fogAmount = 1 / exp(depthDifference * _FogDensity * (lightAmount));
                 return lerp(_FogColor, screenColor, saturate(fogAmount));
 
 
@@ -158,4 +176,5 @@ Shader "Grater/Experimental/VLBox"
             ENDCG
         }
     }
+    Fallback "VertexLit"
 }

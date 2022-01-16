@@ -12,9 +12,12 @@ Shader "Grater/Experimental/VLBox"
 
     SubShader
     {
+
+        
         Tags {
-             "RenderType"="Opaque" 
-             "Queue"="Transparent+1"
+            "LightMode"="ForwardBase"
+            "RenderType"="Opaque" 
+            "Queue"="Transparent+1"
         }
         LOD 100
         GrabPass{
@@ -28,12 +31,15 @@ Shader "Grater/Experimental/VLBox"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
+            #pragma multi_compile_fwdbase
 
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc"
+            #include "GraterVLight.cginc"
 
             struct appdata
             {
-                float4 vertex : POSITION;
+                float4 pos : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
             };
@@ -42,7 +48,7 @@ Shader "Grater/Experimental/VLBox"
             {
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
+                float4 pos : SV_POSITION;
                 
                 float4 screenPos : TEXCOORD2;
                 float3 normal : NORMAL;
@@ -63,16 +69,16 @@ Shader "Grater/Experimental/VLBox"
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.pos = UnityObjectToClipPos(v.pos);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 
-                o.screenPos = ComputeScreenPos(o.vertex);
+                o.screenPos = ComputeScreenPos(o.pos);
                 //o.osNormal = v.normal; //prob dont need this
                 //o.osVertex = v.vertex;
                 
-                o.osViewDir = ObjSpaceViewDir(v.vertex);
+                o.osViewDir = ObjSpaceViewDir(v.pos);
 
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                UNITY_TRANSFER_FOG(o,o.pos);
                 return o;
             }
 
@@ -138,12 +144,14 @@ Shader "Grater/Experimental/VLBox"
 
                 //now we can ask the basic question.
                 float depthDifference = abs(i.screenPos.w - minDepth) * perspectiveCorrection;
+                //fixed frontFogAmount = 1 / exp(i.screenPos.w * perspectiveCorrection * _FogDensity);
+                //fixed backFogAmount = 1 / exp(minDepth * perspectiveCorrection * _FogDensity);
                 fixed fogAmount = 1 / exp(depthDifference * _FogDensity);
+                //fixed fogAmount = -backFogAmount + frontFogAmount;
                 return lerp(_FogColor, screenColor, saturate(fogAmount));
 
-                return 10 / i.screenPos.w;
-                return 10 / (i.screenPos.z / perspectiveCorrection);
-                return 10 / minDepth;
+
+                //return 10 / minDepth;
 
 
             }

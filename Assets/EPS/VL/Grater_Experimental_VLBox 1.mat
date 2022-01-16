@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Grater_Experimental_VLBox
+  m_Name: Grater_Experimental_VLBox 1
   m_Shader: {fileID: 4800000, guid: 067d0386888bc6144abfa57e20e4e9fc, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -25,7 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Depth: -0.5
-    - _FogDensity: 0.0118
+    - _FogDensity: 0.1
     m_Colors:
     - _FogColor: {r: 1.4290168, g: 3.2406504, b: 3.4822018, a: 1}
   m_BuildTextureStacks: []

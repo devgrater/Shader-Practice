@@ -26,5 +26,5 @@ Material:
     m_Floats:
     - _Depth: -0.5
     m_Colors:
-    - _FogColor: {r: 1, g: 0, b: 0, a: 1}
+    - _FogColor: {r: 1.4290168, g: 3.2406504, b: 3.4822018, a: 1}
   m_BuildTextureStacks: []

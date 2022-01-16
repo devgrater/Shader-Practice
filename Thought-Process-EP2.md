@@ -156,6 +156,8 @@ desmos上算出来这么一条曲线。
 	ao = 1 - ((1 - ao) * _AOIntensity);
 	return ao;
 ```
+
+![ao](./Blog/EP2/ao_res.png)
 ## 6. Composite
 把之前的内容全部合并起来……齐活。懒得搞材质，就随便用网上的一张uv图代替了。
 

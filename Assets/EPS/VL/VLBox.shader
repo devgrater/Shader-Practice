@@ -4,12 +4,21 @@ Shader "Grater/Experimental/VLBox"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Depth ("Depth", Float) = 0.5
+        _FogColor ("Fog Color", Color) = (0, 0, 0, 1)
     }
+
+    
+
     SubShader
     {
-        Cull Off
-        Tags { "RenderType"="Opaque" }
+        Tags {
+             "RenderType"="Opaque" 
+             "Queue"="Geometry+1"
+        }
         LOD 100
+        GrabPass{
+
+        }
 
         Pass
         {
@@ -45,7 +54,9 @@ Shader "Grater/Experimental/VLBox"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _CameraDepthTexture;
+            sampler2D _GrabTexture;
             float _Depth;
+            float4 _FogColor;
 
             v2f vert (appdata v)
             {
@@ -81,16 +92,6 @@ Shader "Grater/Experimental/VLBox"
                 
                 minPlane = plane1Closer * plane1 + (1 - plane1Closer) * plane2;
                 maxPlane = (1 - plane1Closer) * plane1 + plane1Closer * plane2;
-                
-                /*
-                if(plane1 < plane2){
-                    minPlane = plane1;
-                    maxPlane = plane2;
-                }
-                else{
-                    minPlane = plane2;
-                    maxPlane = plane1;
-                }*/
             }
 
             fixed4 frag (v2f i) : SV_Target
@@ -101,57 +102,48 @@ Shader "Grater/Experimental/VLBox"
                 fixed3 camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
                 //first lets trace the front and back plane.
                 fixed3 viewDir = normalize(i.osViewDir);
-                fixed3 zPlaneNormal = fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
-                float minZPlane, maxZPlane;
-                //trace_dual_plane(zPlaneNormal, viewDir, , _Depth, minZPlane, maxZPlane);
-                maxZPlane = trace_one_plane(zPlaneNormal, viewDir, camPos, sign(viewDir.z) * _Depth);
 
-                float depthBehind = LinearEyeDepth(tex2D(_CameraDepthTexture, i.screenPos.xy / i.screenPos.w).r);
+                fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
+                float maxZPlane = trace_one_plane(zPlaneNormal, viewDir, camPos, _Depth);
+
+                fixed3 yPlaneNormal = sign(viewDir.y) * fixed3(0, 1, 0);
+                float maxYPlane = trace_one_plane(yPlaneNormal, viewDir, camPos, _Depth);
+
+                fixed3 xPlaneNormal = sign(viewDir.x) * fixed3(1, 0, 0);
+                float maxXPlane = trace_one_plane(xPlaneNormal, viewDir, camPos, _Depth);
+
+
+                float maxDepth = max(max(maxZPlane, maxYPlane), maxXPlane);
+
+                fixed2 screenUV = i.screenPos.xy / i.screenPos.w;
+                float depthBehind = LinearEyeDepth(tex2D(_CameraDepthTexture, screenUV).r);
                 //perspective correct
                 
-                //return float4(i.osCamPos, 1.0);
-                float3 objectSpaceZPos = (maxZPlane * viewDir) + camPos;
-                float3 worldSpaceZDiff = mul(unity_ObjectToWorld, float4(objectSpaceZPos, 1.0));
+                //convert object space to world space,
+                //and take the union with the existing depth map.
+                float3 objectSpacePos = (maxDepth * viewDir);
+                float3 worldSpaceDepthDiff = mul(unity_ObjectToWorld, float4(objectSpacePos, 0.0));
                 //using this....
-                float3 worldSpaceVector = worldSpaceZDiff - _WorldSpaceCameraPos;
-                float3 worldSpaceNormal = UnityObjectToWorldNormal(zPlaneNormal * -sign(viewDir.z));
-                worldSpaceNormal = normalize(worldSpaceNormal);
-                float perspectiveCorrection = dot(viewDir, zPlaneNormal * sign(viewDir.z));
-                //return perspectiveCorrection;
+                float3 worldSpaceVector = worldSpaceDepthDiff;
+
                 float3 viewForward = unity_CameraToWorld._m02_m12_m22;
-                float depth = dot(worldSpaceVector, normalize(viewForward));
+                float perspectiveCorrectDepth = dot(worldSpaceVector, normalize(viewForward));
+                float minDepth = min(depthBehind, perspectiveCorrectDepth);
 
-                return 10 / min(depthBehind, depth);
+                float perspectiveCorrection = dot(normalize(worldSpaceVector), normalize(viewForward));
 
-                /*
-                return float4(zDir, 1.0);
-                zDir = mul(unity_ObjectToWorld, float4(zDir, 1.0)) - _WorldSpaceCameraPos;
-                float maxDepth = sqrt(dot(zDir, zDir));
-                return 10 / min(depthBehind, maxDepth) ;
-                float depth = minZPlane;*/
+                float4 screenColor = tex2D(_GrabTexture, screenUV);
 
-                return maxZPlane - minZPlane;
+                //now we can ask the basic question.
+                float depthDifference = abs(i.screenPos.w - minDepth) * perspectiveCorrection;
+                fixed fogAmount = 1 / exp(depthDifference * 0.1);
+                return lerp(_FogColor, screenColor, fogAmount);
 
-                /*
-                fixed3 xPlaneNormal = fixed3(1, 0, 0);
-                float minXPlane, maxXPlane;
-                trace_dual_plane(xPlaneNormal, viewDir, origin, 0.1, minXPlane, maxXPlane);
-                
+                return 10 / i.screenPos.w;
+                return 10 / (i.screenPos.z / perspectiveCorrection);
+                return 10 / minDepth;
 
-                fixed3 yPlaneNormal = fixed3(0, 1, 0);
-                float minYPlane, maxYPlane;
-                trace_dual_plane(yPlaneNormal, viewDir, origin, 0.1, minYPlane, maxYPlane);
 
-                float firstHit = min(minZPlane, min(minXPlane, minYPlane));
-                float lastHit = min(maxZPlane, min(minXPlane, maxYPlane));
-                return lastHit;
-
-                //return min(minZPlane, min(minYPlane, minXPlane));
-               
-
-                //forgetabout everything else!
-                //start with the object space camera pos...
-                return mul(unity_ObjectToWorld, float4(firstHit * viewDir + i.osCamPos, 1.0));*/
             }
             ENDCG
         }

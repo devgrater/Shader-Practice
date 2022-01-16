@@ -164,7 +164,7 @@ Shader "Grater/FakeInterior"
                 float3 surfaceNormal, roomCenter;
                 fixed2 uv;
                 float hit_t = first_hit(-objectSpaceCameraPos, normalize(objectSpaceViewDir), pixelPosition.xyz + 0.5, surfaceNormal, uv, roomCenter);
-                return 0.1 / hit_t;
+                //return float4((surfaceNormal + 1) / 2, 1);
                 ///////////// HOW ABOUT...? ///////////////////
                 //uv = i.uv * float2(_RoomCountH, _RoomCountV);
                 //////////////////////// RANDOMIZE PROPERTIES /////////////////////////////
@@ -175,11 +175,11 @@ Shader "Grater/FakeInterior"
                 float xOffset = (roomUV % _TexRow);
                 float yOffset = (roomUV - xOffset) / _TexRow;
                 fixed2 uvOffset = fixed2(xOffset / _TexCol, yOffset / _TexCol);
-                //return float4(uvOffset, 0, 1);
+                //return float4(uv / float2(_TexRow, _TexCol) + uvOffset, 0, 1);
 
                 //////////////////////// SAMPLING TEXTURES /////////////////////////////
                 float4 col = tex2D(_RoomTex, uv / float2(_TexRow, _TexCol) + uvOffset);
-                
+                //return col;
                 fixed3 worldNormal = UnityObjectToWorldNormal(surfaceNormal);
                 fixed atten = dot(normalize(worldNormal), normalize(_WorldSpaceLightPos0.xyz));
                 atten = half_lambert_atten(atten);
@@ -191,6 +191,7 @@ Shader "Grater/FakeInterior"
 
                 //////////////////////// FAKE AMBIENT OCCLUSION ///////////////////////////
                 fixed ao = ambient_occlusion(uv);
+                //return ao;
                 col.rgb *= worldLighting * ao;
 
                 // apply fog

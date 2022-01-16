@@ -27,9 +27,13 @@ Shader "Grater/Experimental/VLBox"
 
         Pass
         {
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+
+
+
             // make fog work
             #pragma multi_compile_fog
             #pragma multi_compile_fwdbase

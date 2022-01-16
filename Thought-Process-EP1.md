@@ -1,5 +1,8 @@
 # //EP1// Shader实现的贴花效果
 ![Splash!](./Blog/Images/splash.gif)
+## Source
+[EP1](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/EP1)
+
 ## Overall
 实用性： 还行
 

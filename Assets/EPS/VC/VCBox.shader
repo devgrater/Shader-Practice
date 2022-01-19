@@ -7,6 +7,7 @@ Shader "Grater/Experimental/VLBox"
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
+        _Scale ("Scale", Float) = 0.05
     }
 
     
@@ -65,6 +66,7 @@ Shader "Grater/Experimental/VLBox"
             float4 _FogColor;
             fixed _FogDensity;
             float _StepCount;
+            float _Scale;
             //sampler2D _SunCascadedShadowMap; //thanks, my hero!
 
             v2f vert (appdata v)
@@ -188,7 +190,7 @@ Shader "Grater/Experimental/VLBox"
                     //using this, sample the shadowmap.
                     //instead of doing this...
                     //just sample the 3d texture
-                    lightAmount += tex3D(_VolumeTex, fogWorldSpot / 20);
+                    lightAmount += tex3D(_VolumeTex, fogWorldSpot * _Scale);
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }

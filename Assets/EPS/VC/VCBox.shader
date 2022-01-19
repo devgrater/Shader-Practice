@@ -3,7 +3,6 @@ Shader "Grater/Experimental/VLBox"
     Properties
     {
         _VolumeTex ("Volume Texture", 3D) = "white" {}
-        _Depth ("Depth", Float) = 0.5
         _StepDistance ("Step Distance", Range(0, 10)) = 0.1
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
@@ -32,7 +31,7 @@ Shader "Grater/Experimental/VLBox"
         {
                     
         
- 
+            //premultiplied
             Blend One OneMinusSrcAlpha
             Cull Front
             ZTest Off
@@ -67,7 +66,6 @@ Shader "Grater/Experimental/VLBox"
 
             sampler3D _VolumeTex;
             sampler2D _CameraDepthTexture;
-            float _Depth;
             float4 _FogColor;
             float4 _ShadowColor;
             fixed _FogDensity;
@@ -117,52 +115,68 @@ Shader "Grater/Experimental/VLBox"
             }
 
 
+            float find_bounding_box_back(float3 camPos, float3 viewDir){
+                fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
+                fixed3 yPlaneNormal = sign(viewDir.y) * fixed3(0, 1, 0);
+                fixed3 xPlaneNormal = sign(viewDir.x) * fixed3(1, 0, 0);
+
+                float maxZPlane = trace_one_plane(zPlaneNormal, viewDir, camPos, -0.5);
+                float maxYPlane = trace_one_plane(yPlaneNormal, viewDir, camPos, -0.5);
+                float maxXPlane = trace_one_plane(xPlaneNormal, viewDir, camPos, -0.5);
+            
+                return max(max(maxZPlane, maxYPlane), maxXPlane);
+
+            }
+
+            float find_bounding_box_front(float3 osBackPos, float3 viewDir){
+                fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
+                fixed3 yPlaneNormal = sign(viewDir.y) * fixed3(0, 1, 0);
+                fixed3 xPlaneNormal = sign(viewDir.x) * fixed3(1, 0, 0);
+                
+                float minZPlane = trace_one_plane(zPlaneNormal, -viewDir, osBackPos, 0.5);
+                float minXPlane = trace_one_plane(xPlaneNormal, -viewDir, osBackPos, 0.5);
+                float minYPlane = trace_one_plane(yPlaneNormal, -viewDir, osBackPos, 0.5);
+
+                return max(max(minZPlane, minXPlane), minYPlane);
+            }
+
+            float calculate_transmittance(fixed density, float stepSize){
+                return exp(-density * stepSize);
+            }
+
+            float3 march_lightdir(float3 worldPos){
+                
+
+            }
+
+
             fixed4 frag (v2f i) : SV_Target
             {
                 //in object space, lets say, ideally,
                 //that the front plane happens to be 0.5 units away from teh origin.
                 //same goes for every other plane.
-                fixed3 camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
-                //first lets trace the front and back plane.
+                /////////////////// TRACING PLANES //////////////////////////
+                float3 camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
                 fixed3 viewDir = normalize(i.osViewDir);
 
                 //once we have these, trace from the furthest point,
                 //and trace for the front face from there.
-                fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
-                float maxZPlane = trace_one_plane(zPlaneNormal, viewDir, camPos, -0.5);
-
-                fixed3 yPlaneNormal = sign(viewDir.y) * fixed3(0, 1, 0);
-                float maxYPlane = trace_one_plane(yPlaneNormal, viewDir, camPos, -0.5);
-
-                fixed3 xPlaneNormal = sign(viewDir.x) * fixed3(1, 0, 0);
-                float maxXPlane = trace_one_plane(xPlaneNormal, viewDir, camPos, -0.5);
-                
-                float backPlaneDepth = max(max(maxZPlane, maxYPlane), maxXPlane);
+                float backPlaneDepth = find_bounding_box_back(camPos, viewDir);
+                //find_bounding_box(camPos, viewDir, backPlaneDepth, frontPlaneDepth);
 
                 float3 osBackVector = (backPlaneDepth * viewDir);
                 float3 osBackPos = camPos + osBackVector;
                 //now, trace for the front face. We can safely assume that nothing else is in the way,
                 //because even if there is, it makes no difference at all.
-
-                float minZPlane = trace_one_plane(zPlaneNormal, -viewDir, osBackPos, 0.5);
-                float minXPlane = trace_one_plane(xPlaneNormal, -viewDir, osBackPos, 0.5);
-                float minYPlane = trace_one_plane(yPlaneNormal, -viewDir, osBackPos, 0.5);
-
-                float frontPlaneDepth = max(max(minZPlane, minXPlane), minYPlane);
-                
                 //using this, compute a front plane vector...
+                float frontPlaneDepth = find_bounding_box_front(osBackPos, viewDir);
                 float3 osFrontPos = osBackPos -viewDir * frontPlaneDepth;
                 float3 osFrontVector = osFrontPos - camPos;
-
-                //return 0.5 / sqrt(dot(osFrontVector, osFrontVector));
-
 
                 
                 ///////////////////// SAMPLING DEPTH TEXTURE ////////////////////////////
                 fixed2 screenUV = i.screenPos.xy / i.screenPos.w;
                 float existingDepth = LinearEyeDepth(tex2D(_CameraDepthTexture, screenUV).r);
-
-
 
 
                 /////////////////// CONVERTING VECTORS TO WORLD SPACE ///////////////////////
@@ -182,7 +196,6 @@ Shader "Grater/Experimental/VLBox"
                 //outside -> front Vector > 0
                 //inside -> front vector < 0
 
-
                 
                 float wsBackFaceDepth = sqrt(dot(wsBackVector, wsBackVector)) * perspectiveCorrection;
                 float wsFrontFaceDepth = sqrt(dot(wsFrontVector, wsFrontVector)) * perspectiveCorrection;
@@ -190,37 +203,32 @@ Shader "Grater/Experimental/VLBox"
                 float minStart = max(wsFrontFaceDepth * frontVectorSign, 0);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
-                //float depthColumnWidth = depthDiff / _StepCount;
+                float depthColumnWidth = saturate(depthDiff / 32);
+                float transmittance = 1.0;
 
                 float lightAmount = 0.0;
-                float stepCount = 0.0;
-                
                 for(float step = 0; step < 32; step++){
-                    float depthStep = (_StepDistance * step + minStart);
+                    float depthStep = (depthColumnWidth * step + minStart);
                     if(depthStep > minDepth){
                         break;
                     }
-                    stepCount += 1;
-                    float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep;
-                    //using this, sample the shadowmap.
-                    //instead of doing this...
-                    //just sample the 3d texture
-                    fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
-                    //fixed4 fogAmount2 = tex3D(_VolumeTex, (fogWorldSpot) * _LV2Scale);
-                    //float fogAmount = tex3D(_VolumeTex, (fogWorldSpot + _Time.bbb) * _Scale).r * 0.5f;
-                    fixed fog = fogAmount.r;
-                    lightAmount += fog * _FogDensity;
                     if(lightAmount >= 1.0f){
                         break;
                     }
+                    float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
+
+                    //just sample the 3d texture
+                    fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
+                    lightAmount += fogAmount.r * _FogDensity;
+                    transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
+
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }
 
-                lightAmount = lightAmount;
                 //lightAmount = pow(lightAmount, _FogPower);
 
-                return lightAmount;
+                return _FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
 
                 
 

@@ -7,6 +7,7 @@ Shader "Grater/Experimental/VLBox"
         _VolumeTex3 ("Volume Texture", 3D) = "white" {}
         _Depth ("Depth", Float) = 0.5
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
+        [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
         _FogPower ("Fog Power", Range(1, 8)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
@@ -20,19 +21,19 @@ Shader "Grater/Experimental/VLBox"
     SubShader
     {
 
-        
-        Tags {
-            "LightMode"="ForwardBase"
-            "RenderType"="Opaque" 
-            "Queue"="Transparent+1"
-        }
         LOD 100
-        GrabPass{
-
+        Tags {
+            //"LightMode"="ForwardBase"
+            "RenderType"="Transparent" 
+            "Queue"="Transparent+1"
         }
 
         Pass
         {
+                    
+        
+ 
+            Blend One OneMinusSrcAlpha
             Cull Front
             ZTest Off
             CGPROGRAM
@@ -71,6 +72,7 @@ Shader "Grater/Experimental/VLBox"
             sampler2D _GrabTexture;
             float _Depth;
             float4 _FogColor;
+            float4 _ShadowColor;
             fixed _FogDensity;
             float _StepCount;
             float _Scale;
@@ -213,13 +215,14 @@ Shader "Grater/Experimental/VLBox"
 
                 
 
-                float4 screenColor = tex2D(_GrabTexture, screenUV);
+                //float4 screenColor = tex2D(_GrabTexture, screenUV);
 
                 //now we can ask the basic question.
                 float depthDifference = depthDiff * perspectiveCorrection;
-                fixed fogAmount = 1 / exp(depthDifference * _FogDensity * (lightAmount));
-                return lerp(_LightColor0 * _FogColor, screenColor, saturate(fogAmount));
-
+                fixed fogAmount = 1 - 1 / exp(depthDifference * _FogDensity * (lightAmount));
+                return fogAmount;//float4(_FogColor.rgb, 1 - saturate(fogAmount));
+                //return lerp(_FogColor, screenColor, saturate(fogAmount));
+                
 
                 //return 10 / minDepth;
 

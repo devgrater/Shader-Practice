@@ -144,9 +144,22 @@ Shader "Grater/Experimental/VLBox"
                 return exp(-density * stepSize);
             }
 
-            float3 march_lightdir(float3 worldPos){
-                
+            fixed4 sample_volume_texture(float3 pos){
+                return tex3D(_VolumeTex, pos * _Scale);
+            }
 
+            float3 march_lightdir(float3 worldPos, fixed3 lightDir){
+                float dstToBounds = find_bounding_box_back(worldPos, lightDir);
+                //just start marching towards the boundary...
+                float stepSize = dstToBounds / 8;
+                float densitySum = 0.0f;
+                for(float i = 0.0f; i < 8.0f; i++){
+                    worldPos += stepSize * lightDir;
+                    //sample!
+                    densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
+                }
+                float transmittance = exp(-densitySum);
+                return float3(transmittance, transmittance, transmittance);
             }
 
 
@@ -206,7 +219,10 @@ Shader "Grater/Experimental/VLBox"
                 float depthColumnWidth = saturate(depthDiff / 32);
                 float transmittance = 1.0;
 
+                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+
                 float lightAmount = 0.0;
+                float3 finalColor = float3(0, 0, 0);
                 for(float step = 0; step < 32; step++){
                     float depthStep = (depthColumnWidth * step + minStart);
                     if(depthStep > minDepth){
@@ -218,17 +234,19 @@ Shader "Grater/Experimental/VLBox"
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
 
                     //just sample the 3d texture
-                    fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
+                    fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
                     lightAmount += fogAmount.r * _FogDensity;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
-
+                    float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir);
+                    finalColor += transmittance * lightTransmittance;
+                    
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }
 
                 //lightAmount = pow(lightAmount, _FogPower);
 
-                return _FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
+                return float4(finalColor, 1.0);//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
 
                 
 

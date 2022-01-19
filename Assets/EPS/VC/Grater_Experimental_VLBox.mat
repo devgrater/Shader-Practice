@@ -24,7 +24,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex:
-        m_Texture: {fileID: 11700000, guid: 9d8246437a3eedc419b7e44e9d9ddbc5, type: 3}
+        m_Texture: {fileID: 11700000, guid: 984bb6158d92087458d6bc29200eb728, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex2:
@@ -42,7 +42,7 @@ Material:
     - _LV2Scale: 0.005
     - _LV3Scale: 0.005
     - _Scale: 0.002
-    - _StepCount: 32
+    - _StepCount: 64
     m_Colors:
     - _FogColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

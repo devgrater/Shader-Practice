@@ -42,7 +42,7 @@ Material:
     - _LV2Scale: 0.005
     - _LV3Scale: 0.005
     - _Scale: 0.002
-    - _StepCount: 66
+    - _StepCount: 32
     m_Colors:
     - _FogColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -37,7 +37,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Depth: -0.5
-    - _FogDensity: 0.024
+    - _FogDensity: 0.112
     - _FogPower: 3.59
     - _LV2Scale: 0.005
     - _LV3Scale: 0.005

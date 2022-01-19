@@ -203,8 +203,9 @@ Shader "Grater/Experimental/VLBox"
                     //instead of doing this...
                     //just sample the 3d texture
                     fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
+                    fixed4 fogAmount2 = tex3D(_VolumeTex, (fogWorldSpot) * _LV2Scale);
                     //float fogAmount = tex3D(_VolumeTex, (fogWorldSpot + _Time.bbb) * _Scale).r * 0.5f;
-                    fixed fog = fogAmount.r * 0.5f + fogAmount.g * 0.25f + fogAmount.b * 0.125f + fogAmount.a * 0.0625f;
+                    fixed fog = fogAmount2.g * 0.5 + fogAmount.r * 0.25;
                     lightAmount += fog;
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
@@ -218,7 +219,7 @@ Shader "Grater/Experimental/VLBox"
                 //float4 screenColor = tex2D(_GrabTexture, screenUV);
 
                 //now we can ask the basic question.
-                float depthDifference = depthDiff * perspectiveCorrection;
+                float depthDifference = max(depthDiff, 0) * perspectiveCorrection;
                 fixed fogAmount = 1 - 1 / exp(depthDifference * _FogDensity * (lightAmount));
                 return fogAmount;//float4(_FogColor.rgb, 1 - saturate(fogAmount));
                 //return lerp(_FogColor, screenColor, saturate(fogAmount));

@@ -24,13 +24,25 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex:
-        m_Texture: {fileID: 11700000, guid: 984bb6158d92087458d6bc29200eb728, type: 3}
+        m_Texture: {fileID: 11700000, guid: fc34719c335c64149ad863ec0e8c3ef4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VolumeTex2:
+        m_Texture: {fileID: 11700000, guid: 7351ea3b114b6b9448e38b7c538a8f59, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VolumeTex3:
+        m_Texture: {fileID: 11700000, guid: 188ab85633500fc41a31164ffe6006f5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Depth: -0.5
-    - _FogDensity: 0.1
+    - _FogDensity: 0.24
+    - _FogPower: 5.07
+    - _LV2Scale: 0.005
+    - _LV3Scale: 0.005
+    - _Scale: 0.002
     - _StepCount: 64
     m_Colors:
-    - _FogColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
+    - _FogColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

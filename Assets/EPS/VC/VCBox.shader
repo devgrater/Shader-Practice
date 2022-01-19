@@ -3,11 +3,16 @@ Shader "Grater/Experimental/VLBox"
     Properties
     {
         _VolumeTex ("Volume Texture", 3D) = "white" {}
+        _VolumeTex2 ("Volume Texture 2", 3D) = "white" {}
+        _VolumeTex3 ("Volume Texture", 3D) = "white" {}
         _Depth ("Depth", Float) = 0.5
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
+        _FogPower ("Fog Power", Range(1, 8)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
-        _Scale ("Scale", Float) = 0.05
+        [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
+        [PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
+        [PowerSlider]_LV3Scale ("LV3 Scale", Range(0, 0.3)) = 0.05
     }
 
     
@@ -60,6 +65,8 @@ Shader "Grater/Experimental/VLBox"
             };
 
             sampler3D _VolumeTex;
+            sampler3D _VolumeTex2;
+            sampler3D _VolumeTex3;
             sampler2D _CameraDepthTexture;
             sampler2D _GrabTexture;
             float _Depth;
@@ -67,6 +74,9 @@ Shader "Grater/Experimental/VLBox"
             fixed _FogDensity;
             float _StepCount;
             float _Scale;
+            float _LV2Scale;
+            float _LV3Scale;
+            float _FogPower;
             //sampler2D _SunCascadedShadowMap; //thanks, my hero!
 
             v2f vert (appdata v)
@@ -190,13 +200,16 @@ Shader "Grater/Experimental/VLBox"
                     //using this, sample the shadowmap.
                     //instead of doing this...
                     //just sample the 3d texture
-                    lightAmount += tex3D(_VolumeTex, fogWorldSpot * _Scale);
+                    fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
+                    //float fogAmount = tex3D(_VolumeTex, (fogWorldSpot + _Time.bbb) * _Scale).r * 0.5f;
+                    fixed fog = fogAmount.r * 0.5f + fogAmount.g * 0.25f + fogAmount.b * 0.125f + fogAmount.a * 0.0625f;
+                    lightAmount += fog;
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }
 
                 lightAmount = lightAmount / _StepCount;
-                lightAmount = pow(lightAmount, 2);
+                lightAmount = pow(lightAmount, _FogPower);
 
                 
 
@@ -205,7 +218,7 @@ Shader "Grater/Experimental/VLBox"
                 //now we can ask the basic question.
                 float depthDifference = depthDiff * perspectiveCorrection;
                 fixed fogAmount = 1 / exp(depthDifference * _FogDensity * (lightAmount));
-                return lerp(_LightColor0 * 2.2, screenColor, saturate(fogAmount));
+                return lerp(_LightColor0 * _FogColor, screenColor, saturate(fogAmount));
 
 
                 //return 10 / minDepth;

@@ -9,6 +9,7 @@ Shader "Grater/Experimental/VLBox"
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         
         _FogPower ("Fog Power", Range(1, 8)) = 1
+        _TransmittenceOffset ("Transmittance Offset", Range(0, 40)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
         [PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
@@ -75,6 +76,7 @@ Shader "Grater/Experimental/VLBox"
             float _LV3Scale;
             float _FogPower;
             float _StepDistance;
+            float _TransmittenceOffset;
             //sampler2D _SunCascadedShadowMap; //thanks, my hero!
 
             v2f vert (appdata v)
@@ -148,18 +150,29 @@ Shader "Grater/Experimental/VLBox"
                 return tex3D(_VolumeTex, pos * _Scale);
             }
 
-            float3 march_lightdir(float3 worldPos, fixed3 lightDir){
+            /*float3 march_lightdir(float3 worldPos, fixed3 lightDir){
                 float dstToBounds = find_bounding_box_back(worldPos, lightDir);
                 //just start marching towards the boundary...
                 float stepSize = dstToBounds / 8;
                 float densitySum = 0.0f;
-                for(float i = 0.0f; i < 8.0f; i++){
+                for(int i = 0; i < 4.0f; i++){
                     worldPos += stepSize * lightDir;
                     //sample!
                     densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
                 }
                 float transmittance = exp(-densitySum);
                 return float3(transmittance, transmittance, transmittance);
+            }*/
+
+            float3 march_lightdir(float3 worldPos, fixed3 lightDir){
+                //instead of doing all the fancy stuff
+                //we nudge the worldpos a bit towards the light direction.
+                worldPos -= lightDir * _TransmittenceOffset;
+                //and then sample...the cube map.
+                fixed volume = sample_volume_texture(worldPos) * _FogDensity;
+                //lerp between the 3 colors.
+                return float3(1 - volume, 1 - volume, 1 - volume);
+
             }
 
 
@@ -238,7 +251,7 @@ Shader "Grater/Experimental/VLBox"
                     lightAmount += fogAmount.r * _FogDensity;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir);
-                    finalColor += transmittance * lightTransmittance;
+                    finalColor += transmittance * (1 - lightTransmittance);
                     
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.

@@ -3,12 +3,12 @@ Shader "Grater/Experimental/VLBox"
     Properties
     {
         _VolumeTex ("Volume Texture", 3D) = "white" {}
-        _VolumeTex2 ("Volume Texture 2", 3D) = "white" {}
-        _VolumeTex3 ("Volume Texture", 3D) = "white" {}
         _Depth ("Depth", Float) = 0.5
+        _StepDistance ("Step Distance", Range(0, 10)) = 0.1
+        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
-        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
+        
         _FogPower ("Fog Power", Range(1, 8)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
@@ -66,10 +66,7 @@ Shader "Grater/Experimental/VLBox"
             };
 
             sampler3D _VolumeTex;
-            sampler3D _VolumeTex2;
-            sampler3D _VolumeTex3;
             sampler2D _CameraDepthTexture;
-            sampler2D _GrabTexture;
             float _Depth;
             float4 _FogColor;
             float4 _ShadowColor;
@@ -79,6 +76,7 @@ Shader "Grater/Experimental/VLBox"
             float _LV2Scale;
             float _LV3Scale;
             float _FogPower;
+            float _StepDistance;
             //sampler2D _SunCascadedShadowMap; //thanks, my hero!
 
             v2f vert (appdata v)
@@ -192,36 +190,47 @@ Shader "Grater/Experimental/VLBox"
                 float minStart = max(wsFrontFaceDepth * frontVectorSign, 0);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
-                float depthColumnWidth = depthDiff / _StepCount;
+                //float depthColumnWidth = depthDiff / _StepCount;
 
                 float lightAmount = 0.0;
+                float stepCount = 0.0;
                 
-                for(float step = 0; step < _StepCount; step++){
-                    float depthStep = (depthColumnWidth * step + minStart) / perspectiveCorrection;
+                for(float step = 0; step < 32; step++){
+                    float depthStep = (_StepDistance * step + minStart);
+                    if(depthStep > minDepth){
+                        break;
+                    }
+                    stepCount += 1;
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep;
                     //using this, sample the shadowmap.
                     //instead of doing this...
                     //just sample the 3d texture
                     fixed4 fogAmount = tex3D(_VolumeTex, (fogWorldSpot) * _Scale);
-                    fixed4 fogAmount2 = tex3D(_VolumeTex, (fogWorldSpot) * _LV2Scale);
+                    //fixed4 fogAmount2 = tex3D(_VolumeTex, (fogWorldSpot) * _LV2Scale);
                     //float fogAmount = tex3D(_VolumeTex, (fogWorldSpot + _Time.bbb) * _Scale).r * 0.5f;
-                    fixed fog = fogAmount2.g * 0.5 + fogAmount.r * 0.25;
-                    lightAmount += fog;
+                    fixed fog = fogAmount.r;
+                    lightAmount += fog * _FogDensity;
+                    if(lightAmount >= 1.0f){
+                        break;
+                    }
                     //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }
 
-                lightAmount = lightAmount / _StepCount;
-                lightAmount = pow(lightAmount, _FogPower);
+                lightAmount = lightAmount;
+                //lightAmount = pow(lightAmount, _FogPower);
+
+                return lightAmount;
 
                 
 
                 //float4 screenColor = tex2D(_GrabTexture, screenUV);
-
                 //now we can ask the basic question.
-                float depthDifference = max(depthDiff, 0) * perspectiveCorrection;
+                float depthDifference = max(depthDiff, 0) * lightAmount * perspectiveCorrection;
+                return depthDifference;
+                /*
                 fixed fogAmount = 1 - 1 / exp(depthDifference * _FogDensity * (lightAmount));
-                return fogAmount;//float4(_FogColor.rgb, 1 - saturate(fogAmount));
+                return fogAmount;//float4(_FogColor.rgb, 1 - saturate(fogAmount));*/
                 //return lerp(_FogColor, screenColor, saturate(fogAmount));
                 
 

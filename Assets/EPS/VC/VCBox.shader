@@ -12,8 +12,8 @@ Shader "Grater/Experimental/VLBox"
         _TransmittenceOffset ("Transmittance Offset", Range(0, 40)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
-        [PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
-        [PowerSlider]_LV3Scale ("LV3 Scale", Range(0, 0.3)) = 0.05
+        //[PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
+        //[PowerSlider]_LV3Scale ("LV3 Scale", Range(0, 0.3)) = 0.05
     }
 
     
@@ -23,7 +23,7 @@ Shader "Grater/Experimental/VLBox"
 
         LOD 100
         Tags {
-            //"LightMode"="ForwardBase"
+            "LightMode"="ForwardBase"
             "RenderType"="Transparent" 
             "Queue"="Transparent+1"
         }
@@ -44,25 +44,30 @@ Shader "Grater/Experimental/VLBox"
 
             // make fog work
             #pragma multi_compile_fog
-            #pragma multi_compile_fwdbase
+            //#pragma multi_compile_fwdbase
 
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
-            #include "Shadows.cginc"
+            //#include "Shadows.cginc"
 
             struct appdata
             {
                 float4 pos : POSITION;
-                float3 normal : NORMAL;
             };
 
             struct v2f
             {
                 float4 pos : SV_POSITION;
                 float4 screenPos : TEXCOORD2;
-                float3 normal : NORMAL;
                 float3 osViewDir : TEXCOORD1;
+                
                 float3 camDir : TEXCOORD3;
+                float3 camPos : TEXCOORD4;
+                float wsDistance : TEXCOORD5;
+                float3 wsZNormal : TEXCOORD6;
+                float3 wsXNormal : TEXCOORD7;
+                float3 wsYNormal : TEXCOORD8;
+                float3 wsNormalOffset : TEXCOORD9;
             };
 
             sampler3D _VolumeTex;
@@ -77,7 +82,45 @@ Shader "Grater/Experimental/VLBox"
             float _FogPower;
             float _StepDistance;
             float _TransmittenceOffset;
-            //sampler2D _SunCascadedShadowMap; //thanks, my hero!
+            float3 _WorldPos;
+
+            void computeWorldSpaceParams(float3 osLightDir, out float3 xNormal, out float3 yNormal, out float3 zNormal, out float3 direction){
+                zNormal = sign(osLightDir.z) * fixed3(0, 0, 1);
+                yNormal = sign(osLightDir.y) * fixed3(0, 1, 0);
+                xNormal = sign(osLightDir.x) * fixed3(1, 0, 0);
+
+                xNormal = mul(unity_ObjectToWorld, float4(xNormal, 0.0f)).xyz;
+                yNormal = mul(unity_ObjectToWorld, float4(yNormal, 0.0f)).xyz;
+                zNormal = mul(unity_ObjectToWorld, float4(zNormal, 0.0f)).xyz;
+
+                //this is not correct.
+                
+                float3 directionAlongX = mul(unity_ObjectToWorld, float4(1.0f, 0.0f, 0.0f, 0.0f));
+                float3 directionAlongY = mul(unity_ObjectToWorld, float4(0.0f, 1.0f, 0.0f, 0.0f));
+                float3 directionAlongZ = mul(unity_ObjectToWorld, float4(0.0f, 0.0f, 1.0f, 0.0f));
+                
+                direction = float3(
+                    sqrt(dot(directionAlongX, directionAlongX)),
+                    sqrt(dot(directionAlongY, directionAlongY)),
+                    sqrt(dot(directionAlongZ, directionAlongZ))
+                );
+
+                float3 offset = mul(unity_ObjectToWorld, float4(unity_ObjectToWorld._m03, unity_ObjectToWorld._m13, unity_ObjectToWorld._m23, 1.0f)).xyz;
+                direction += offset;
+                //float distance = -0.5f * (unity_ObjectToWorld._m00 + unity_ObjectToWorld._m11 + unity_ObjectToWorld._m12);
+                //direction = mul(unity_ObjectToWorld, float4(distance, distance, distance, 1.0f));
+                //direction = float3(distance + unity_ObjectToWorld.)
+                //direction = mul(unity_ObjectToWorld, float4(-0.5f, -0.5f, -0.5f, 1.0f));
+                //direction = offset;
+                /*
+                direction = float3(
+                    unity_ObjectToWorld._m03,
+                    unity_ObjectToWorld._m13,
+                    unity_ObjectToWorld._m23
+                );*/
+            }
+
+
 
             v2f vert (appdata v)
             {
@@ -87,35 +130,18 @@ Shader "Grater/Experimental/VLBox"
                 o.pos = UnityObjectToClipPos(v.pos);
                 
                 o.screenPos = ComputeScreenPos(o.pos);
-                //o.osNormal = v.normal; //prob dont need this
-                //o.osVertex = v.vertex;
-                
+                o.camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
                 o.osViewDir = ObjSpaceViewDir(v.pos);
+                float3 osLightDir = normalize(mul(unity_WorldToObject, float4(_WorldSpaceLightPos0.xyz, 0.0f)).xyz);
+                computeWorldSpaceParams(osLightDir, o.wsXNormal, o.wsYNormal, o.wsZNormal, o.wsNormalOffset);
                 //question:
                 //UNITY_TRANSFER_FOG(o,o.pos);
                 return o;
             }
 
-            float trace_one_plane(fixed3 normal, fixed3 viewDir, float3 origin, float c){
+            float trace_one_plane(float3 normal, float3 viewDir, float3 origin, float c){
                 return (c - dot(normal, origin)) / dot(normal, viewDir);
             }
-
-            void trace_dual_plane(fixed3 normal, fixed3 viewDir, float3 origin, float c, out float minPlane, out float maxPlane){
-                float nDotO = dot(normal, origin);
-                float nDotV = dot(normal, viewDir);
-                //because this is in object space, we can cheat our way thru
-                float plane1 = (c - nDotO) / nDotV;
-                float plane2 = (-c - nDotO) / nDotV;
-                fixed plane1Closer = (plane1 < plane2);
-                
-                //if true, plane1Closer evaluates to 1
-                //otherwise evalueates to 0 and plane2 gets pulled out.
-                //linearly combine them, and you get which plane is closer than the other.
-                
-                minPlane = plane1Closer * plane1 + (1 - plane1Closer) * plane2;
-                maxPlane = (1 - plane1Closer) * plane1 + plane1Closer * plane2;
-            }
-
 
             float find_bounding_box_back(float3 camPos, float3 viewDir){
                 fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
@@ -127,8 +153,8 @@ Shader "Grater/Experimental/VLBox"
                 float maxXPlane = trace_one_plane(xPlaneNormal, viewDir, camPos, -0.5);
             
                 return max(max(maxZPlane, maxYPlane), maxXPlane);
-
             }
+
 
             float find_bounding_box_front(float3 osBackPos, float3 viewDir){
                 fixed3 zPlaneNormal = sign(viewDir.z) * fixed3(0, 0, 1); //doesn't matter that much (we only care the first hit time and the last hit time.)
@@ -142,6 +168,14 @@ Shader "Grater/Experimental/VLBox"
                 return max(max(minZPlane, minXPlane), minYPlane);
             }
 
+            float trace_worldspace_back(float3 pos, float3 dir, float3 nx, float3 ny, float3 nz, float3 offsets){
+                float maxZPlane = trace_one_plane(nz, dir, pos, offsets.z);
+                float maxYPlane = trace_one_plane(ny, dir, pos, offsets.y);
+                float maxXPlane = trace_one_plane(nx, dir, pos, offsets.x);
+            
+                return max(max(maxZPlane, maxYPlane), maxXPlane);
+            }
+
             float calculate_transmittance(fixed density, float stepSize){
                 return exp(-density * stepSize);
             }
@@ -149,40 +183,41 @@ Shader "Grater/Experimental/VLBox"
             fixed4 sample_volume_texture(float3 pos){
                 return tex3D(_VolumeTex, pos * _Scale);
             }
-
-            /*float3 march_lightdir(float3 worldPos, fixed3 lightDir){
-                float dstToBounds = find_bounding_box_back(worldPos, lightDir);
+            
+            float march_lightdir(float3 worldPos, fixed3 lightDir, float dstToBounds){
+                //float3 osPos = mul(unity_WorldToObject, worldPos);
+                //float dstToBounds = find_bounding_box_back(worldPos, lightDir);
                 //just start marching towards the boundary...
-                float stepSize = dstToBounds / 8;
+                float stepSize = dstToBounds / 4;
                 float densitySum = 0.0f;
-                for(int i = 0; i < 4.0f; i++){
+                for(int i = 0; i < 4; i++){
                     worldPos += stepSize * lightDir;
                     //sample!
                     densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
                 }
                 float transmittance = exp(-densitySum);
-                return float3(transmittance, transmittance, transmittance);
-            }*/
-
+                return densitySum;//transmittance;//return float3(transmittance, transmittance, transmittance);
+            }
+            /*
             float3 march_lightdir(float3 worldPos, fixed3 lightDir){
                 //instead of doing all the fancy stuff
                 //we nudge the worldpos a bit towards the light direction.
-                worldPos -= lightDir * _TransmittenceOffset;
                 //and then sample...the cube map.
-                fixed volume = sample_volume_texture(worldPos) * _FogDensity;
+                fixed volume = sample_volume_texture(worldPos + lightDir * _TransmittenceOffset) * _FogDensity;
                 //lerp between the 3 colors.
                 return float3(1 - volume, 1 - volume, 1 - volume);
 
-            }
+            }*/
 
 
             fixed4 frag (v2f i) : SV_Target
             {
+                //return float4(i.wsNormalOffset, 1.0);
                 //in object space, lets say, ideally,
                 //that the front plane happens to be 0.5 units away from teh origin.
                 //same goes for every other plane.
                 /////////////////// TRACING PLANES //////////////////////////
-                float3 camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
+                float3 camPos = i.camPos;//mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
                 fixed3 viewDir = normalize(i.osViewDir);
 
                 //once we have these, trace from the furthest point,
@@ -231,50 +266,60 @@ Shader "Grater/Experimental/VLBox"
                 //return saturate(10 / depthDiff);
                 float depthColumnWidth = saturate(depthDiff / 32);
                 float transmittance = 1.0;
-
+                
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                
+
+                //convert to world space.
+                
+                //using the object space light directions, we can compute out....
+                //the planes in their world space.
 
                 float lightAmount = 0.0;
+                float outScattering = 0.0;
                 float3 finalColor = float3(0, 0, 0);
+                //return float4(i.wsNormalOffset, 1.0);
+                //find the world space back faces.
+                //return float4(lightDir, 1.0);
+                float marchDistance = trace_worldspace_back(_WorldPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
+                float dst = 120 / marchDistance;
+                if(marchDistance > 0){
+                    return float4(dst, dst, dst, 1.0);
+                }
+                else{
+                    return float4(1.0, 0.0, 0.0, 1.0);
+                }
+                
+                //object space light dir, and object space pos.
                 for(float step = 0; step < 32; step++){
                     float depthStep = (depthColumnWidth * step + minStart);
                     if(depthStep > minDepth){
                         break;
                     }
+                    /*
                     if(lightAmount >= 1.0f){
                         break;
-                    }
+                    }*/
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
 
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
-                    lightAmount += fogAmount.r * _FogDensity;
+                    // += fogAmount.r * _FogDensity;
+                    lightAmount += fogAmount.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
-                    float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir);
-                    finalColor += transmittance * (1 - lightTransmittance);
                     
-                    //lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
-                    //using this, we can sample the shadow map.
+                    float marchDistance = trace_worldspace_back(_WorldSpaceCameraPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
+                    //return marchDistance;
+                    float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
+                    //this is probably correct
+                    outScattering += transmittance * lightTransmittance * depthColumnWidth;
+                    //but, hmmmm
                 }
 
                 //lightAmount = pow(lightAmount, _FogPower);
-
-                return float4(finalColor, 1.0);//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
-
-                
-
-                //float4 screenColor = tex2D(_GrabTexture, screenUV);
-                //now we can ask the basic question.
-                float depthDifference = max(depthDiff, 0) * lightAmount * perspectiveCorrection;
-                return depthDifference;
-                /*
-                fixed fogAmount = 1 - 1 / exp(depthDifference * _FogDensity * (lightAmount));
-                return fogAmount;//float4(_FogColor.rgb, 1 - saturate(fogAmount));*/
-                //return lerp(_FogColor, screenColor, saturate(fogAmount));
-                
-
-                //return 10 / minDepth;
-
+                //return lightAmount / 32;
+                //return 1-transmittance;
+                return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
 
             }
             ENDCG

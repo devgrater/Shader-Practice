@@ -86,37 +86,6 @@ Shader "Grater/Experimental/VLBox"
             float _FogPower;
             float _StepDistance;
             float _TransmittenceOffset;
-            float3 _WorldPos;
-
-            /*
-            void computeWorldSpaceParams(float3 osLightDir, out float3 xNormal, out float3 yNormal, out float3 zNormal, out float3 direction){
-                zNormal = sign(osLightDir.z) * fixed3(0, 0, 1);
-                yNormal = sign(osLightDir.y) * fixed3(0, 1, 0);
-                xNormal = sign(osLightDir.x) * fixed3(1, 0, 0);
-
-                xNormal = mul(unity_ObjectToWorld, float4(xNormal, 0.0f)).xyz;
-                yNormal = mul(unity_ObjectToWorld, float4(yNormal, 0.0f)).xyz;
-                zNormal = mul(unity_ObjectToWorld, float4(zNormal, 0.0f)).xyz;
-
-                //this is not wrong.
-                //assuming the normal didn't change at all...
-                float3 directionAlongX = mul(unity_ObjectToWorld, float4(-0.5f, 0.0f, 0.0f, 1.0f));
-                float3 directionAlongY = mul(unity_ObjectToWorld, float4(0.0f, -0.5f, 0.0f, 1.0f));
-                float3 directionAlongZ = mul(unity_ObjectToWorld, float4(0.0f, 0.0f, -0.5f, 1.0f));
-                
-                direction = float3(
-                    sqrt(dot(directionAlongX, directionAlongX)),
-                    sqrt(dot(directionAlongY, directionAlongY)),
-                    sqrt(dot(directionAlongZ, directionAlongZ))
-                );
-
-                //float3 base = mul(unity_WorldToObject, float4(-0.5f, -0.5f, -0.5f, 0.0f)).xyz;
-                //float3 offset = mul(unity_ObjectToWorld, float4(-0.5f, -0.5f, -0.5f, 0.0f)).xyz;
-                //direction = offset;
-
-
-                //in other words, base is too trivial to make any difference at all.
-            }*/
 
             float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
                 //perform a transformation to world space:
@@ -132,8 +101,6 @@ Shader "Grater/Experimental/VLBox"
             v2f vert (appdata v)
             {
                 v2f o;
-                //o.pos = mul(unity_ObjectToWorld, v.pos);
-                //o.pos = mul(UNITY_MATRIX_VP, o.pos);
                 o.pos = UnityObjectToClipPos(v.pos);
                 
                 o.screenPos = ComputeScreenPos(o.pos);
@@ -144,10 +111,6 @@ Shader "Grater/Experimental/VLBox"
                     normalize(o.osLightDir),
                     normalize(o.osViewDir)
                 );
-                
-                //computeWorldSpaceParams(osLightDir, o.wsXNormal, o.wsYNormal, o.wsZNormal, o.wsNormalOffset);
-                //question:
-                //UNITY_TRANSFER_FOG(o,o.pos);
                 return o;
             }
 
@@ -244,6 +207,7 @@ Shader "Grater/Experimental/VLBox"
                 float frontPlaneDepth = find_bounding_box_front(osBackPos, viewDir);
                 float3 osFrontPos = osBackPos -viewDir * frontPlaneDepth;
                 float3 osFrontVector = osFrontPos - camPos;
+                
 
                 
                 ///////////////////// SAMPLING DEPTH TEXTURE ////////////////////////////
@@ -265,6 +229,7 @@ Shader "Grater/Experimental/VLBox"
                 
                 //dot the vector with the front direction
                 fixed frontVectorSign = sign(dot(viewForward, wsFrontVector));
+                
                 //outside -> front Vector > 0
                 //inside -> front vector < 0
 
@@ -273,6 +238,7 @@ Shader "Grater/Experimental/VLBox"
                 float wsFrontFaceDepth = sqrt(dot(wsFrontVector, wsFrontVector)) * perspectiveCorrection;
                 float minDepth = min(existingDepth, wsBackFaceDepth);
                 float minStart = max(wsFrontFaceDepth * frontVectorSign, 0);
+                float osStart = max(length(osFrontVector) * frontVectorSign, 0);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
                 float depthColumnWidth = saturate(depthDiff / 32);
@@ -289,18 +255,12 @@ Shader "Grater/Experimental/VLBox"
 
                 float lightAmount = 0.0;
                 float outScattering = 0.0;
-                float3 finalColor = float3(0, 0, 0);
-                //return float4(i.wsNormalOffset, 1.0);
-                //find the world space back faces.
-                //return float4(lightDir, 1.0);
-                //float marchDistance = trace_worldspace_back(_WorldPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
-
-
 
                 //object space light dir, and object space pos.
                 for(float step = 0; step < 32; step++){
-                    float depthStep = (depthColumnWidth * step + minStart);
-                    float osStep = depthStep / i.ratio.y;
+                    float depthStep = (depthColumnWidth * step);
+                    float osStep = depthStep / i.ratio.y + osStart;
+                    depthStep += minStart;
                     if(depthStep > minDepth){
                         break;
                     }

@@ -168,7 +168,7 @@ Shader "Grater/Experimental/VLBox"
                     densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
                 }
                 float transmittance = exp(-densitySum);
-                return densitySum;//transmittance;//return float3(transmittance, transmittance, transmittance);
+                return transmittance;//transmittance;//return float3(transmittance, transmittance, transmittance);
             }
             /*
             float3 march_lightdir(float3 worldPos, fixed3 lightDir){
@@ -202,8 +202,9 @@ Shader "Grater/Experimental/VLBox"
                 //because even if there is, it makes no difference at all.
                 //using this, compute a front plane vector...
                 float frontPlaneDepth = find_bounding_box_front(osBackPos, viewDir);
-                float3 osFrontPos = osBackPos -viewDir * frontPlaneDepth;
+                float3 osFrontPos = osBackPos - viewDir * frontPlaneDepth;
                 float3 osFrontVector = osFrontPos - camPos;
+                
                 
 
                 
@@ -219,6 +220,7 @@ Shader "Grater/Experimental/VLBox"
                 float3 wsBackVector = mul(unity_ObjectToWorld, float4(osBackVector, 0.0));
                 float3 wsFrontVector = mul(unity_ObjectToWorld, float4(osFrontVector, 0.0));
                 fixed3 wsViewDir = normalize(wsBackVector); //doesn't matter which one you use.
+                
 
                 ///////////////////////// PERSPECTIVE CORRECT DEPTH /////////////////////////////
                 fixed3 viewForward = normalize(unity_CameraToWorld._m02_m12_m22);
@@ -226,7 +228,7 @@ Shader "Grater/Experimental/VLBox"
                 
                 //dot the vector with the front direction
                 fixed frontVectorSign = sign(dot(viewForward, wsFrontVector));
-                
+                fixed3 realOsViewDir = normalize(osFrontVector);
                 //outside -> front Vector > 0
                 //inside -> front vector < 0
 
@@ -236,14 +238,17 @@ Shader "Grater/Experimental/VLBox"
                 float minDepth = min(existingDepth, wsBackFaceDepth);
                 float minStart = max(wsFrontFaceDepth * frontVectorSign, 0);
                 float osStart = max(length(osFrontVector) * frontVectorSign, 0);
+
+                //return float4(normalize(osFrontVector) * osStart + camPos, 1.0f);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
                 float depthColumnWidth = saturate(depthDiff / 32);
+                float osColumnWidth = depthColumnWidth / i.ratio.y;
                 float transmittance = 1.0;
                 
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 
-                
+                //return float4(osStart * normalize(osFrontVector) + camPos, 1.0);
 
                 //convert to world space.
                 
@@ -255,26 +260,29 @@ Shader "Grater/Experimental/VLBox"
 
                 //object space light dir, and object space pos.
                 for(float step = 0; step < 32; step++){
-                    float depthStep = (depthColumnWidth * step);
-                    float osStep = depthStep / i.ratio.y + osStart;
-                    depthStep += minStart;
+                    float depthStep = (depthColumnWidth * step) + minStart;
+                    float osStep = (depthColumnWidth * step) / i.ratio.y + osStart;
                     if(depthStep > minDepth){
                         break;
                     }
 
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
                     //well, theoretically it should
-                    float3 fogObjectSpot = camPos + viewDir * osStep;
+                    //return float4(fogWorldSpot, 1.0);
+                    float3 fogObjectSpot = camPos + realOsViewDir * osStep;
+                    //return float4(fogObjectSpot, 1.0);
+                    //return float4(fogObjectSpot, 1.0f);
                     //return float4(1 / osStep, 1 / osStep, 1 / osStep, 1.0f);
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
-                    lightAmount += fogAmount.r;
+                    //lightAmount += fogAmount.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
-                    float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
+                    float lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
+                    
                     outScattering += transmittance * lightTransmittance * depthColumnWidth;
                 }
-
+                
                 //lightAmount = pow(lightAmount, _FogPower);
                 //return lightAmount / 32;
                 //return 1-transmittance;

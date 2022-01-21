@@ -3,7 +3,7 @@ Shader "Grater/Experimental/VLBox"
     Properties
     {
         _VolumeTex ("Volume Texture", 3D) = "white" {}
-        [PowerSlider]_FogDensity ("Fog Density", Range(0, 20)) = 0.1
+        [PowerSlider]_FogDensity ("Fog Density", Range(0, 1)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         

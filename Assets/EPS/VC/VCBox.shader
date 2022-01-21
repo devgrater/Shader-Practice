@@ -63,11 +63,15 @@ Shader "Grater/Experimental/VLBox"
                 
                 float3 camDir : TEXCOORD3;
                 float3 camPos : TEXCOORD4;
+                float3 osLightDir : TEXCOORD5;
+                float2 ratio : TEXCOORD6; //x - os:ws Light
+                                          //y - os:ws Camera
+                /*
                 float wsDistance : TEXCOORD5;
                 float3 wsZNormal : TEXCOORD6;
                 float3 wsXNormal : TEXCOORD7;
                 float3 wsYNormal : TEXCOORD8;
-                float3 wsNormalOffset : TEXCOORD9;
+                float3 wsNormalOffset : TEXCOORD9;*/
             };
 
             sampler3D _VolumeTex;
@@ -84,6 +88,7 @@ Shader "Grater/Experimental/VLBox"
             float _TransmittenceOffset;
             float3 _WorldPos;
 
+            /*
             void computeWorldSpaceParams(float3 osLightDir, out float3 xNormal, out float3 yNormal, out float3 zNormal, out float3 direction){
                 zNormal = sign(osLightDir.z) * fixed3(0, 0, 1);
                 yNormal = sign(osLightDir.y) * fixed3(0, 1, 0);
@@ -93,11 +98,11 @@ Shader "Grater/Experimental/VLBox"
                 yNormal = mul(unity_ObjectToWorld, float4(yNormal, 0.0f)).xyz;
                 zNormal = mul(unity_ObjectToWorld, float4(zNormal, 0.0f)).xyz;
 
-                //this is not correct.
-                
-                float3 directionAlongX = mul(unity_ObjectToWorld, float4(1.0f, 0.0f, 0.0f, 0.0f));
-                float3 directionAlongY = mul(unity_ObjectToWorld, float4(0.0f, 1.0f, 0.0f, 0.0f));
-                float3 directionAlongZ = mul(unity_ObjectToWorld, float4(0.0f, 0.0f, 1.0f, 0.0f));
+                //this is not wrong.
+                //assuming the normal didn't change at all...
+                float3 directionAlongX = mul(unity_ObjectToWorld, float4(-0.5f, 0.0f, 0.0f, 1.0f));
+                float3 directionAlongY = mul(unity_ObjectToWorld, float4(0.0f, -0.5f, 0.0f, 1.0f));
+                float3 directionAlongZ = mul(unity_ObjectToWorld, float4(0.0f, 0.0f, -0.5f, 1.0f));
                 
                 direction = float3(
                     sqrt(dot(directionAlongX, directionAlongX)),
@@ -105,19 +110,21 @@ Shader "Grater/Experimental/VLBox"
                     sqrt(dot(directionAlongZ, directionAlongZ))
                 );
 
-                float3 offset = mul(unity_ObjectToWorld, float4(unity_ObjectToWorld._m03, unity_ObjectToWorld._m13, unity_ObjectToWorld._m23, 1.0f)).xyz;
-                direction += offset;
-                //float distance = -0.5f * (unity_ObjectToWorld._m00 + unity_ObjectToWorld._m11 + unity_ObjectToWorld._m12);
-                //direction = mul(unity_ObjectToWorld, float4(distance, distance, distance, 1.0f));
-                //direction = float3(distance + unity_ObjectToWorld.)
-                //direction = mul(unity_ObjectToWorld, float4(-0.5f, -0.5f, -0.5f, 1.0f));
+                //float3 base = mul(unity_WorldToObject, float4(-0.5f, -0.5f, -0.5f, 0.0f)).xyz;
+                //float3 offset = mul(unity_ObjectToWorld, float4(-0.5f, -0.5f, -0.5f, 0.0f)).xyz;
                 //direction = offset;
-                /*
-                direction = float3(
-                    unity_ObjectToWorld._m03,
-                    unity_ObjectToWorld._m13,
-                    unity_ObjectToWorld._m23
-                );*/
+
+
+                //in other words, base is too trivial to make any difference at all.
+            }*/
+
+            float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
+                //perform a transformation to world space:
+                float3 wsLightDirDst = mul(unity_ObjectToWorld, float4(osLightDir, 0.0f)).xyz;
+                float3 wsViewDirDst = mul(unity_ObjectToWorld, float4(osViewDir, 0.0f)).xyz;
+                float wsLightLength = length(wsLightDirDst);
+                float wsViewLength = length(wsViewDirDst);
+                return float2(wsLightLength, wsViewLength);
             }
 
 
@@ -132,8 +139,13 @@ Shader "Grater/Experimental/VLBox"
                 o.screenPos = ComputeScreenPos(o.pos);
                 o.camPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
                 o.osViewDir = ObjSpaceViewDir(v.pos);
-                float3 osLightDir = normalize(mul(unity_WorldToObject, float4(_WorldSpaceLightPos0.xyz, 0.0f)).xyz);
-                computeWorldSpaceParams(osLightDir, o.wsXNormal, o.wsYNormal, o.wsZNormal, o.wsNormalOffset);
+                o.osLightDir = normalize(mul(unity_WorldToObject, float4(_WorldSpaceLightPos0.xyz, 0.0f)).xyz);
+                o.ratio = computeWorldSpaceRatio(
+                    normalize(o.osLightDir),
+                    normalize(o.osViewDir)
+                );
+                
+                //computeWorldSpaceParams(osLightDir, o.wsXNormal, o.wsYNormal, o.wsZNormal, o.wsNormalOffset);
                 //question:
                 //UNITY_TRANSFER_FOG(o,o.pos);
                 return o;
@@ -212,7 +224,6 @@ Shader "Grater/Experimental/VLBox"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                //return float4(i.wsNormalOffset, 1.0);
                 //in object space, lets say, ideally,
                 //that the front plane happens to be 0.5 units away from teh origin.
                 //same goes for every other plane.
@@ -269,6 +280,7 @@ Shader "Grater/Experimental/VLBox"
                 
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 
+                
 
                 //convert to world space.
                 
@@ -281,18 +293,14 @@ Shader "Grater/Experimental/VLBox"
                 //return float4(i.wsNormalOffset, 1.0);
                 //find the world space back faces.
                 //return float4(lightDir, 1.0);
-                float marchDistance = trace_worldspace_back(_WorldPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
-                float dst = 120 / marchDistance;
-                if(marchDistance > 0){
-                    return float4(dst, dst, dst, 1.0);
-                }
-                else{
-                    return float4(1.0, 0.0, 0.0, 1.0);
-                }
-                
+                //float marchDistance = trace_worldspace_back(_WorldPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
+
+
+
                 //object space light dir, and object space pos.
                 for(float step = 0; step < 32; step++){
                     float depthStep = (depthColumnWidth * step + minStart);
+                    float osStep = depthStep / i.ratio.y;
                     if(depthStep > minDepth){
                         break;
                     }
@@ -301,14 +309,14 @@ Shader "Grater/Experimental/VLBox"
                         break;
                     }*/
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
-
+                    float3 fogObjectSpot = camPos + viewDir * osStep;
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
                     // += fogAmount.r * _FogDensity;
                     lightAmount += fogAmount.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
-                    
-                    float marchDistance = trace_worldspace_back(_WorldSpaceCameraPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
+                    float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
+                    //float marchDistance = trace_worldspace_back(_WorldSpaceCameraPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
                     //return marchDistance;
                     float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
                     //this is probably correct

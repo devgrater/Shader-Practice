@@ -2,15 +2,18 @@ Shader "Grater/Experimental/VLBox"
 {
     Properties
     {
+        _WeatherMap ("Weather Map", 2D) = "white" {}
         _VolumeTex ("Volume Texture", 3D) = "white" {}
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 1)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         
-        _FogPower ("Fog Power", Range(1, 8)) = 1
-        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 36)) = 1
-        [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
+        _BrightnessPower ("Brightness Power", Range(0, 1)) = 0.95
+        _ShadowPower ("Shadow Power", Range(0, 1)) = 0.95
+        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 1)) = 1
+        _StepDistance ("Step Distance", Range(0, 128)) = 5
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
+        [PowerSlider]_WeatherMapScale ("Weather Map Scale", Range(0, 0.1)) = 0.01
         //[PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
         //[PowerSlider]_LV3Scale ("LV3 Scale", Range(0, 0.3)) = 0.05
     }
@@ -74,15 +77,17 @@ Shader "Grater/Experimental/VLBox"
             };
 
             sampler3D _VolumeTex;
+            sampler2D _WeatherMap;
             sampler2D _CameraDepthTexture;
             float4 _FogColor;
             float4 _ShadowColor;
             fixed _FogDensity;
-            float _StepCount;
+            float _StepDistance;
             float _Scale;
-            float _LV2Scale;
+            float _WeatherMapScale;
             float _LV3Scale;
-            float _FogPower;
+            float _BrightnessPower;
+            float _ShadowPower;
             float _TransmittenceOffset;
 
             float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
@@ -156,6 +161,11 @@ Shader "Grater/Experimental/VLBox"
             fixed4 sample_volume_texture(float3 pos){
                 return tex3D(_VolumeTex, pos * _Scale);
             }
+
+            
+            fixed sample_weather_mask(float2 uv){
+                return tex2D(_WeatherMap, uv * _WeatherMapScale).r;
+            }
             
             float march_lightdir(float3 worldPos, fixed3 lightDir, float dstToBounds){
                 float stepSize = dstToBounds / 4;
@@ -163,21 +173,12 @@ Shader "Grater/Experimental/VLBox"
                 for(int i = 0; i < 4; i++){
                     worldPos += stepSize * lightDir;
                     //sample!
-                    densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
+                    densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize * sample_weather_mask(worldPos.xz);
                 }
-                float transmittance = exp(-densitySum - _TransmittenceOffset);
+                float transmittance = exp(-densitySum - _TransmittenceOffset / _FogDensity);
                 return transmittance;//transmittance;//return float3(transmittance, transmittance, transmittance);
             }
-            /*
-            float3 march_lightdir(float3 worldPos, fixed3 lightDir){
-                //instead of doing all the fancy stuff
-                //we nudge the worldpos a bit towards the light direction.
-                //and then sample...the cube map.
-                fixed volume = sample_volume_texture(worldPos + lightDir * _TransmittenceOffset) * _FogDensity;
-                //lerp between the 3 colors.
-                return float3(1 - volume, 1 - volume, 1 - volume);
 
-            }*/
 
 
             fixed4 frag (v2f i) : SV_Target
@@ -240,7 +241,7 @@ Shader "Grater/Experimental/VLBox"
                 //return float4(normalize(osFrontVector) * osStart + camPos, 1.0f);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
-                float depthColumnWidth = 5.0f;//saturate(depthDiff / 32);
+                float depthColumnWidth = _StepDistance;//saturate(depthDiff / 32);
                 float osColumnWidth = depthColumnWidth / i.ratio.y;
                 float transmittance = 1.0;
                 
@@ -266,8 +267,9 @@ Shader "Grater/Experimental/VLBox"
 
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
                     float3 fogObjectSpot = camPos + realOsViewDir * osStep;
+                    float weatherMapDensity = sample_weather_mask(fogWorldSpot.xz);//tex2D(_WeatherMap, fogWorldSpot.xz * _WeatherMapScale);
                     //just sample the 3d texture
-                    fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
+                    fixed4 fogAmount = sample_volume_texture(fogWorldSpot) * weatherMapDensity.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
                     float lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
@@ -277,10 +279,14 @@ Shader "Grater/Experimental/VLBox"
                 //return float4(0, 0, 0, 1 - transmittance);
                 //return outScattering;
                 float scatterOffset = saturate(outScattering);
-                float hlOffset = (scatterOffset - 0.8f) / 0.2f;
+                float midOffset = saturate(scatterOffset - (1 - _ShadowPower)) / _ShadowPower;
+                float hlOffset = pow(scatterOffset, _BrightnessPower);
 
+                float3 lowToneColor = lerp(_ShadowColor, _FogColor, midOffset);
+                float3 finalColor = lerp(lowToneColor, _LightColor0, hlOffset);
 
-                return float4(lerp(_ShadowColor, _FogColor, saturate(outScattering)).rgb * (1 - transmittance), 1 - transmittance);
+                float transmittancePower = 1 - transmittance;
+                return float4(finalColor * transmittancePower, transmittancePower);
                 
                 //return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
             }

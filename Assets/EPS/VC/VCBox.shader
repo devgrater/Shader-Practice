@@ -159,12 +159,12 @@ Shader "Grater/Experimental/VLBox"
             }
 
             fixed4 sample_volume_texture(float3 pos){
-                return tex3D(_VolumeTex, pos * _Scale);
+                return tex3D(_VolumeTex, pos * _Scale + _Time.ggg / 20);
             }
 
             
             fixed sample_weather_mask(float2 uv){
-                return tex2D(_WeatherMap, uv * _WeatherMapScale).r;
+                return tex2D(_WeatherMap, uv * _WeatherMapScale + _Time.gr / 10).r;
             }
             
             float march_lightdir(float3 worldPos, fixed3 lightDir, float dstToBounds){

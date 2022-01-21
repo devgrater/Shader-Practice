@@ -160,9 +160,6 @@ Shader "Grater/Experimental/VLBox"
             }
             
             float march_lightdir(float3 worldPos, fixed3 lightDir, float dstToBounds){
-                //float3 osPos = mul(unity_WorldToObject, worldPos);
-                //float dstToBounds = find_bounding_box_back(worldPos, lightDir);
-                //just start marching towards the boundary...
                 float stepSize = dstToBounds / 4;
                 float densitySum = 0.0f;
                 for(int i = 0; i < 4; i++){
@@ -264,24 +261,18 @@ Shader "Grater/Experimental/VLBox"
                     if(depthStep > minDepth){
                         break;
                     }
-                    /*
-                    if(lightAmount >= 1.0f){
-                        break;
-                    }*/
+
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
+                    //well, theoretically it should
                     float3 fogObjectSpot = camPos + viewDir * osStep;
+                    //return float4(1 / osStep, 1 / osStep, 1 / osStep, 1.0f);
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
-                    // += fogAmount.r * _FogDensity;
                     lightAmount += fogAmount.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
-                    //float marchDistance = trace_worldspace_back(_WorldSpaceCameraPos, lightDir, i.wsXNormal, i.wsYNormal, i.wsZNormal, i.wsNormalOffset);
-                    //return marchDistance;
                     float3 lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
-                    //this is probably correct
                     outScattering += transmittance * lightTransmittance * depthColumnWidth;
-                    //but, hmmmm
                 }
 
                 //lightAmount = pow(lightAmount, _FogPower);

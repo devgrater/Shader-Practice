@@ -3,13 +3,12 @@ Shader "Grater/Experimental/VLBox"
     Properties
     {
         _VolumeTex ("Volume Texture", 3D) = "white" {}
-        _StepDistance ("Step Distance", Range(0, 10)) = 0.1
-        [PowerSlider]_FogDensity ("Fog Density", Range(0, 0.4)) = 0.1
+        [PowerSlider]_FogDensity ("Fog Density", Range(0, 20)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         
         _FogPower ("Fog Power", Range(1, 8)) = 1
-        _TransmittenceOffset ("Transmittance Offset", Range(0, 40)) = 1
+        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 1)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
         //[PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
@@ -84,7 +83,6 @@ Shader "Grater/Experimental/VLBox"
             float _LV2Scale;
             float _LV3Scale;
             float _FogPower;
-            float _StepDistance;
             float _TransmittenceOffset;
 
             float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
@@ -167,7 +165,7 @@ Shader "Grater/Experimental/VLBox"
                     //sample!
                     densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
                 }
-                float transmittance = exp(-densitySum);
+                float transmittance = exp(-densitySum * _TransmittenceOffset);
                 return transmittance;//transmittance;//return float3(transmittance, transmittance, transmittance);
             }
             /*
@@ -242,7 +240,7 @@ Shader "Grater/Experimental/VLBox"
                 //return float4(normalize(osFrontVector) * osStart + camPos, 1.0f);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
-                float depthColumnWidth = saturate(depthDiff / 32);
+                float depthColumnWidth = 5.0f;//saturate(depthDiff / 32);
                 float osColumnWidth = depthColumnWidth / i.ratio.y;
                 float transmittance = 1.0;
                 
@@ -267,27 +265,20 @@ Shader "Grater/Experimental/VLBox"
                     }
 
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
-                    //well, theoretically it should
-                    //return float4(fogWorldSpot, 1.0);
                     float3 fogObjectSpot = camPos + realOsViewDir * osStep;
-                    //return float4(fogObjectSpot, 1.0);
-                    //return float4(fogObjectSpot, 1.0f);
-                    //return float4(1 / osStep, 1 / osStep, 1 / osStep, 1.0f);
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot);
-                    //lightAmount += fogAmount.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
                     float lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
                     
                     outScattering += transmittance * lightTransmittance * depthColumnWidth;
                 }
+                //return float4(0, 0, 0, 1 - transmittance);
+                //return outScattering;
+                return float4(lerp(_ShadowColor, _FogColor, saturate(outScattering)).rgb * (1 - transmittance), 1 - transmittance);
                 
-                //lightAmount = pow(lightAmount, _FogPower);
-                //return lightAmount / 32;
-                //return 1-transmittance;
-                return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
-
+                //return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
             }
             ENDCG
         }

@@ -8,7 +8,7 @@ Shader "Grater/Experimental/VLBox"
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         
         _FogPower ("Fog Power", Range(1, 8)) = 1
-        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 1)) = 1
+        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 36)) = 1
         [IntRange]_StepCount ("Sampling Steps", Range(1, 128)) = 32
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
         //[PowerSlider]_LV2Scale ("LV2 Scale", Range(0, 0.3)) = 0.05
@@ -165,7 +165,7 @@ Shader "Grater/Experimental/VLBox"
                     //sample!
                     densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize;
                 }
-                float transmittance = exp(-densitySum * _TransmittenceOffset);
+                float transmittance = exp(-densitySum - _TransmittenceOffset);
                 return transmittance;//transmittance;//return float3(transmittance, transmittance, transmittance);
             }
             /*
@@ -276,6 +276,10 @@ Shader "Grater/Experimental/VLBox"
                 }
                 //return float4(0, 0, 0, 1 - transmittance);
                 //return outScattering;
+                float scatterOffset = saturate(outScattering);
+                float hlOffset = (scatterOffset - 0.8f) / 0.2f;
+
+
                 return float4(lerp(_ShadowColor, _FogColor, saturate(outScattering)).rgb * (1 - transmittance), 1 - transmittance);
                 
                 //return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;

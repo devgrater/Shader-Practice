@@ -8,8 +8,8 @@ Shader "Grater/Experimental/VLBox"
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         
-        _BrightnessPower ("Brightness Power", Range(0, 1)) = 0.95
-        _ShadowPower ("Shadow Power", Range(0, 1)) = 0.95
+        _BrightnessPower ("Brightness Power", Range(0.01, 0.99)) = 0.95
+        _ShadowPower ("Shadow Power", Range(0.01, 0.99)) = 0.95
         [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 1)) = 1
         _StepDistance ("Step Distance", Range(0, 128)) = 5
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
@@ -239,7 +239,7 @@ Shader "Grater/Experimental/VLBox"
                 
                 //dot the vector with the front direction
                 fixed frontVectorSign = sign(dot(viewForward, wsFrontVector));
-                fixed3 realOsViewDir = normalize(osFrontVector);
+                fixed3 realOsViewDir = normalize(osBackVector);
                 //outside -> front Vector > 0
                 //inside -> front vector < 0
 
@@ -268,7 +268,7 @@ Shader "Grater/Experimental/VLBox"
 
                 float lightAmount = 0.0;
                 float outScattering = 0.0;
-
+                //return float4(camPos.z, camPos.z, camPos.z, 1.0f);
                 //object space light dir, and object space pos.
                 for(float step = 0; step < 32; step++){
                     float depthStep = (depthColumnWidth * step) + minStart;

@@ -242,7 +242,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex:
-        m_Texture: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
+        m_Texture: {fileID: 11700000, guid: b90bab75466e0ba409bfcd48be192cd6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex2:
@@ -258,21 +258,23 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BrightnessPower: 0.523
+    - _BrightnessPower: 0.367
     - _ColorOffset0: 0.411
     - _ColorOffset1: 1.223
     - _DarknessThreshold: 2.72
     - _Depth: -0.5
-    - _FogDensity: 0.027
+    - _FogDensity: 1
     - _FogPower: 1
     - _LV2Scale: 0.0001
     - _LV3Scale: 0.0338
-    - _Scale: 0.00055
+    - _LightAbsorption: 1.6
+    - _Scale: 0.01
     - _ShadowPower: 0.99
+    - _ShadowThreshold: 0.28
     - _StepCount: 8
-    - _StepDistance: 3.9
+    - _StepDistance: 0
     - _StepSize: 9.81
-    - _TransmittenceOffset: 0.215
+    - _TransmittenceOffset: 0
     - _WeatherMapScale: 0.0001
     m_Colors:
     - _FogColor: {r: 0.6981132, g: 0.29627162, b: 0, a: 1}
@@ -1344,7 +1346,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951339034}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1709, y: -255, z: 575}
+  m_LocalPosition: {x: 2501, y: -255, z: 824}
   m_LocalScale: {x: 1013.8078, y: 1013.8078, z: 1013.8078}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1630,8 +1632,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1147946836}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2273, y: -201, z: -312}
-  m_LocalScale: {x: 5298.322, y: 449.33682, z: 5563.2397}
+  m_LocalPosition: {x: 2695, y: -201, z: 1587}
+  m_LocalScale: {x: 2.1315947, y: 1.675468, z: 1.5634065}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 21

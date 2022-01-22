@@ -163,7 +163,7 @@ Shader "Grater/Experimental/VLBox"
             }
 
             fixed4 sample_volume_texture(float3 pos){
-                return tex3D(_VolumeTex, pos * _Scale);
+                return tex3D(_VolumeTex, pos * _Scale) * _FogDensity;
             }
 
             float remap(float original_value, float original_min, float original_max, float new_min, float new_max)
@@ -196,6 +196,20 @@ Shader "Grater/Experimental/VLBox"
                 }
                 float transmittance = exp(-densitySum * _LightAbsorption);
                 return _ShadowThreshold + transmittance * (1 - _ShadowThreshold);//transmittance;//return float3(transmittance, transmittance, transmittance);
+            }
+
+            float light_march(float3 worldPos, float3 osPos, float3 osLightDir, float3 lightDir, float dstToBounds){
+                float stepSize = dstToBounds / 8;
+                float densitySum = 0.0f;
+                worldPos += stepSize * lightDir * 0.5f;
+                for(int i = 0; i < 8; i++){
+                    worldPos += stepSize * lightDir;
+                    osPos.z += osLightDir.z * stepSize;
+                    float density = sample_volume_texture(worldPos);
+                    densitySum += density * stepSize;
+                }
+                float transmittance = exp(-densitySum * _LightAbsorption);
+                return _ShadowThreshold + transmittance * (1 - _ShadowThreshold);
             }
 
 
@@ -263,21 +277,31 @@ Shader "Grater/Experimental/VLBox"
 
                 float3 wsDir = normalize(wsViewDir);
                 float3 worldPos = _WorldSpaceCameraPos + wsDir * minStart / perspectiveCorrection;
+                float3 objPos = camPos + realOsViewDir * osStart;
                 float distanceTravelled = 0.0;
                 //float ratio = 
+
+                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                float lightEnergy = 0.0f;
                 
                 for(float step = 0; step < 32; step++){
                     worldPos += wsDir * depthColumnWidth;
-                    if(minStart + depthColumnWidth * step > minDepth){
+                    distanceTravelled += depthColumnWidth;
+                    //stop early
+                    if(distanceTravelled > minDepth){
                         break;
                     }
+                    objPos += realOsViewDir * osColumnWidth;
                     //sample texture...
                     fixed cloudDensity = sample_volume_texture(worldPos);
+                    float depthToLightBounds = find_bounding_box_back(objPos, i.osLightDir) * i.ratio.x;
+                    //using this, trace the planes.
+                    float lightTransmittance = light_march(worldPos, objPos, i.osLightDir, lightDir, depthToLightBounds);
+                    lightEnergy += lightTransmittance * transmittance * depthColumnWidth * cloudDensity;
 
-                    //float currentStepDensity = sample_volume_texture
-                    //first lets do the transmittance
                     transmittance *= exp(-cloudDensity * depthColumnWidth * _LightAbsorption);
                 }
+                return float4(lightEnergy,lightEnergy,lightEnergy, transmittance);
                 return float4(transmittance, transmittance, transmittance, 1.0f);
                 
 

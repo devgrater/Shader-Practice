@@ -176,7 +176,7 @@ Shader "Grater/Experimental/VLBox"
                 float gradient = saturate(remap(depthInClouds, -0.5f, weatherMask - 0.5f, 1.0f, 0.0f));
                 //fixed surfaceSign = max(sign(weatherMask - depthInClouds), 0.0f);
                 //return weatherMask * surfaceSign;
-                return sqrt(gradient);
+                return gradient;//sqrt(gradient);
             }
             
             float march_lightdir(float3 worldPos, float height, fixed3 lightDir, float dstToBounds){
@@ -284,7 +284,7 @@ Shader "Grater/Experimental/VLBox"
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot) * weatherMapDensity.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
-                    float lightTransmittance = march_lightdir(fogWorldSpot, fogObjectSpot.y, lightDir, marchDistance);
+                    float lightTransmittance = march_lightdir(fogWorldSpot, fogObjectSpot.y, -lightDir, marchDistance);
                     
                     outScattering += transmittance * lightTransmittance * depthColumnWidth;
                 }

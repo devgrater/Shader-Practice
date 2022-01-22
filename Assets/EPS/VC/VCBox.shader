@@ -162,18 +162,30 @@ Shader "Grater/Experimental/VLBox"
                 return tex3D(_VolumeTex, pos * _Scale + _Time.ggg / 20);
             }
 
-            
-            fixed sample_weather_mask(float2 uv){
-                return tex2D(_WeatherMap, uv * _WeatherMapScale + _Time.gr / 10).r;
+            float remap(float original_value, float original_min, float original_max, float new_min, float new_max)
+            {
+            return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
+            }
+                        
+            fixed sample_weather_mask(float2 uv, float depthInClouds){
+                float weatherMask = tex2D(_WeatherMap, uv * _WeatherMapScale + _Time.gr / 10).r;
+                //premis:
+                //depth in clouds range from 0 to 1, where 1 is the top of the clouds.
+                //if the depth in clouds is greater than weather mask,
+                //we add in the contribution.
+                float gradient = saturate(remap(depthInClouds, -0.5f, weatherMask - 0.5f, 1.0f, 0.0f));
+                //fixed surfaceSign = max(sign(weatherMask - depthInClouds), 0.0f);
+                //return weatherMask * surfaceSign;
+                return sqrt(gradient);
             }
             
-            float march_lightdir(float3 worldPos, fixed3 lightDir, float dstToBounds){
+            float march_lightdir(float3 worldPos, float height, fixed3 lightDir, float dstToBounds){
                 float stepSize = dstToBounds / 4;
                 float densitySum = 0.0f;
                 for(int i = 0; i < 4; i++){
                     worldPos += stepSize * lightDir;
                     //sample!
-                    densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize * sample_weather_mask(worldPos.xz);
+                    densitySum += sample_volume_texture(worldPos) * _FogDensity * stepSize * sample_weather_mask(worldPos.xz, height);
                 }
                 float transmittance = exp(-densitySum - _TransmittenceOffset / _FogDensity);
                 return transmittance;//transmittance;//return float3(transmittance, transmittance, transmittance);
@@ -241,7 +253,7 @@ Shader "Grater/Experimental/VLBox"
                 //return float4(normalize(osFrontVector) * osStart + camPos, 1.0f);
                 float depthDiff = (minDepth - minStart);
                 //return saturate(10 / depthDiff);
-                float depthColumnWidth = _StepDistance;//saturate(depthDiff / 32);
+                float depthColumnWidth = depthDiff / 32;
                 float osColumnWidth = depthColumnWidth / i.ratio.y;
                 float transmittance = 1.0;
                 
@@ -267,12 +279,12 @@ Shader "Grater/Experimental/VLBox"
 
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
                     float3 fogObjectSpot = camPos + realOsViewDir * osStep;
-                    float weatherMapDensity = sample_weather_mask(fogWorldSpot.xz);//tex2D(_WeatherMap, fogWorldSpot.xz * _WeatherMapScale);
+                    float weatherMapDensity = sample_weather_mask(fogWorldSpot.xz, fogObjectSpot.y);//tex2D(_WeatherMap, fogWorldSpot.xz * _WeatherMapScale);
                     //just sample the 3d texture
                     fixed4 fogAmount = sample_volume_texture(fogWorldSpot) * weatherMapDensity.r;
                     transmittance *= calculate_transmittance(fogAmount.r * _FogDensity, depthColumnWidth); 
                     float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
-                    float lightTransmittance = march_lightdir(fogWorldSpot, lightDir, marchDistance);
+                    float lightTransmittance = march_lightdir(fogWorldSpot, fogObjectSpot.y, lightDir, marchDistance);
                     
                     outScattering += transmittance * lightTransmittance * depthColumnWidth;
                 }

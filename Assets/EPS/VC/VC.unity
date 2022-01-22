@@ -267,13 +267,13 @@ Material:
     - _FogPower: 1
     - _LV2Scale: 0.0001
     - _LV3Scale: 0.0338
-    - _Scale: 0.0005
+    - _Scale: 0.00055
     - _ShadowPower: 1
     - _StepCount: 8
-    - _StepDistance: 36.9
+    - _StepDistance: 9.2
     - _StepSize: 9.81
     - _TransmittenceOffset: 0.116
-    - _WeatherMapScale: 0.0005
+    - _WeatherMapScale: 0.0003
     m_Colors:
     - _FogColor: {r: 1, g: 0.85863876, b: 0.42931938, a: 1}
     - _ShadowColor: {r: 0.3301887, g: 0.17288181, b: 0.3144458, a: 1}
@@ -1631,7 +1631,7 @@ Transform:
   m_GameObject: {fileID: 1147946836}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2273, y: -201, z: -312}
-  m_LocalScale: {x: 2568.046, y: 315.78763, z: 3239.0378}
+  m_LocalScale: {x: 5298.322, y: 384.72406, z: 5563.2397}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 21
@@ -7408,5 +7408,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 0.5138}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 13
+  m_RootOrder: 14
   m_LocalEulerAnglesHint: {x: -95.129, y: 29.429993, z: -34.767}

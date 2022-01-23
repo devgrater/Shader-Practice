@@ -357,59 +357,6 @@ Shader "Grater/Experimental/VLBox"
                 return float4((finalColor + phaseVal) * transmittancePower, transmittancePower);
                 //return float4(transmittance, transmittance, transmittance, 1.0f);
                 
-
-                /*
-                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-
-                //convert to world space.
-                
-                //using the object space light directions, we can compute out....
-                //the planes in their world space.
-
-                //float lightAmount = 0.0;
-                float outScattering = 0.0;
-                float3 lightEnergy = 0;
-                //return float4(camPos.z, camPos.z, camPos.z, 1.0f);
-                //object space light dir, and object space pos.
-                for(float step = 0; step < 32; step++){
-                    float depthStep = (depthColumnWidth * step) + minStart;
-                    float osStep = (osColumnWidth * step) + osStart;
-                    if(depthStep > minDepth){
-                        break;
-                    }
-
-                    float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep / perspectiveCorrection;
-                    float3 fogObjectSpot = camPos + realOsViewDir * osStep;
-                    float weatherMapDensity = sample_weather_mask(fogWorldSpot.xz, fogObjectSpot.y);//tex2D(_WeatherMap, fogWorldSpot.xz * _WeatherMapScale);
-                    //just sample the 3d texture
-                    fixed fogAmount = saturate(sample_volume_texture(fogWorldSpot) * weatherMapDensity.r);
-                    
-                    float marchDistance = find_bounding_box_back(fogObjectSpot, i.osLightDir) * i.ratio.x;
-                    float lightTransmittance = march_lightdir(fogWorldSpot, fogObjectSpot, i.osLightDir / i.ratio.x, lightDir, marchDistance);
-                    lightEnergy += lightTransmittance * transmittance * depthColumnWidth * fogAmount.r;
-                    transmittance *= exp(-fogAmount.r * depthColumnWidth * _LightAbsorption); 
-                    
-                    //outScattering += transmittance * lightTransmittance * depthColumnWidth;
-                    if(transmittance < 0.01){
-                        break;
-                    }
-                }
-                
-                //return float4(lightEnergy, 1.0f);
-                return float4(lightEnergy * (1 - transmittance), 1 - transmittance);
-                //return outScattering;
-                float scatterOffset = saturate(outScattering);
-                float midOffset = saturate(scatterOffset - (1 - _ShadowPower)) / _ShadowPower;
-                float hlOffset = pow(scatterOffset, _BrightnessPower);
-
-                float3 lowToneColor = lerp(_ShadowColor, _FogColor, midOffset);
-                float3 finalColor = lerp(lowToneColor, _LightColor0, hlOffset);
-
-                float transmittancePower = 1 - transmittance;
-                return float4(finalColor * transmittancePower, transmittancePower);
-                
-                //return saturate(float4(outScattering, outScattering, outScattering, 1.0)); //finalColor.r;//_FogColor * (1 - transmittance);//lightAmount * depthColumnWidth;
-                */
             }
             ENDCG
         }

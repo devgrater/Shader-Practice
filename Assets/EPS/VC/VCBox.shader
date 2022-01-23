@@ -12,7 +12,8 @@ Shader "Grater/Experimental/VLBox"
         _ShadowPower ("Shadow Power", Range(0.01, 0.99)) = 0.95
         _ShadowThreshold ("Shadow Threshold", Range(0.0, 1.0)) = 0.5
         _LightAbsorption ("Light Absorption", Range(0.0, 2.0)) = 1.6
-        [PowerSlider]_TransmittenceOffset ("Transmittance Offset", Range(0, 1)) = 1
+        _PhaseParams ("Phase Params", Vector) = (0, 0, 0, 0)
+        _HeightMapOffset ("HeightMap Offset", Range(0, 1)) = 0.5
         _StepDistance ("Step Distance", Range(0, 128)) = 5
         [PowerSlider]_Scale ("Scale", Range(0, 0.3)) = 0.05
         [PowerSlider]_WeatherMapScale ("Weather Map Scale", Range(0, 0.1)) = 0.01
@@ -37,7 +38,7 @@ Shader "Grater/Experimental/VLBox"
                     
         
             //premultiplied
-            Blend One OneMinusSrcAlpha
+            Blend One OneMinusSrcAlpha 
             Cull Front
             ZTest Off
             CGPROGRAM
@@ -91,8 +92,11 @@ Shader "Grater/Experimental/VLBox"
             float _LV3Scale;
             float _BrightnessPower;
             float _ShadowPower;
-            float _TransmittenceOffset;
+            float _HeightMapOffset;
             float _LightAbsorption;
+            float _WorldBottom;
+            float _WorldTop;
+            float4 _PhaseParams;
 
             float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
                 //perform a transformation to world space:
@@ -119,6 +123,18 @@ Shader "Grater/Experimental/VLBox"
                     normalize(o.osViewDir)
                 );
                 return o;
+            }
+
+            float hg(float a, float g) 
+            {
+                float g2 = g * g;
+                return (1 - g2) / (4 * 3.1415 * pow(1 + g2 - 2 * g * (a), 1.5));
+            }
+            float phase(float a) 
+            {
+                float blend = 0.5;
+                float hgBlend = hg(a, _PhaseParams.x) * (1 - blend) + hg(a, -_PhaseParams.y) * blend;
+                return _PhaseParams.z + hgBlend * _PhaseParams.w;
             }
 
             float trace_one_plane(float3 normal, float3 viewDir, float3 origin, float c){
@@ -168,19 +184,21 @@ Shader "Grater/Experimental/VLBox"
 
             float remap(float original_value, float original_min, float original_max, float new_min, float new_max)
             {
-            return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
+                return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
             }
                         
             fixed sample_weather_mask(float2 uv, float depthInClouds){
                 float weatherMask = tex2D(_WeatherMap, uv * _WeatherMapScale).r;
+                float gMin = remap(weatherMask, 0, 1, 0.1, 0.5);
+                float gMax = remap(weatherMask, 0, 1, gMin, 0.9);
                 //premis:
                 //depth in clouds range from 0 to 1, where 1 is the top of the clouds.
                 //if the depth in clouds is greater than weather mask,
                 //we add in the contribution.
-                float gradient = saturate(remap(depthInClouds, -0.5f, weatherMask - 0.5f, 1.0f, 0.0f));
-                //fixed surfaceSign = max(sign(weatherMask - depthInClouds), 0.0f);
-                //return weatherMask * surfaceSign;
-                return gradient;//sqrt(gradient);
+                float heightGradient = saturate(remap(depthInClouds, 0.0, gMin, 0, 1)) * saturate(remap(depthInClouds, 1, gMax, 0, 1));
+                float heightGradient2 = saturate(remap(depthInClouds, 0.0, weatherMask.r, 1, 0)) * saturate(remap(depthInClouds, 0.0, gMin, 0, 1));
+                heightGradient = saturate(lerp(heightGradient, heightGradient2, _HeightMapOffset));
+                return heightGradient;//sqrt(gradient);
             }
             
             float march_lightdir(float3 worldPos, float3 osPos, float3 osLightDir, float3 lightDir, float dstToBounds){
@@ -198,10 +216,11 @@ Shader "Grater/Experimental/VLBox"
                 return _ShadowThreshold + transmittance * (1 - _ShadowThreshold);//transmittance;//return float3(transmittance, transmittance, transmittance);
             }
 
-            float sample_cloud_value(float3 worldPos, float3 osHeight){
-                //fixed weatherMask = sample_weather_mask(worldPos.xz, osHeight);
+            float sample_cloud_value(float3 worldPos){
+                fixed normalizedY = (worldPos.y - _WorldBottom) / (_WorldTop - _WorldBottom);
+                fixed weatherMask = sample_weather_mask(worldPos.xz, normalizedY);
                 fixed densityMask = sample_volume_texture(worldPos);
-                return densityMask;//weatherMask * densityMask;
+                return weatherMask * densityMask;
             }
 
             float light_march(float3 worldPos, float3 osPos, float3 osLightDir, float3 lightDir, float dstToBounds){
@@ -211,7 +230,7 @@ Shader "Grater/Experimental/VLBox"
                 for(int i = 0; i < 8; i++){
                     worldPos += stepSize * lightDir;
                     osPos += osLightDir * stepSize;
-                    float density = sample_cloud_value(worldPos, osPos.y);//sample_volume_texture(worldPos);
+                    float density = sample_cloud_value(worldPos);//sample_volume_texture(worldPos);
                     densitySum += density * stepSize;
                 }
                 float transmittance = exp(-densitySum * _LightAbsorption);
@@ -226,7 +245,7 @@ Shader "Grater/Experimental/VLBox"
                 //that the front plane happens to be 0.5 units away from teh origin.
                 //same goes for every other plane.
                 /////////////////// TRACING PLANES //////////////////////////
-                float3 camPos = i.camPos;//mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1.0));
+                float3 camPos = i.camPos;
                 fixed3 viewDir = normalize(i.osViewDir);
 
                 //once we have these, trace from the furthest point,
@@ -261,14 +280,14 @@ Shader "Grater/Experimental/VLBox"
                 ///////////////////////// PERSPECTIVE CORRECT DEPTH /////////////////////////////
                 
                 fixed3 viewForward = normalize(unity_CameraToWorld._m02_m12_m22);
-                fixed3 osViewForward = normalize(mul(unity_WorldToObject, float4(viewForward, 0.0f)).xyz);
+                //fixed3 osViewForward = normalize(mul(unity_WorldToObject, float4(viewForward, 0.0f)).xyz);
                 float perspectiveCorrection = dot(wsViewDir, viewForward);
                 
                 
                 //dot the vector with the front direction
                 fixed frontVectorSign = sign(dot(viewForward, wsFrontVector));
                 fixed3 realOsViewDir = normalize(osBackVector);
-                float osPerspectiveCorrection = dot(realOsViewDir, osViewForward);
+                //float osPerspectiveCorrection = dot(realOsViewDir, osViewForward);
                 //return perspectiveCorrection;
                 //outside -> front Vector > 0
                 //inside -> front vector < 0
@@ -297,6 +316,9 @@ Shader "Grater/Experimental/VLBox"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 fixed3 osLightDir = normalize(i.osLightDir);
                 float lightEnergy = 0.0f;
+
+                float cosAngle = dot(wsViewDir, _WorldSpaceLightPos0.xyz);
+                float3 phaseVal = phase(cosAngle);
                 
                 for(float step = 0; step < 32; step++){
                     worldPos += wsViewDir * depthColumnWidth;
@@ -307,8 +329,8 @@ Shader "Grater/Experimental/VLBox"
                     }
                     objPos += realOsViewDir * osColumnWidth;
                     //sample texture...
-                    fixed cloudDensity = sample_cloud_value(worldPos, objPos.y);
-
+                    fixed cloudDensity = sample_cloud_value(worldPos);
+                    //assume that it's just a flat plane.
                     float depthToLightBounds = find_bounding_box_back(objPos, osLightDir) * i.ratio.x;
                     //using this, trace the planes.
                     float lightTransmittance = light_march(worldPos, objPos, osLightDir / i.ratio.x, lightDir, depthToLightBounds);
@@ -319,10 +341,16 @@ Shader "Grater/Experimental/VLBox"
                         break;
                     }
                 }
-                //return float4(objPos, 1.0f);
-                float3 le = lightEnergy;
-                return float4(le, 1.0f);
-                return float4(transmittance, transmittance, transmittance, 1.0f);
+                float transmittancePower = (1 - transmittance);
+                float scatterOffset = saturate(lightEnergy);
+                float midOffset = saturate(scatterOffset - (1 - _ShadowPower)) / _ShadowPower;
+                float hlOffset = pow(scatterOffset, _BrightnessPower);
+                
+
+                float3 lowToneColor = lerp(_ShadowColor, _FogColor, midOffset);
+                float3 finalColor = lerp(lowToneColor, _LightColor0, hlOffset);
+                return float4((finalColor + phaseVal) * transmittancePower, transmittancePower);
+                //return float4(transmittance, transmittance, transmittance, 1.0f);
                 
 
                 /*

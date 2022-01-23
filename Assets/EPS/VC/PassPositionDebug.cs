@@ -6,7 +6,6 @@ using UnityEngine;
 public class PassPositionDebug : MonoBehaviour
 {
     // Start is called before the first frame update
-    [SerializeField]private GameObject tPos;
     private Material mat;
     private MaterialPropertyBlock mpb;
     private Renderer renderer;
@@ -24,6 +23,8 @@ public class PassPositionDebug : MonoBehaviour
             renderer = GetComponent<Renderer>();
             mat = renderer.sharedMaterial;
         }
-        mat.SetVector("_WorldPos", tPos.transform.position);
+        float centerPos = transform.position.y;
+        mat.SetFloat("_WorldBottom", centerPos - transform.localScale.y / 2.0f);
+        mat.SetFloat("_WorldTop", centerPos + transform.localScale.y / 2.0f);
     }
 }

@@ -4,10 +4,11 @@ Shader "Grater/Experimental/VLBox"
     {
         _WeatherMap ("Weather Map", 2D) = "white" {}
         _VolumeTex ("Volume Texture", 3D) = "white" {}
+        _BlueNoise ("Blue Noise", 2D) = "gray" {}
         [PowerSlider]_FogDensity ("Fog Density", Range(0, 1)) = 0.1
         [HDR]_FogColor ("Fog Color", Color) = (0, 0, 0, 1)
         [HDR]_ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
-        
+        _Offsets ("Offsets", Vector) = (0, 0, 0, 0)
         _BrightnessPower ("Brightness Power", Range(0.01, 0.99)) = 0.95
         _ShadowPower ("Shadow Power", Range(0.01, 0.99)) = 0.95
         _ShadowThreshold ("Shadow Threshold", Range(0.0, 1.0)) = 0.5
@@ -97,6 +98,7 @@ Shader "Grater/Experimental/VLBox"
             float _WorldBottom;
             float _WorldTop;
             float4 _PhaseParams;
+            float4 _Offsets;
 
             float2 computeWorldSpaceRatio(fixed3 osLightDir, fixed3 osViewDir){
                 //perform a transformation to world space:
@@ -189,7 +191,7 @@ Shader "Grater/Experimental/VLBox"
                         
             fixed sample_weather_mask(float2 uv, float depthInClouds){
                 float weatherMask = tex2D(_WeatherMap, uv * _WeatherMapScale).r;
-                float gMin = remap(weatherMask, 0, 1, 0.1, 0.5);
+                float gMin = remap(weatherMask, 0, 1, 0.1, 0.6);
                 float gMax = remap(weatherMask, 0, 1, gMin, 0.9);
                 //premis:
                 //depth in clouds range from 0 to 1, where 1 is the top of the clouds.
@@ -198,6 +200,7 @@ Shader "Grater/Experimental/VLBox"
                 float heightGradient = saturate(remap(depthInClouds, 0.0, gMin, 0, 1)) * saturate(remap(depthInClouds, 1, gMax, 0, 1));
                 float heightGradient2 = saturate(remap(depthInClouds, 0.0, weatherMask.r, 1, 0)) * saturate(remap(depthInClouds, 0.0, gMin, 0, 1));
                 heightGradient = saturate(lerp(heightGradient, heightGradient2, _HeightMapOffset));
+                //return gMin;
                 return heightGradient;//sqrt(gradient);
             }
             
@@ -217,7 +220,9 @@ Shader "Grater/Experimental/VLBox"
             }
 
             float sample_cloud_value(float3 worldPos){
+                
                 fixed normalizedY = (worldPos.y - _WorldBottom) / (_WorldTop - _WorldBottom);
+                worldPos.xz += _Time.gg * _Offsets.xz;
                 fixed weatherMask = sample_weather_mask(worldPos.xz, normalizedY);
                 fixed densityMask = sample_volume_texture(worldPos);
                 return weatherMask * densityMask;

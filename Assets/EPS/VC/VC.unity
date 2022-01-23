@@ -322,7 +322,7 @@ Transform:
   m_GameObject: {fileID: 136978501}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2666, y: -6, z: 1550}
-  m_LocalScale: {x: 91.34939, y: 32.61365, z: 100.74699}
+  m_LocalScale: {x: 10204.212, y: 729.0639, z: 12471.8545}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 25
@@ -351,7 +351,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex:
-        m_Texture: {fileID: 11700000, guid: b90bab75466e0ba409bfcd48be192cd6, type: 3}
+        m_Texture: {fileID: 11700000, guid: d66fc1c1fcf3331459d093928bd0b187, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex2:
@@ -372,12 +372,12 @@ Material:
     - _ColorOffset1: 1.223
     - _DarknessThreshold: 2.72
     - _Depth: -0.5
-    - _FogDensity: 0.032
+    - _FogDensity: 0.002
     - _FogPower: 1
     - _LV2Scale: 0.0001
     - _LV3Scale: 0.0338
     - _LightAbsorption: 1.6
-    - _Scale: 0.01
+    - _Scale: 0.0002
     - _ShadowPower: 0.99
     - _ShadowThreshold: 0.28
     - _StepCount: 8

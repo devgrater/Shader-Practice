@@ -79,7 +79,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 cameraVector = normalize(worldPos - _WorldSpaceCameraPos);*/
                 //float3 worldPos = _WorldSpaceCameraPos + i.viewVector * linearDepth;
                 //now, test for whether you hit the box or not.
-                float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, 1 / normalizedVector);
+                float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, 1 / viewVector);
                 float dstToBox = vboxHitInfo.x;
                 float dstInBox = vboxHitInfo.y;
                 //take the union with the scene depth:
@@ -92,10 +92,13 @@ Shader "Hidden/PostProcessing/PostProcessVC"
 
                 float dstTravelled = 0.0f;
                 float transmission = 1.0f;
-                float3 headPos = _WorldSpaceCameraPos + dstToBox * normalizedVector;
+                float3 headPos = _WorldSpaceCameraPos + dstToBox * viewVector;
                 for(int step = 0; step < 32; step++){
                     if(dstTravelled > dstToBoxBack){
                         break;
+                    }
+                    if(transmission < 0.01){
+                        break; //too occluded to do anything
                     }
                     transmission *= exp(-_DensityMultiplier * distanceStep);
                     headPos += distanceStep * normalizedVector;

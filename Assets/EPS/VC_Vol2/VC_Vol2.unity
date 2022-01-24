@@ -562,8 +562,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.444, y: 1.206, z: 0.166}
-  m_LocalScale: {x: 1.2436444, y: 1.8088176, z: 1.4538}
+  m_LocalPosition: {x: 0.444, y: -1.66, z: 0.166}
+  m_LocalScale: {x: 4.422897, y: 5.3823175, z: 4.8241444}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
@@ -605,7 +605,7 @@ MonoBehaviour:
   targetCamera: {fileID: 2076876968}
   postProcessMat: {fileID: 2100000, guid: e13ab9b1d1761764f87faf3a592b3c74, type: 2}
   boxVolume: {fileID: 1708544432}
-  densityMultiplier: 1
+  densityMultiplier: 0.46
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0

@@ -9,7 +9,7 @@ public class VolumetricCloudMaster : MonoBehaviour
     [SerializeField] private Material postProcessMat;
     [Tooltip("The Box Volume to Hold the Clouds")]
     [SerializeField] private Transform boxVolume;
-    [SerializeField][Range(0, 1)] private float densityMultiplier;
+    [SerializeField][Range(0, 8)] private float densityMultiplier;
 
     
     void UpdateMaterialParams(){

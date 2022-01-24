@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-[ExecuteInEditMode, RequireComponent(typeof(Camera))]
+[ExecuteInEditMode, RequireComponent(typeof(Camera)), ImageEffectAllowedInSceneView]
 public class VolumetricCloudMaster : MonoBehaviour
 {
     // Start is called before the first frame update
@@ -19,6 +19,10 @@ public class VolumetricCloudMaster : MonoBehaviour
         Matrix4x4 projMat = GL.GetGPUProjectionMatrix(targetCamera.projectionMatrix, false);
         Matrix4x4 viewProjMat = (projMat * viewMat);
         postProcessMat.SetMatrix("_ViewProjInv", viewProjMat.inverse);
+        Vector3 boxMin = boxVolume.transform.position - boxVolume.localScale / 2;
+        Vector3 boxMax = boxVolume.transform.position + boxVolume.localScale / 2;
+        postProcessMat.SetVector("_VBoxMin", new Vector4(boxMin.x, boxMin.y, boxMin.z, 0.0f));
+        postProcessMat.SetVector("_VBoxMax", new Vector4(boxMax.x, boxMax.y, boxMax.z, 0.0f));
     }
 
     void OnRenderImage(RenderTexture src, RenderTexture dest){

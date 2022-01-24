@@ -1,3 +1,4 @@
+
 Shader "Hidden/PostProcessing/PostProcessVC"
 {
     Properties
@@ -8,6 +9,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
     {
         // No culling or depth
         Cull Off ZWrite Off ZTest Always
+        CGINCLUDE
+
+
+
+        ENDCG
 
         Pass
         {
@@ -38,12 +44,19 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             }
 
             sampler2D _MainTex;
+            sampler2D _CameraDepthTexture;
+            float3 _MaxBounds;
+            float3 _MinBounds;
 
             fixed4 frag (v2f i) : SV_Target
             {
+                float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
+                float4 worldPos = reconstruct_worldpos(i.uv);
+                return reconstruct_worldpos(i.uv);
                 fixed4 col = tex2D(_MainTex, i.uv);
+
                 // just invert the colors
-                col.rgb = 1 - col.rgb;
+                //col.rgb = 1 - col.rgb;
                 return col;
             }
             ENDCG

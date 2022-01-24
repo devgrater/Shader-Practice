@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 ///Find a way to draw debug info
+
 public class VCloudVolume : MonoBehaviour
 {
     // Start is called before the first frame update
@@ -11,5 +12,6 @@ public class VCloudVolume : MonoBehaviour
     {
         Gizmos.color = gizmoColor;
         Gizmos.DrawWireCube(transform.position, transform.localScale);
+        
     }
 }

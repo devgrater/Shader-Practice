@@ -18,6 +18,10 @@ public sealed class VCloudRenderer : PostProcessEffectRenderer<VCloud>
     {   
         
         var sheet = context.propertySheets.Get("Hidden/PostProcessing/PostProcessVC"); //put in your shader code here..
+        Matrix4x4 viewMat = context.camera.worldToCameraMatrix;
+        Matrix4x4 projMat = GL.GetGPUProjectionMatrix(context.camera.projectionMatrix, false);
+        Matrix4x4 viewProjMat = (projMat * viewMat);
+        sheet.properties.SetMatrix("_ViewProjInv", viewProjMat.inverse);
         /*
         Matrix4x4 projectionMatrix = GL.GetGPUProjectionMatrix(context.camera.projectionMatrix, false);
         sheet.properties.SetMatrix(Shader.PropertyToID("_InverseProjectionMatrix"), projectionMatrix.inverse);
@@ -25,6 +29,7 @@ public sealed class VCloudRenderer : PostProcessEffectRenderer<VCloud>
         
         //reconstruct world coordinates:
         sheet.properties.SetVector(Shader.PropertyToID("_VolumeMin"), new Vector4(0, 0, 0, 0));*/
+        context.command.BlitFullscreenTriangle(context.source, context.destination, sheet, 0);
 
         
         //throw new System.NotImplementedException();

@@ -58,9 +58,9 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 return D / D.w;
             }
 
-            float2 trace_vbox_planes(float3 cameraPos, float3 cameraVector){
-                float3 hitT0 = (_VBoxMin - cameraPos) / cameraVector;
-                float3 hitT1 = (_VBoxMax - cameraPos) / cameraVector;
+            float2 trace_vbox_planes(float3 cameraPos, float3 oneOverCameraVector){
+                float3 hitT0 = (_VBoxMin - cameraPos) * oneOverCameraVector;
+                float3 hitT1 = (_VBoxMax - cameraPos) * oneOverCameraVector;
 
                 float3 minT = min(hitT0, hitT1);
                 float3 maxT = max(hitT0, hitT1);
@@ -68,7 +68,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float dstA = max(max(minT.x, minT.y), minT.z);
                 float dstB = min(min(maxT.x, maxT.y), maxT.z);
 
-                float dstToBox = max(0, dstA);
+                float dstToBox = max(0, dstA);//if you are inside the box, this returns 0
                 float dstInBox = max(0, dstB - dstToBox);
                 return float2(dstToBox, dstInBox);
             }
@@ -82,12 +82,19 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 worldPos = reconstruct_worldpos(i.uv).xyz;
                 float3 cameraVector = normalize(worldPos - _WorldSpaceCameraPos);*/
                 float3 worldPos = _WorldSpaceCameraPos + i.viewVector * linearDepth;
-
-
-                return float4(worldPos, 1.0f);//reconstruct_worldpos(i.uv);
-
+                //now, test for whether you hit the box or not.
+                float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, 1 / normalize(viewVector));
+                float dstToBox = vboxHitInfo.x;
+                float dstInBox = vboxHitInfo.y;
+                //take the union with the scene depth:
+                //return dstToBox;
+                //float dstToFront = 
+                float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
+                dstToBoxBack = lerp(linearDepth, dstToBoxBack, sign(dstInBox));
+                return 1 / dstToBoxBack;
                 
                 fixed4 col = tex2D(_MainTex, i.uv);
+                return lerp(col, float4(0, 0, 0, 1.0f), sign(dstToBox + dstInBox));
 
                 // just invert the colors
                 //col.rgb = 1 - col.rgb;

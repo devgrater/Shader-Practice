@@ -67,17 +67,10 @@ Shader "Grater/Experimental/VLBox"
                 float4 screenPos : TEXCOORD2;
                 float3 osViewDir : TEXCOORD1;
                 
-                float3 camDir : TEXCOORD3;
                 float3 camPos : TEXCOORD4;
                 float3 osLightDir : TEXCOORD5;
                 float2 ratio : TEXCOORD6; //x - os:ws Light
                                           //y - os:ws Camera
-                /*
-                float wsDistance : TEXCOORD5;
-                float3 wsZNormal : TEXCOORD6;
-                float3 wsXNormal : TEXCOORD7;
-                float3 wsYNormal : TEXCOORD8;
-                float3 wsNormalOffset : TEXCOORD9;*/
             };
 
             sampler3D _VolumeTex;

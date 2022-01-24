@@ -52,16 +52,9 @@ Shader "Grater/Experimental/VLBox"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                //UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
-                
                 float4 screenPos : TEXCOORD2;
-                float3 normal : NORMAL;
                 float3 osViewDir : TEXCOORD1;
-                float3 camDir : TEXCOORD3;
-
-                //CAM_COORDS(4, 5)
-                
             };
 
             sampler2D _MainTex;

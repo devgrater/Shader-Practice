@@ -83,8 +83,8 @@ Shader "Unlit/GrabPassRefraction"
 
             fixed4 box_blur(float2 uv){
                 //offset the uv...
-                float2 uvOffsetX = (_CameraPass_TexelSize.x, 0);
-                float2 uvOffsetY = (0, _CameraPass_TexelSize.y);
+                float2 uvOffsetX = float2(_CameraPass_TexelSize.x, 0);
+                float2 uvOffsetY = float2(0, _CameraPass_TexelSize.y);
                 float2 uvBase = uv;
                 float4 colorSum = float4(0, 0, 0, 0);
                 for(int i = -2; i <= 2; i++){

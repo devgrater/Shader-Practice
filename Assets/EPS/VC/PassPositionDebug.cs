@@ -8,7 +8,7 @@ public class PassPositionDebug : MonoBehaviour
     // Start is called before the first frame update
     private Material mat;
     private MaterialPropertyBlock mpb;
-    private Renderer renderer;
+    private Renderer targetRenderer;
     void Start()
     {
         
@@ -18,10 +18,10 @@ public class PassPositionDebug : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //renderer.GetPropertyBlock(mpb);
+        //targetRenderer.GetPropertyBlock(mpb);
         if(mat == null){
-            renderer = GetComponent<Renderer>();
-            mat = renderer.sharedMaterial;
+            targetRenderer = GetComponent<Renderer>();
+            mat = targetRenderer.sharedMaterial;
         }
         float centerPos = transform.position.y;
         mat.SetFloat("_WorldBottom", centerPos - transform.localScale.y / 2.0f);

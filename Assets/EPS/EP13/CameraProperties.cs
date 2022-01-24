@@ -6,16 +6,16 @@ using UnityEngine;
 public class CameraProperties : MonoBehaviour
 {
     // Start is called before the first frame update
-    private Camera camera;
+    private Camera targetCamera;
     void Start()
     {
-        camera = GetComponent<Camera>();
+        targetCamera = GetComponent<Camera>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //convert camera space coords to world space coords...
+        //convert targetCamera space coords to world space coords...
         
     }
 }

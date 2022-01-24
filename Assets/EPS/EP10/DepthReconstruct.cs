@@ -7,15 +7,15 @@ using UnityEngine;
 public class DepthReconstruct : MonoBehaviour
 {
     [SerializeField] private Material postProcess;
-    private Camera camera;
+    private Camera targetCamera;
 
-    private Transform m_cameraTransform;
-    public Transform p_cameraTransform {
+    private Transform m_targetCameraTransform;
+    public Transform p_targetCameraTransform {
         get {
-            if(m_cameraTransform == null){
-                m_cameraTransform = transform;
+            if(m_targetCameraTransform == null){
+                m_targetCameraTransform = transform;
             }
-            return m_cameraTransform;
+            return m_targetCameraTransform;
         }
     }
 
@@ -25,14 +25,14 @@ public class DepthReconstruct : MonoBehaviour
     [SerializeField] private Color fogColor;
 
     void Awake(){
-        camera = GetComponent<Camera>();
+        targetCamera = GetComponent<Camera>();
     }
     void OnRenderImage(RenderTexture src, RenderTexture dest){
         if(postProcess != null){
-            float near = camera.nearClipPlane;
-            float far = camera.farClipPlane;
-            float fov = camera.fieldOfView;
-            float aspect = camera.aspect;
+            float near = targetCamera.nearClipPlane;
+            float far = targetCamera.farClipPlane;
+            float fov = targetCamera.fieldOfView;
+            float aspect = targetCamera.aspect;
 
             float halfHeight = near * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
             //should compute a ray...
@@ -55,8 +55,8 @@ public class DepthReconstruct : MonoBehaviour
             frustumCorners.SetRow(1, rayCoordsBR);
             frustumCorners.SetRow(2, rayCoordsTR);
             frustumCorners.SetRow(3, rayCoordsTL);
-            //postProcess.SetFloat("_Near", camera.nearClipPlane);
-            //postProcess.SetFloat("_Far", camera.farClipPlane);
+            //postProcess.SetFloat("_Near", targetCamera.nearClipPlane);
+            //postProcess.SetFloat("_Far", targetCamera.farClipPlane);
             postProcess.SetMatrix("_FrustumCornersRay", frustumCorners);//and then just let the vertex shader interpolate
             postProcess.SetColor("_FogColor", fogColor);
             postProcess.SetFloat("_FogDensity", fogDensity);

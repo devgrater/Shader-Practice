@@ -12,7 +12,7 @@ public class MotionBlurWithDepth : MonoBehaviour
     [SerializeField] private Material postProcess;
 
     private Camera currentCamera;
-    public Camera camera {
+    public Camera targetCamera {
         get {
             if(currentCamera == null){
                 currentCamera = GetComponent<Camera>();
@@ -27,7 +27,7 @@ public class MotionBlurWithDepth : MonoBehaviour
         if(postProcess != null){
             postProcess.SetFloat("_BlurAmount", blurAmount);
             postProcess.SetMatrix("_PreviousProjection", previousProjectionMatrix);
-            currentProjectionMatrix = camera.projectionMatrix * camera.worldToCameraMatrix;
+            currentProjectionMatrix = targetCamera.projectionMatrix * targetCamera.worldToCameraMatrix;
             Matrix4x4 inverse = currentProjectionMatrix.inverse;
             postProcess.SetMatrix("_CurrentProjectionInverse", inverse);
             previousProjectionMatrix = currentProjectionMatrix;

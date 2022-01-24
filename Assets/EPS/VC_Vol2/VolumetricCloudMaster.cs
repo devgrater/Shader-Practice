@@ -9,6 +9,7 @@ public class VolumetricCloudMaster : MonoBehaviour
     [SerializeField] private Material postProcessMat;
     [Tooltip("The Box Volume to Hold the Clouds")]
     [SerializeField] private Transform boxVolume;
+    [SerializeField][Range(0, 1)] private float densityMultiplier;
 
     
     void UpdateMaterialParams(){
@@ -23,6 +24,7 @@ public class VolumetricCloudMaster : MonoBehaviour
         Vector3 boxMax = boxVolume.transform.position + boxVolume.localScale / 2;
         postProcessMat.SetVector("_VBoxMin", new Vector4(boxMin.x, boxMin.y, boxMin.z, 0.0f));
         postProcessMat.SetVector("_VBoxMax", new Vector4(boxMax.x, boxMax.y, boxMax.z, 0.0f));
+        postProcessMat.SetFloat("_DensityMultiplier", densityMultiplier);
     }
 
     void OnRenderImage(RenderTexture src, RenderTexture dest){

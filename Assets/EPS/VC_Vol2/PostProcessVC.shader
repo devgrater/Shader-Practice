@@ -31,8 +31,16 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             float _WeatherMapOffset;
             float _CloudMaskScale;
 
+            float _ShadowPower;
+            float _BrightnessPower;
+
             float4 _CloudMaskWeight;
             float4 _CloudDetailWeight;
+
+            float4 _ShadowColor;
+            float4 _MidColor;
+            float4 _PhaseParams;
+            
 
             ////////// Automatic Operations /////////////
             float3 _VBoxMin;
@@ -61,7 +69,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
 
             fixed sample_volume_texture(float3 pos){
                 fixed4 volume = tex3D(_VolumeTex, pos * _Scale) * _DensityMultiplier;
-                return dot(volume, _CloudDetailWeight);
+                return saturate(dot(volume, _CloudDetailWeight));
             }
 
             fixed sample_noise_mask(float3 pos){
@@ -88,11 +96,27 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float heightGradient2 = saturate(remap(depthInClouds, 0.0, weatherMask.r, 1, 0)) * saturate(remap(depthInClouds, 0.0, gMin, 0, 1));
                 heightGradient = saturate(lerp(heightGradient, heightGradient2, _HeightMapOffset));
                 
-
+                const float containerEdgeFadeDst = 50;
+                float dstFromEdgeX = min(containerEdgeFadeDst, min(pos.x - _VBoxMin.x, _VBoxMax.x - pos.x));
+                float dstFromEdgeZ = min(containerEdgeFadeDst, min(pos.z - _VBoxMin.z, _VBoxMax.z - pos.z));
+                float edgeWeight = min(dstFromEdgeZ,dstFromEdgeX) / containerEdgeFadeDst;
 
 
                 
-                return saturate(heightGradient);
+                return saturate(heightGradient * edgeWeight);
+            }
+
+            float hg(float a, float g) 
+            {
+                float g2 = g * g;
+                return (1 - g2) / (12.5664f * pow(1 + g2 - 2 * g * (a), 1.5));
+            }
+
+            float phase(float a) 
+            {
+                float blend = 0.5;
+                float hgBlend = hg(a, _PhaseParams.x) * (1 - blend) + hg(a, -_PhaseParams.y) * blend;
+                return _PhaseParams.z + hgBlend * _PhaseParams.w;
             }
 
             fixed sample_cloud(float3 pos){
@@ -111,10 +135,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float maxHit = trace_vbox_planes(pos, 1 / _WorldSpaceLightPos0).y;
                 //this will guaratee for a hit... almost.
                 float stepSize = maxHit / 8;
+                float3 stepVector = _WorldSpaceLightPos0 * stepSize;
                 float densitySum = 0.0f;
                 for(int i = 0; i < 8; i++){
                     //take a step in the light direct:
-                    pos += _WorldSpaceLightPos0 * stepSize;
+                    pos += stepVector;
                     //sample the texture
                     fixed density = sample_cloud(pos);
                     densitySum += density * stepSize;
@@ -175,34 +200,45 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
                 float isRayHittingBox = sign(dstInBox);
 
-                float distanceStep = max(dstToBoxBack - dstToBox, 0) / 32;
+                float distanceStep = max(dstToBoxBack - dstToBox, 0) / 24;
 
                 float dstTravelled = blueNoiseOffset * _BlueNoiseStrength;
-                float transmission = 1.0f;
+                float transmittance = 1.0f;
                 float lightEnergy = 0.0f;
                 float3 headPos = _WorldSpaceCameraPos + (dstToBox + dstTravelled) * viewVector;
-                for(uint step = 0; step < 32; step++){
-                    float currentStepDistance = distanceStep * exp(step / 32) / 1.7;
+                float absorptionAmount = distanceStep * _LightAbsorption;
+                float3 stepVector = distanceStep * normalizedVector;
+                for(uint step = 0; step < 24; step++){
                     if(dstTravelled > dstToBoxBack){
                         break;
                     }
-                    if(transmission < 0.01){
+                    if(transmittance < 0.01){
                         break; //too occluded to do anything
                     }
                     fixed cubemapDensity = sample_cloud(headPos); //_DensityMultiplier has been multiplied inside
-                    //trace the lightrays for light transmission
-                    lightEnergy += transmission * march_lightray(headPos) * cubemapDensity * currentStepDistance;
+                    //trace the lightrays for light transmittance
+                    lightEnergy += transmittance * march_lightray(headPos) * cubemapDensity * distanceStep;
 
-                    transmission *= exp(-currentStepDistance * cubemapDensity * _LightAbsorption);
-                    headPos += currentStepDistance * normalizedVector;
-                    dstTravelled += currentStepDistance;
+                    transmittance *= exp(-absorptionAmount * cubemapDensity);
+                    headPos += stepVector;
+                    dstTravelled += distanceStep;
                 }
+                float cosAngle = dot(normalizedVector, _WorldSpaceLightPos0.xyz);
+                float3 phaseVal = phase(cosAngle);
+                float transmittancePower = (1 - transmittance);
+                float scatterOffset = saturate(lightEnergy);
+                float midOffset = saturate(scatterOffset - (1 - _ShadowPower)) / _ShadowPower;
+                float hlOffset = pow(scatterOffset, _BrightnessPower);
+                
 
+                float3 lowToneColor = lerp(_ShadowColor, _MidColor, midOffset);
+                float3 finalColor = lerp(lowToneColor, _LightColor0, hlOffset);
+
+                finalColor += phaseVal;
+                //return float4((finalColor + phaseVal) * transmittancePower, transmittancePower);
 
                 fixed4 col = tex2D(_MainTex, i.uv);
-                //return transmission;
-                return (lightEnergy * isRayHittingBox);
-                return lerp(col, float4(1.0, 1.0, 1.0, 1.0), (1 - transmission));
+                return lerp(col, float4(finalColor, 1.0f), (1 - transmittance) * (1 - transmittance) );
 
                 // just invert the colors
                 //col.rgb = 1 - col.rgb;

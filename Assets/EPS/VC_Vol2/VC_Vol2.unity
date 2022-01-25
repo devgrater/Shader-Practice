@@ -563,7 +563,7 @@ Transform:
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.444, y: 2.1, z: 0.166}
-  m_LocalScale: {x: 104.01156, y: 11.246916, z: 161.7639}
+  m_LocalScale: {x: 160.27141, y: 11.246916, z: 161.7639}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
@@ -605,21 +605,25 @@ MonoBehaviour:
   targetCamera: {fileID: 2076876968}
   postProcessMat: {fileID: 2100000, guid: e13ab9b1d1761764f87faf3a592b3c74, type: 2}
   boxVolume: {fileID: 1708544432}
-  cloudDetail3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
-  cloudMask3d: {fileID: 11700000, guid: 918c8ea1c23123343a2458bbc6740ab0, type: 3}
   weatherMap: {fileID: 2800000, guid: 309b35fb697357e48aeea07e770b08fc, type: 3}
-  blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  cloudMaskScale: 0.004
+  cloudMask3d: {fileID: 11700000, guid: 918c8ea1c23123343a2458bbc6740ab0, type: 3}
+  cloudMaskScale: 0.003
   cloudMaskWeight: {x: 0.48, y: -0.05, z: 0.49, w: 0}
+  cloudDetail3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
   cloudDetailScale: 0.052
-  cloudDetailWeight: {x: 1.12, y: -0.33, z: -0.2, w: -0.07}
-  densityMultiplier: 1.23
-  absorption: 1.79
-  weatherMapScale: 0.0145
-  weatherMapOffset: 0.01
-  heightMapOffset: 0.319
+  cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
+  blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
   blueNoiseStrength: 1
-  marchDistance: 0.04
+  densityMultiplier: 1.19
+  absorption: 3.8
+  weatherMapScale: 0.008
+  weatherMapOffset: 0.01
+  heightMapOffset: 0.501
+  phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
+  midToneColor: {r: 1, g: 0.66169494, b: 0.3820755, a: 0}
+  lowToneColor: {r: 0, g: 0.2815582, b: 0.42352942, a: 0}
+  shadowPower: 1
+  brightnessPower: 0.776
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0

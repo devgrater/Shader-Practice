@@ -30,6 +30,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             float _BlueNoiseStrength;
             float _WeatherMapOffset;
             float _CloudMaskScale;
+            float _MaxMarchDistance;
 
             float _ShadowPower;
             float _BrightnessPower;
@@ -212,11 +213,10 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float transmittance = 1.0f;
                 float lightEnergy = 0.0f;
                 float3 headPos = _WorldSpaceCameraPos + (dstToBox + dstTravelled) * viewVector;
-                float absorptionAmount = distanceStep * _LightAbsorption;
-
                 float3 stepVector = distanceStep * normalizedVector;
+                float absorptionAmount = distanceStep * _LightAbsorption;
+                
                 for(uint step = 0; step < 32; step++){
-                    distanceStep = totalDistanceStep * exp(step / 32) / 1.7;
                     if(dstTravelled > dstToBoxBack){
                         break;
                     }
@@ -226,10 +226,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     fixed cubemapDensity = sample_cloud(headPos); //_DensityMultiplier has been multiplied inside
                     //trace the lightrays for light transmittance
                     if(cubemapDensity > 0.01){
+                        
                         lightEnergy += transmittance * march_lightray(headPos, inverseViewVector) * cubemapDensity * distanceStep;
                         transmittance *= exp(-absorptionAmount * cubemapDensity);
                     }
-
+                    
                     headPos += stepVector;
                     dstTravelled += distanceStep;
                 }

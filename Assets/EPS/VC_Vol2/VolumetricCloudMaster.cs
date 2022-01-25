@@ -40,6 +40,7 @@ public class VolumetricCloudMaster : MonoBehaviour
     [SerializeField] private Vector4 phaseParams;
     
     [SerializeField][Range(0, 100)] private float marchDistance = 0.5f;
+    [SerializeField][Range(0, 100)] private float maxMarchDistance = 0.5f;
 
     [Header("Cloud Colors")]
     [SerializeField][ColorUsage(true, true)] private Color midToneColor;
@@ -73,6 +74,7 @@ public class VolumetricCloudMaster : MonoBehaviour
         postProcessMat.SetFloat("_ShadowPower", shadowPower);
         postProcessMat.SetFloat("_ShadowThreshold", shadowThreshold);
         postProcessMat.SetFloat("_BrightnessPower", brightnessPower);
+        postProcessMat.SetFloat("_MaxMarchDistance", maxMarchDistance);
 
         ///////////////
         postProcessMat.SetVector("_CloudMaskWeight", cloudMaskWeight);

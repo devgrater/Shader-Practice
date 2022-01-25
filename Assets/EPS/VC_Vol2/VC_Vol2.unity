@@ -402,7 +402,7 @@ Transform:
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.444, y: 2.1, z: 0.166}
-  m_LocalScale: {x: 144.42905, y: 11.246916, z: 132.21318}
+  m_LocalScale: {x: 144.42905, y: 14.094865, z: 132.21318}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -449,22 +449,23 @@ MonoBehaviour:
   weatherMapOffset: 0.01
   heightMapOffset: 0.501
   cloudMask3d: {fileID: 11700000, guid: 918c8ea1c23123343a2458bbc6740ab0, type: 3}
-  cloudMaskScale: 0.0026
+  cloudMaskScale: 0.002
   cloudMaskWeight: {x: 0.48, y: -0.05, z: 0.49, w: 0}
   cloudDetail3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
   cloudDetailScale: 0.052
   cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
   blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  blueNoiseStrength: 1
-  densityMultiplier: 1.36
+  blueNoiseStrength: 1.99
+  densityMultiplier: 1.49
   absorption: 2.28
   phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
   marchDistance: 1.4
-  midToneColor: {r: 2, g: 1.1137255, b: 0.6745098, a: 0}
-  lowToneColor: {r: 0.3018868, g: 0.0042719753, b: 0.11293055, a: 0}
-  shadowPower: 1.168
-  brightnessPower: 1.058
-  shadowThreshold: 0.158
+  maxMarchDistance: 46.4
+  midToneColor: {r: 1, g: 0.3390638, b: 0.23137254, a: 0}
+  lowToneColor: {r: 0.3019608, g: 0.0039215703, b: 0.24163206, a: 0}
+  shadowPower: 1.631
+  brightnessPower: 1.343
+  shadowThreshold: 0.173
   baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
   weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
   detailMapAnimation: {x: 2.1, y: 0.94, z: 0, w: 0}

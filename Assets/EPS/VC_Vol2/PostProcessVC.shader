@@ -33,6 +33,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
 
             float _ShadowPower;
             float _BrightnessPower;
+            float _ShadowThreshold;
 
             float4 _CloudMaskWeight;
             float4 _CloudDetailWeight;
@@ -40,6 +41,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             float4 _ShadowColor;
             float4 _MidColor;
             float4 _PhaseParams;
+            
             
 
             ////////// Automatic Operations /////////////
@@ -134,10 +136,10 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 //trace for the light plane:
                 float maxHit = trace_vbox_planes(pos, 1 / _WorldSpaceLightPos0).y;
                 //this will guaratee for a hit... almost.
-                float stepSize = maxHit / 8;
+                float stepSize = maxHit / 6;
                 float3 stepVector = _WorldSpaceLightPos0 * stepSize;
                 float densitySum = 0.0f;
-                for(int i = 0; i < 8; i++){
+                for(int i = 0; i < 6; i++){
                     //take a step in the light direct:
                     pos += stepVector;
                     //sample the texture
@@ -145,7 +147,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     densitySum += density * stepSize;
                 }
                 float outEnergy = exp(-densitySum * _LightAbsorption);
-                return outEnergy;
+                return _ShadowThreshold + outEnergy * (1 - _ShadowThreshold);
             }
 
 
@@ -199,8 +201,9 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float dstInBox = vboxHitInfo.y;
                 float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
                 float isRayHittingBox = sign(dstInBox);
-
-                float distanceStep = max(dstToBoxBack - dstToBox, 0) / 24;
+                float totalDistanceStep = max(dstToBoxBack - dstToBox, 0) / 32;//_MarchDistance * sign(max(dstToBoxBack - dstToBox, 0));
+                float distanceStep = totalDistanceStep;
+                //float distanceStep = max(dstToBoxBack - dstToBox, 0) / 24;
 
                 float dstTravelled = blueNoiseOffset * _BlueNoiseStrength;
                 float transmittance = 1.0f;
@@ -208,7 +211,8 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 headPos = _WorldSpaceCameraPos + (dstToBox + dstTravelled) * viewVector;
                 float absorptionAmount = distanceStep * _LightAbsorption;
                 float3 stepVector = distanceStep * normalizedVector;
-                for(uint step = 0; step < 24; step++){
+                for(uint step = 0; step < 32; step++){
+                    distanceStep = totalDistanceStep * exp(step / 32) / 1.7;
                     if(dstTravelled > dstToBoxBack){
                         break;
                     }

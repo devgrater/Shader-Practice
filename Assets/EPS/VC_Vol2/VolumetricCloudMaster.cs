@@ -87,13 +87,14 @@ public class VolumetricCloudMaster : MonoBehaviour
         postProcessMat.SetTexture("_CloudMask", cloudMask3d);
         postProcessMat.SetTexture("_BlueNoise", blueNoise);
         postProcessMat.SetTexture("_WeatherMap", weatherMap);
+
+        ////////////// ANIMATIONS //////////////////////
+        postProcessMat.SetVector("_BaseMapAnim", baseMapAnimation);
+        postProcessMat.SetVector("_WeatherMapAnim", weatherMapAnimation);
+        postProcessMat.SetVector("_DetailMapAnim", detailMapAnimation);
+
         
         ////////////// AUTOMATIC //////////////////////////
-        /*
-        Matrix4x4 viewMat = targetCamera.worldToCameraMatrix;
-        Matrix4x4 projMat = GL.GetGPUProjectionMatrix(targetCamera.projectionMatrix, false);
-        Matrix4x4 viewProjMat = (projMat * viewMat);
-        postProcessMat.SetMatrix("_ViewProjInv", viewProjMat.inverse);*/
         Vector3 boxMin = boxVolume.transform.position - boxVolume.localScale / 2;
         Vector3 boxMax = boxVolume.transform.position + boxVolume.localScale / 2;
         postProcessMat.SetVector("_VBoxMin", new Vector4(boxMin.x, boxMin.y, boxMin.z, 0.0f));

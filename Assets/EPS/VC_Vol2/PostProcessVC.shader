@@ -42,6 +42,9 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             float4 _MidColor;
             float4 _PhaseParams;
             
+            float3 _BaseMapAnim;
+            float2 _WeatherMapAnim;
+            float3 _DetailMapAnim;
             
 
             ////////// Automatic Operations /////////////
@@ -69,8 +72,8 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 return float2(dstToBox, dstInBox);
             }
 
-            fixed sample_volume_texture(float3 pos){
-                fixed4 volume = tex3D(_VolumeTex, pos * _Scale) * _DensityMultiplier;
+            fixed sample_detail_texture(float3 pos){
+                fixed4 volume = tex3D(_VolumeTex, (pos + _Time.ggg * _DetailMapAnim) * _Scale ) * _DensityMultiplier;
                 return saturate(dot(volume, _CloudDetailWeight));
             }
 
@@ -79,7 +82,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             }
 
             fixed sample_cloud_baseshape(float3 pos){
-                float3 noiseMask = sample_noise_mask(pos);
+                float3 noiseMask = sample_noise_mask(pos + _Time.ggg * _BaseMapAnim);
                 noiseMask = noiseMask * noiseMask; //make some part less visible....
                 noiseMask = saturate(noiseMask - 0.2f);
 
@@ -89,7 +92,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
 
             fixed sample_weather_map(float3 pos){
                 float depthInClouds = (pos.y - _VBoxMin.y) / (_VBoxMax.y - _VBoxMin.y);
-                float weatherMask = tex2D(_WeatherMap, pos.xz * _WeatherMapScale).r;
+                float weatherMask = tex2D(_WeatherMap, (pos.xz + _Time.gg * _WeatherMapAnim.xy) * _WeatherMapScale).r;
                 weatherMask = saturate(weatherMask + _WeatherMapOffset);
                 float gMin = remap(weatherMask, 0, 1, 0.1, 0.6);
                 float gMax = remap(weatherMask, 0, 1, gMin, 0.9);
@@ -126,7 +129,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 fixed weatherMap = sample_weather_map(pos);
                 fixed baseSum = baseShape * weatherMap;
                 if(baseSum > 0.01){
-                    return sample_volume_texture(pos) * baseSum;
+                    return sample_detail_texture(pos) * baseSum;
                 }
                 return baseSum;
             }

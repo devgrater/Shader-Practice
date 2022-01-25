@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 593c5ce011407b045b51fc947e629a2d, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: b7944b9b25a0bac4fb68025b8ea5aea1, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.55180144, g: 0.85084736, b: 0.84314877, a: 1}
+  m_IndirectSpecularColor: {r: 0.8914989, g: 0.86719096, b: 0.82686496, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -196,7 +196,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5a8242792f1eeb0498abd8acf425b98b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.4
+      value: 6.6
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5a8242792f1eeb0498abd8acf425b98b, type: 3}
       propertyPath: m_LocalPosition.y
@@ -204,7 +204,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5a8242792f1eeb0498abd8acf425b98b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 5.4
+      value: 6.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5a8242792f1eeb0498abd8acf425b98b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -328,13 +328,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1529081651}
-  m_LocalRotation: {x: 0.43216446, y: 0.8294282, z: -0.35394537, w: 0.002336921}
+  m_LocalRotation: {x: 0.53997225, y: 0.7539239, z: -0.14309222, w: 0.34576494}
   m_LocalPosition: {x: 3.818552, y: 20.606997, z: 43.85689}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 143.90201, y: 1461.951, z: -117.725006}
+  m_LocalEulerAnglesHint: {x: 143.90201, y: 1413, z: -117.725006}
 --- !u!114 &1529081654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -465,9 +465,9 @@ MonoBehaviour:
   shadowPower: 1.168
   brightnessPower: 1.058
   shadowThreshold: 0.158
-  baseMapAnimation: {x: 0, y: 0, z: 0, w: 0}
-  weatherMapAnimation: {x: 0, y: 0, z: 0, w: 0}
-  detailMapAnimation: {x: 0, y: 0, z: 0, w: 0}
+  baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
+  weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
+  detailMapAnimation: {x: 2.1, y: 8.72, z: 0, w: 0}
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0

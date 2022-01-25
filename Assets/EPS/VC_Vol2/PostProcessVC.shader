@@ -206,7 +206,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float dstInBox = vboxHitInfo.y;
                 float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
                 float isRayHittingBox = sign(dstInBox);
-                float totalDistanceStep = max(dstToBoxBack - dstToBox, 0) / 32;//_MarchDistance * sign(max(dstToBoxBack - dstToBox, 0));
+                float totalDistanceStep = min(max(dstToBoxBack - dstToBox, 0) / 32, (_VBoxMax.y - _VBoxMin.y) * 0.5);//_MarchDistance * sign(max(dstToBoxBack - dstToBox, 0));
                 float distanceStep = totalDistanceStep;
                 //float distanceStep = max(dstToBoxBack - dstToBox, 0) / 24;
 

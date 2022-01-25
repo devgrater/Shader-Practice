@@ -562,8 +562,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.444, y: -1.66, z: 0.166}
-  m_LocalScale: {x: 4.422897, y: 5.3823175, z: 4.8241444}
+  m_LocalPosition: {x: 0.444, y: 0.13, z: 0.166}
+  m_LocalScale: {x: 27.655842, y: 3.5872843, z: 33.305027}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
@@ -605,7 +605,16 @@ MonoBehaviour:
   targetCamera: {fileID: 2076876968}
   postProcessMat: {fileID: 2100000, guid: e13ab9b1d1761764f87faf3a592b3c74, type: 2}
   boxVolume: {fileID: 1708544432}
-  densityMultiplier: 0.46
+  cloudVolume3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
+  weatherMap: {fileID: 2800000, guid: 309b35fb697357e48aeea07e770b08fc, type: 3}
+  blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
+  densityMultiplier: 1.04
+  absorption: 3.05
+  scale: 0.195
+  weatherMapScale: 0.034
+  heightMapOffset: 0.62
+  blueNoiseStrength: 1.02
+  marchDistance: 0.04
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0

@@ -106,8 +106,6 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float dstFromEdgeZ = min(containerEdgeFadeDst, min(pos.z - _VBoxMin.z, _VBoxMax.z - pos.z));
                 float edgeWeight = min(dstFromEdgeZ,dstFromEdgeX) / containerEdgeFadeDst;
 
-
-                
                 return saturate(heightGradient * edgeWeight);
             }
 
@@ -135,14 +133,14 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             }
 
             //nothign else to worry about.
-            fixed march_lightray(float3 pos){
+            fixed march_lightray(float3 pos, float3 inverseLightVector){
                 //trace for the light plane:
-                float maxHit = trace_vbox_planes(pos, 1 / _WorldSpaceLightPos0).y;
+                float maxHit = trace_vbox_planes(pos, inverseLightVector).y;
                 //this will guaratee for a hit... almost.
-                float stepSize = maxHit / 6;
+                float stepSize = maxHit * 0.25f;
                 float3 stepVector = _WorldSpaceLightPos0 * stepSize;
                 float densitySum = 0.0f;
-                for(int i = 0; i < 6; i++){
+                for(int i = 0; i < 4; i++){
                     //take a step in the light direct:
                     pos += stepVector;
                     //sample the texture
@@ -193,13 +191,15 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             {
                 fixed3 viewVector = i.viewVector;
                 fixed3 normalizedVector = normalize(viewVector);
+                float3 inverseViewVector = 1 / viewVector;
+                float3 inverseLightVector = 1 / _WorldSpaceLightPos0;
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
                 float linearDepth = LinearEyeDepth(depth);
-                float blueNoiseOffset = tex2D(_BlueNoise, i.uv * 2.0f);
+                float blueNoiseOffset = tex2D(_BlueNoise, i.uv * 3.0f);
 
 
                 //now, test for whether you hit the box or not.
-                float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, 1 / viewVector);
+                float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, inverseViewVector);
                 float dstToBox = vboxHitInfo.x;
                 float dstInBox = vboxHitInfo.y;
                 float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
@@ -213,6 +213,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float lightEnergy = 0.0f;
                 float3 headPos = _WorldSpaceCameraPos + (dstToBox + dstTravelled) * viewVector;
                 float absorptionAmount = distanceStep * _LightAbsorption;
+
                 float3 stepVector = distanceStep * normalizedVector;
                 for(uint step = 0; step < 32; step++){
                     distanceStep = totalDistanceStep * exp(step / 32) / 1.7;
@@ -224,9 +225,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     }
                     fixed cubemapDensity = sample_cloud(headPos); //_DensityMultiplier has been multiplied inside
                     //trace the lightrays for light transmittance
-                    lightEnergy += transmittance * march_lightray(headPos) * cubemapDensity * distanceStep;
+                    if(cubemapDensity > 0.01){
+                        lightEnergy += transmittance * march_lightray(headPos, inverseViewVector) * cubemapDensity * distanceStep;
+                        transmittance *= exp(-absorptionAmount * cubemapDensity);
+                    }
 
-                    transmittance *= exp(-absorptionAmount * cubemapDensity);
                     headPos += stepVector;
                     dstTravelled += distanceStep;
                 }

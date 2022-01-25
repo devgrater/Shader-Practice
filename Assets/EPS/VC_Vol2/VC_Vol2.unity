@@ -467,7 +467,7 @@ MonoBehaviour:
   shadowThreshold: 0.158
   baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
   weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
-  detailMapAnimation: {x: 2.1, y: 8.72, z: 0, w: 0}
+  detailMapAnimation: {x: 2.1, y: 0.94, z: 0, w: 0}
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0

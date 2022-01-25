@@ -149,7 +149,8 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     densitySum += density * stepSize;
                 }
                 float outEnergy = exp(-densitySum * _LightAbsorption);
-                return _ShadowThreshold + outEnergy * (1 - _ShadowThreshold);
+                return outEnergy;
+                //return _ShadowThreshold + outEnergy * (1 - _ShadowThreshold);
             }
 
 
@@ -227,13 +228,15 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     //trace the lightrays for light transmittance
                     if(cubemapDensity > 0.01){
                         
-                        lightEnergy += transmittance * march_lightray(headPos, inverseViewVector) * cubemapDensity * distanceStep;
+                        lightEnergy += transmittance * march_lightray(headPos, inverseLightVector) * cubemapDensity * distanceStep;
                         transmittance *= exp(-absorptionAmount * cubemapDensity);
                     }
                     
                     headPos += stepVector;
                     dstTravelled += distanceStep;
                 }
+
+                //return lightEnergy;
                 float cosAngle = dot(normalizedVector, _WorldSpaceLightPos0.xyz);
                 float3 phaseVal = phase(cosAngle);
                 float transmittancePower = (1 - transmittance);

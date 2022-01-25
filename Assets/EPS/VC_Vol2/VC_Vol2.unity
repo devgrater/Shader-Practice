@@ -465,7 +465,7 @@ MonoBehaviour:
   lowToneColor: {r: 0.3019608, g: 0.0039215703, b: 0.24163206, a: 0}
   shadowPower: 1.631
   brightnessPower: 1.343
-  shadowThreshold: 0.173
+  shadowThreshold: 1
   baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
   weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
   detailMapAnimation: {x: 2.1, y: 0.94, z: 0, w: 0}

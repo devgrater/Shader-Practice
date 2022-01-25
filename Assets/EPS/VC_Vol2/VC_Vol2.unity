@@ -613,7 +613,7 @@ MonoBehaviour:
   scale: 0.195
   weatherMapScale: 0.034
   heightMapOffset: 0.62
-  blueNoiseStrength: 1.02
+  blueNoiseStrength: 1
   marchDistance: 0.04
 --- !u!81 &2076876967
 AudioListener:

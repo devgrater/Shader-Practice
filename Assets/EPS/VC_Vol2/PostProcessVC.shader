@@ -135,7 +135,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 fixed3 normalizedVector = normalize(viewVector);
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
                 float linearDepth = LinearEyeDepth(depth);
-                float blueNoiseOffset = tex2D(_BlueNoise, i.uv);
+                float blueNoiseOffset = tex2D(_BlueNoise, i.uv * 2.0f);
 
 
                 //now, test for whether you hit the box or not.

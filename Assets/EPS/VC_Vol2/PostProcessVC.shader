@@ -17,6 +17,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             sampler2D _WeatherMap;
             sampler2D _BlueNoise;
             sampler3D _VolumeTex;
+            sampler3D _CloudMask;
             
 
             /////////// User Params //////////////
@@ -27,7 +28,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             float _HeightMapOffset;
             float _MarchDistance;
             float _BlueNoiseStrength;
+            float _WeatherMapOffset;
+            float _CloudMaskScale;
 
+            float4 _CloudMaskWeight;
+            float4 _CloudDetailWeight;
 
             ////////// Automatic Operations /////////////
             float3 _VBoxMin;
@@ -55,24 +60,49 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             }
 
             fixed sample_volume_texture(float3 pos){
-                return tex3D(_VolumeTex, pos * _Scale) * _DensityMultiplier;
+                fixed4 volume = tex3D(_VolumeTex, pos * _Scale) * _DensityMultiplier;
+                return dot(volume, _CloudDetailWeight);
+            }
+
+            fixed sample_noise_mask(float3 pos){
+                return tex3D(_CloudMask, pos * _CloudMaskScale) * _DensityMultiplier;
+            }
+
+            fixed sample_cloud_baseshape(float3 pos){
+                float3 noiseMask = sample_noise_mask(pos);
+                noiseMask = noiseMask * noiseMask; //make some part less visible....
+                noiseMask = saturate(noiseMask - 0.2f);
+
+                float maskValue = dot(noiseMask, _CloudMaskWeight.xyz);
+                return maskValue;
             }
 
             fixed sample_weather_map(float3 pos){
                 float depthInClouds = (pos.y - _VBoxMin.y) / (_VBoxMax.y - _VBoxMin.y);
                 float weatherMask = tex2D(_WeatherMap, pos.xz * _WeatherMapScale).r;
+                weatherMask = saturate(weatherMask + _WeatherMapOffset);
                 float gMin = remap(weatherMask, 0, 1, 0.1, 0.6);
                 float gMax = remap(weatherMask, 0, 1, gMin, 0.9);
                 
                 float heightGradient = saturate(remap(depthInClouds, 0.0, gMin, 0, 1)) * saturate(remap(depthInClouds, 1, gMax, 0, 1));
                 float heightGradient2 = saturate(remap(depthInClouds, 0.0, weatherMask.r, 1, 0)) * saturate(remap(depthInClouds, 0.0, gMin, 0, 1));
                 heightGradient = saturate(lerp(heightGradient, heightGradient2, _HeightMapOffset));
+                
 
-                return heightGradient;
+
+
+                
+                return saturate(heightGradient);
             }
 
             fixed sample_cloud(float3 pos){
-                return sample_volume_texture(pos) * sample_weather_map(pos);
+                fixed baseShape = sample_cloud_baseshape(pos);
+                fixed weatherMap = sample_weather_map(pos);
+                fixed baseSum = baseShape * weatherMap;
+                if(baseSum > 0.01){
+                    return sample_volume_texture(pos) * baseSum;
+                }
+                return baseSum;
             }
 
             //nothign else to worry about.
@@ -152,7 +182,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float lightEnergy = 0.0f;
                 float3 headPos = _WorldSpaceCameraPos + (dstToBox + dstTravelled) * viewVector;
                 for(uint step = 0; step < 32; step++){
-                    float currentStepDistance = distanceStep;//distanceStep * exp(step / 32) / 1.7;
+                    float currentStepDistance = distanceStep * exp(step / 32) / 1.7;
                     if(dstTravelled > dstToBoxBack){
                         break;
                     }

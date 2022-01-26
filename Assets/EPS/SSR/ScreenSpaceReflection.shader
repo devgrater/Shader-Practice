@@ -3,10 +3,15 @@ Shader "Unlit/ScreenSpaceReflection"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _StepSize ("StepSize", Float) = 1.0
+        _BlueNoise ("Blue Noise", 2D) = "black" {}
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags {
+            "RenderType"="Transparent"
+            "Queue"="Transparent+1"
+        }
         LOD 100
 
         GrabPass {}
@@ -43,7 +48,8 @@ Shader "Unlit/ScreenSpaceReflection"
             sampler2D _MainTex;
             sampler2D _GrabTexture;
             sampler2D _CameraDepthTexture;
-
+            sampler2D _BlueNoise;
+            float _StepSize;
             float4 _MainTex_ST;
 
             v2f vert (appdata v)
@@ -66,24 +72,20 @@ Shader "Unlit/ScreenSpaceReflection"
                 //can probably trace everything in ndc space.,
 
                 //do it in the view space? //nah no need
-                
+                float2 uv = i.screenPos.xy / i.screenPos.w;
+                float blueNoiseValue = tex2D(_BlueNoise, uv * 3.0f);
                 float3 viewDir = normalize(i.viewDir);
                 float3 normal = normalize(i.worldNormal);
 
                 float3 reflectedVector = normalize(reflect(-viewDir, normal));
-                //reflectedVector = mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f));
-                //lets just think of an ideal case.
-                //viewDir.y = -viewDir.y;
-                reflectedVector = mul(UNITY_MATRIX_V, -viewDir);
-                //return float4(i.screenPos.xy / i.screenPos.w, 0.0f, 1.0f);
+                reflectedVector = normalize(mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f)).xyz);
 
-                //return float4(reflectedVector, 1.0f);
-
-                float3 viewStart = i.viewSpacePos;
+                float3 viewStart = i.viewSpacePos + reflectedVector * blueNoiseValue; //if you are already beyond, we don't even need to check. (TODO)
+                float startDepth = -viewStart.z;
                 //return float4(viewStart, 0.0f);
                 //then, we march along this....
                 for(int i = 0; i < 32; i++){
-                    viewStart += reflectedVector;
+                    viewStart += reflectedVector * _StepSize;
                     //and then...
                     float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
                     float2 screenUV = clipPosHead.xy / clipPosHead.w;
@@ -91,10 +93,10 @@ Shader "Unlit/ScreenSpaceReflection"
                     //return float4(screenUV, 0.0f , 1.0f);
 
                     float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
-                    if(-viewStart.z >= depth){
+                    if(-viewStart.z >= depth && startDepth < depth){
                         //return the uv, maybe?
                         return tex2D(_GrabTexture, screenUV);
-                        //return 1 / depth;//;float4(screenUV, 0.0f, 1.0f);
+                        //return float4(screenUV, 0.0f, 1.0f);
                     }
                 }
                 return 0.0f;

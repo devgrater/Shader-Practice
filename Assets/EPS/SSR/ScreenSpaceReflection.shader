@@ -93,7 +93,8 @@ Shader "Unlit/ScreenSpaceReflection"
                     float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
                     if(-viewStart.z >= depth){
                         //return the uv, maybe?
-                        return 1 / depth;//;float4(screenUV, 0.0f, 1.0f);
+                        return tex2D(_GrabTexture, screenUV);
+                        //return 1 / depth;//;float4(screenUV, 0.0f, 1.0f);
                     }
                 }
                 return 0.0f;

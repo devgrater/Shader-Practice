@@ -56,7 +56,7 @@ Shader "Unlit/ScreenSpaceReflection"
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 o.screenPos = ComputeScreenPos(o.vertex);
-                o.viewSpacePos = mul(UNITY_MATRIX_MV, v.vertex);
+                o.viewSpacePos = UnityObjectToViewPos(v.vertex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -66,24 +66,32 @@ Shader "Unlit/ScreenSpaceReflection"
                 //can probably trace everything in ndc space.,
 
                 //do it in the view space? //nah no need
-
+                
                 float3 viewDir = normalize(i.viewDir);
                 float3 normal = normalize(i.worldNormal);
 
                 float3 reflectedVector = normalize(reflect(-viewDir, normal));
-                reflectedVector = mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f));
+                //reflectedVector = mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f));
+                //lets just think of an ideal case.
+                //viewDir.y = -viewDir.y;
+                reflectedVector = mul(UNITY_MATRIX_V, -viewDir);
+
+                //return float4(reflectedVector, 1.0f);
 
                 float3 viewStart = i.viewSpacePos;
+                //return float4(viewStart, 0.0f);
                 //then, we march along this....
-                for(int i = 0; i < 10; i++){
+                for(int i = 0; i < 32; i++){
                     viewStart += reflectedVector;
                     //and then...
                     float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
                     float2 screenUV = clipPosHead.xy / clipPosHead.w;
+                    return float4(screenUV, 0.0f , 1.0f);
 
                     float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
                     if(-viewStart.z >= depth){
-                        return 1.0f;
+                        //return the uv, maybe?
+                        return 1 / depth;//;float4(screenUV, 0.0f, 1.0f);
                     }
                 }
                 return 0.0f;

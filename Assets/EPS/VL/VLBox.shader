@@ -151,7 +151,7 @@ Shader "Grater/Experimental/VLBox"
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep;
                     //using this, sample the shadowmap.
                     //essentially, the part thats not under the sun have almost no transmission.
-                    lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1) * depthColumnWidth * 2.7;
+                    lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
                     //using this, we can sample the shadow map.
                 }
 

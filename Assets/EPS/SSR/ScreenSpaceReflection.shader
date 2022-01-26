@@ -5,6 +5,9 @@ Shader "Unlit/ScreenSpaceReflection"
         _MainTex ("Texture", 2D) = "white" {}
         _StepSize ("StepSize", Float) = 1.0
         _BlueNoise ("Blue Noise", 2D) = "black" {}
+        _BlueNoiseIntensity ("Blue Noise Intensity", Range(0, 5)) = 1.0
+        _EdgeFade ("Edge Fade", Range(0, 1)) = 0.1
+        _ReflectionOffset ("Reflection Offset", Float) = 0.0
     }
     SubShader
     {
@@ -46,11 +49,15 @@ Shader "Unlit/ScreenSpaceReflection"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_ST;
             sampler2D _GrabTexture;
             sampler2D _CameraDepthTexture;
             sampler2D _BlueNoise;
             float _StepSize;
-            float4 _MainTex_ST;
+            float _ReflectionOffset;
+            float _EdgeFade;
+            float _BlueNoiseIntensity;
+            
 
             v2f vert (appdata v)
             {
@@ -67,54 +74,68 @@ Shader "Unlit/ScreenSpaceReflection"
                 return o;
             }
 
+            float fresnel(fixed cosTheta){
+                return pow(saturate(1.0 - cosTheta), 5.0);
+            }
+
+            float4 sample_reflection_color(float2 uv){
+                //offset the uv to blur it a bit?
+                return tex2D(_GrabTexture, uv);
+            }
+
+            float4 trace_reflection(float4 baseColor, float3 viewStart, float3 reflectedVector){
+                float startDepth = -viewStart.z;
+                
+                for(int i = 0; i < 16; i++){
+                    //step exponentially if you need...
+                    viewStart += reflectedVector * _StepSize;
+                    //and then...
+                    float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
+                    //normalize the coordinates
+                    float2 screenUV = clipPosHead.xy / clipPosHead.w;
+                    screenUV = (screenUV + 1.0) * 0.5f;
+                    screenUV.y = 1 - screenUV.y;
+                    
+                    float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
+                    if(-viewStart.z >= depth && startDepth + _ReflectionOffset < depth){
+                        //calculate out uv fade:
+                        float dstFromEdgeX = min(_EdgeFade, min(screenUV.x, 1 - screenUV.x));
+                        float dstFromEdgeY = min(_EdgeFade, min(screenUV.y, 1 - screenUV.y));
+                        float edgeWeight = min(dstFromEdgeY, dstFromEdgeX) / _EdgeFade;
+                        return lerp(baseColor, sample_reflection_color(screenUV), edgeWeight);
+                    }
+                }
+                //no hit
+                return float4(baseColor.xyz, 0.0f);
+            }
+
+
             fixed4 frag (v2f i) : SV_Target
             {
                 //can probably trace everything in ndc space.,
 
                 //do it in the view space? //nah no need
                 float2 uv = i.screenPos.xy / i.screenPos.w;
-                float blueNoiseValue = tex2D(_BlueNoise, uv * 3.0f);
+                float blueNoiseValue = tex2D(_BlueNoise, (uv) * 3.0f);
                 float3 viewDir = normalize(i.viewDir);
                 float3 normal = normalize(i.worldNormal);
+
+                float cosTheta = dot(viewDir, normal);
+                float fresnelValue = fresnel(cosTheta);
+
+                float4 baseColor = tex2D(_MainTex, i.uv);
+
+
 
                 float3 reflectedVector = normalize(reflect(-viewDir, normal));
                 reflectedVector = normalize(mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f)).xyz);
 
-                float3 viewStart = i.viewSpacePos + reflectedVector * blueNoiseValue; //if you are already beyond, we don't even need to check. (TODO)
-                float startDepth = -viewStart.z;
-                //return float4(viewStart, 0.0f);
-                //then, we march along this....
-                for(int i = 0; i < 32; i++){
-                    viewStart += reflectedVector * _StepSize;
-                    //and then...
-                    float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
-                    float2 screenUV = clipPosHead.xy / clipPosHead.w;
-                    screenUV = (screenUV + 1.0) * 0.5f;
-                    //return float4(screenUV, 0.0f , 1.0f);
-
-                    float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
-                    if(-viewStart.z >= depth && startDepth < depth){
-                        //return the uv, maybe?
-                        return tex2D(_GrabTexture, screenUV);
-                        //return float4(screenUV, 0.0f, 1.0f);
-                    }
-                }
-                return 0.0f;
-
-                /*
-                float3 viewDir = normalize(i.viewDir);
-                float3 normal = normalize(i.worldNormal);
-                //reflect the view direction
-                float3 reflectedVector = normalize(reflect(-viewDir, normal));
-                float4 startReflectionPos = i.vertex; //look!
-                
-
-                //need to find a way to convert the coordinates to screen space.
-                float4 screenSpaceVector = mul(UNITY_MATRIX_VP, reflectedVector);
-                return tex2D(_GrabTexture, screenSpaceVector.xy);
-                return float4(screenSpaceVector.xy / screenSpaceVector.w, 0.0f, 1.0f);*/
+                float3 viewStart = i.viewSpacePos + reflectedVector * blueNoiseValue * _BlueNoiseIntensity; //if you are already beyond, we don't even need to check. (TODO)
+                float4 outColor = trace_reflection(baseColor, viewStart, reflectedVector);
+                return lerp(baseColor, outColor, fresnelValue);
             }
             ENDCG
         }
     }
+    Fallback "VertexLit"
 }

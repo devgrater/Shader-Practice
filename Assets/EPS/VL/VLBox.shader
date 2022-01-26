@@ -145,12 +145,13 @@ Shader "Grater/Experimental/VLBox"
                 float depthColumnWidth = depthDiff / _StepCount;
 
                 float lightAmount = 0.0;
-                
+                float transmission = 1.0f;
                 for(float step = 0; step < _StepCount; step++){
                     float depthStep = (depthColumnWidth * step + i.screenPos.w) / perspectiveCorrection;
                     float3 fogWorldSpot = _WorldSpaceCameraPos + wsViewDir * depthStep;
                     //using this, sample the shadowmap.
-                    lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1);
+                    //essentially, the part thats not under the sun have almost no transmission.
+                    lightAmount += GetSunShadowsAttenuation_PCF5x5(fogWorldSpot, depthStep, 0.1) * depthColumnWidth * 2.7;
                     //using this, we can sample the shadow map.
                 }
 

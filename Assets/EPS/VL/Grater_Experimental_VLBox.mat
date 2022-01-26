@@ -25,7 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Depth: -0.5
-    - _FogDensity: 0.067
+    - _FogDensity: 0.046
     - _StepCount: 128
     m_Colors:
     - _FogColor: {r: 0.43867922, g: 0.77153677, b: 1, a: 1}

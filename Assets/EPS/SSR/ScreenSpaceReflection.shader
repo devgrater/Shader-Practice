@@ -36,6 +36,7 @@ Shader "Unlit/ScreenSpaceReflection"
                 float3 worldNormal : NORMAL;
                 float3 worldPos : TEXCOORD2;
                 float3 viewDir : TEXCOORD1;
+                float3 viewSpacePos : TEXCOORD4; 
                 float4 screenPos : TEXCOORD3;
             };
 
@@ -55,6 +56,7 @@ Shader "Unlit/ScreenSpaceReflection"
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 o.screenPos = ComputeScreenPos(o.vertex);
+                o.viewSpacePos = mul(UNITY_MATRIX_MV, v.vertex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -62,13 +64,29 @@ Shader "Unlit/ScreenSpaceReflection"
             fixed4 frag (v2f i) : SV_Target
             {
                 //can probably trace everything in ndc space.,
+
+                //do it in the view space? //nah no need
+
                 float3 viewDir = normalize(i.viewDir);
                 float3 normal = normalize(i.worldNormal);
 
                 float3 reflectedVector = normalize(reflect(-viewDir, normal));
-                //how to go to ndc space?
-                float4 screenSpaceVector = mul(UNITY_MATRIX_VP, reflectedVector);
+                reflectedVector = mul(UNITY_MATRIX_V, float4(reflectedVector, 0.0f));
 
+                float3 viewStart = i.viewSpacePos;
+                //then, we march along this....
+                for(int i = 0; i < 10; i++){
+                    viewStart += reflectedVector;
+                    //and then...
+                    float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
+                    float2 screenUV = clipPosHead.xy / clipPosHead.w;
+
+                    float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
+                    if(-viewStart.z >= depth){
+                        return 1.0f;
+                    }
+                }
+                return 0.0f;
 
                 /*
                 float3 viewDir = normalize(i.viewDir);

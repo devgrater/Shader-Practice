@@ -75,6 +75,7 @@ Shader "Unlit/ScreenSpaceReflection"
                 //lets just think of an ideal case.
                 //viewDir.y = -viewDir.y;
                 reflectedVector = mul(UNITY_MATRIX_V, -viewDir);
+                //return float4(i.screenPos.xy / i.screenPos.w, 0.0f, 1.0f);
 
                 //return float4(reflectedVector, 1.0f);
 
@@ -86,7 +87,8 @@ Shader "Unlit/ScreenSpaceReflection"
                     //and then...
                     float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
                     float2 screenUV = clipPosHead.xy / clipPosHead.w;
-                    return float4(screenUV, 0.0f , 1.0f);
+                    screenUV = (screenUV + 1.0) * 0.5f;
+                    //return float4(screenUV, 0.0f , 1.0f);
 
                     float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
                     if(-viewStart.z >= depth){

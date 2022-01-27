@@ -205,9 +205,10 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float2 vboxHitInfo = trace_vbox_planes(_WorldSpaceCameraPos, inverseViewVector);
                 float dstToBox = vboxHitInfo.x;
                 float dstInBox = vboxHitInfo.y;
-                float dstToBoxBack = min(dstInBox + dstToBox, linearDepth);
-                float isRayHittingBox = sign(dstInBox);
-                float totalDistanceStep = min(max(dstToBoxBack - dstToBox, 0) / 32, (_VBoxMax.y - _VBoxMin.y) * 0.5);//_MarchDistance * sign(max(dstToBoxBack - dstToBox, 0));
+                float dstToBoxBack = min(dstInBox, linearDepth - dstToBox);
+                float isRayHittingBox = sign(dstToBoxBack);
+
+                float totalDistanceStep = _MarchDistance * isRayHittingBox;//min(max(dstToBoxBack - dstToBox, 0) / 32, _MarchDistance);//_MarchDistance * sign(max(dstToBoxBack - dstToBox, 0));
                 float distanceStep = totalDistanceStep;
                 //float distanceStep = max(dstToBoxBack - dstToBox, 0) / 24;
 
@@ -218,14 +219,10 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 stepVector = distanceStep * normalizedVector;
                 float absorptionAmount = distanceStep * _LightAbsorption;
                 
-                for(uint step = 0; step < 32; step++){
-                    if(dstTravelled > dstToBoxBack){
-                        break;
-                    }
-                    if(transmittance < 0.01){
-                        break; //too occluded to do anything
-                    }
+                [unroll(55)]
+                while(dstTravelled < dstToBoxBack && transmittance > 0.01){
                     fixed cubemapDensity = sample_cloud(headPos); //_DensityMultiplier has been multiplied inside
+                    dstTravelled += distanceStep;
                     //trace the lightrays for light transmittance
                     if(cubemapDensity > 0.01){
                         
@@ -234,7 +231,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                     }
                     
                     headPos += stepVector;
-                    dstTravelled += distanceStep;
+                    
                 }
 
                 //return lightEnergy;

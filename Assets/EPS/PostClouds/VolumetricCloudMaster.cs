@@ -42,21 +42,25 @@ public class VolumetricCloudMaster : MonoBehaviour
     [SerializeField][Range(0, 100)] private float marchDistance = 0.5f;
     [SerializeField][Range(0, 100)] private float maxMarchDistance = 0.5f;
 
+    /*
     [Header("Cloud Colors")]
     [SerializeField][ColorUsage(true, true)] private Color midToneColor;
     [SerializeField][ColorUsage(true, true)] private Color lowToneColor;
     [SerializeField][Range(0, 2)] private float shadowPower = 0.5f;
     [SerializeField][Range(0, 2)] private float brightnessPower = 0.5f;
-    [SerializeField][Range(0, 1)] private float shadowThreshold = 0.5f;
+    [SerializeField][Range(0, 1)] private float shadowThreshold = 0.5f;*/
+
+    [Header("Colors")]
+    public Gradient gradient = new Gradient();
+    private Texture2D gradientMap;
+    
 
     [Header("Animations")]
     [SerializeField] private Vector4 baseMapAnimation;
     [SerializeField] private Vector4 weatherMapAnimation;
     [SerializeField] private Vector4 detailMapAnimation;
     
-    [Header("Colors")]
-    private Texture2D gradientMap;
-    public Gradient gradient = new Gradient();
+
 
     void Start(){
         RecomputeGradientMap(); // do it here!
@@ -77,16 +81,16 @@ public class VolumetricCloudMaster : MonoBehaviour
         postProcessMat.SetFloat("_BlueNoiseStrength", blueNoiseStrength);
         postProcessMat.SetFloat("_CloudMaskScale", cloudMaskScale);
 
-        postProcessMat.SetFloat("_ShadowPower", shadowPower);
-        postProcessMat.SetFloat("_ShadowThreshold", shadowThreshold);
-        postProcessMat.SetFloat("_BrightnessPower", brightnessPower);
+        // postProcessMat.SetFloat("_ShadowPower", shadowPower);
+        // postProcessMat.SetFloat("_ShadowThreshold", shadowThreshold);
+        // postProcessMat.SetFloat("_BrightnessPower", brightnessPower);
         postProcessMat.SetFloat("_MaxMarchDistance", maxMarchDistance);
 
         ///////////////
         postProcessMat.SetVector("_CloudMaskWeight", cloudMaskWeight);
         postProcessMat.SetVector("_CloudDetailWeight", cloudDetailWeight);
-        postProcessMat.SetVector("_ShadowColor", lowToneColor);
-        postProcessMat.SetVector("_MidColor", midToneColor);
+        // postProcessMat.SetVector("_ShadowColor", lowToneColor);
+        // postProcessMat.SetVector("_MidColor", midToneColor);
         postProcessMat.SetVector("_PhaseParams", phaseParams);
 
         //////////////// TEXTURES ///////////////////////////

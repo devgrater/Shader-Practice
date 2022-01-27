@@ -402,7 +402,7 @@ Transform:
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.444, y: 2.1, z: 0.166}
-  m_LocalScale: {x: 168.00218, y: 23.180325, z: 212.53079}
+  m_LocalScale: {x: 190.59848, y: 22.281305, z: 212.53079}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -602,14 +602,14 @@ MonoBehaviour:
   weatherMapOffset: 0.01
   heightMapOffset: 0.501
   cloudMask3d: {fileID: 11700000, guid: 918c8ea1c23123343a2458bbc6740ab0, type: 3}
-  cloudMaskScale: 0.002
+  cloudMaskScale: 0.0015
   cloudMaskWeight: {x: 0.48, y: -0.05, z: 0.49, w: 0}
   cloudDetail3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
   cloudDetailScale: 0.052
   cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
   blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  blueNoiseStrength: 5
-  densityMultiplier: 1.09
+  blueNoiseStrength: 4
+  densityMultiplier: 1.02
   absorption: 4
   phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
   marchDistance: 2.5
@@ -627,15 +627,15 @@ MonoBehaviour:
     key0: {r: 0.5943396, g: 0.21586862, b: 0.41919044, a: 1}
     key1: {r: 0.7735849, g: 0.33935562, b: 0.49175593, a: 1}
     key2: {r: 0.9245283, g: 0.5712887, b: 0.69443643, a: 0}
-    key3: {r: 1, g: 1, b: 1, a: 0}
+    key3: {r: 0.9245283, g: 0.5712887, b: 0.69443643, a: 0}
     key4: {r: 0.45977217, g: 0.76934993, b: 0.7924528, a: 0}
     key5: {r: 0.45977217, g: 0.76934993, b: 0.7924528, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
     ctime1: 9638
-    ctime2: 31033
-    ctime3: 51272
+    ctime2: 24094
+    ctime3: 26214
     ctime4: 28334
     ctime5: 28334
     ctime6: 0
@@ -649,5 +649,5 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 3
+    m_NumColorKeys: 4
     m_NumAlphaKeys: 2

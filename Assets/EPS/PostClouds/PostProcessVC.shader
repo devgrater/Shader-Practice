@@ -198,7 +198,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 inverseLightVector = 1 / _WorldSpaceLightPos0;
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
                 float linearDepth = LinearEyeDepth(depth);
-                float blueNoiseOffset = tex2D(_BlueNoise, i.uv * 3.0f);
+                float blueNoiseOffset = tex2D(_BlueNoise, (i.uv + _Time.gg) * 3.0f );
 
 
                 //now, test for whether you hit the box or not.
@@ -219,7 +219,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 stepVector = distanceStep * normalizedVector;
                 float absorptionAmount = distanceStep * _LightAbsorption;
                 
-                [unroll(55)]
+                [loop]
                 while(dstTravelled < dstToBoxBack && transmittance > 0.01){
                     fixed cubemapDensity = sample_cloud(headPos); //_DensityMultiplier has been multiplied inside
                     dstTravelled += distanceStep;

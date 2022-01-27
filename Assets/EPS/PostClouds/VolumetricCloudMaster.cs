@@ -58,7 +58,7 @@ public class VolumetricCloudMaster : MonoBehaviour
     private Texture2D gradientMap;
     public Gradient gradient = new Gradient();
 
-    void Awake(){
+    void Start(){
         RecomputeGradientMap(); // do it here!
     }
 

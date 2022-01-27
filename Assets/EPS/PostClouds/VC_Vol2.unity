@@ -402,7 +402,7 @@ Transform:
   m_GameObject: {fileID: 1708544430}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.444, y: 2.1, z: 0.166}
-  m_LocalScale: {x: 121.07393, y: 23.180325, z: 112.71742}
+  m_LocalScale: {x: 168.00218, y: 23.180325, z: 212.53079}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -418,7 +418,6 @@ GameObject:
   - component: {fileID: 2076876969}
   - component: {fileID: 2076876968}
   - component: {fileID: 2076876967}
-  - component: {fileID: 2076876966}
   - component: {fileID: 2076876970}
   - component: {fileID: 2076876971}
   - component: {fileID: 2076876972}
@@ -430,75 +429,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2076876966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2076876965}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1d64ca69ba5d624e923ce023caf1ab9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetCamera: {fileID: 2076876968}
-  postProcessMat: {fileID: 2100000, guid: e13ab9b1d1761764f87faf3a592b3c74, type: 2}
-  boxVolume: {fileID: 1708544432}
-  weatherMap: {fileID: 2800000, guid: 309b35fb697357e48aeea07e770b08fc, type: 3}
-  weatherMapScale: 0.008
-  weatherMapOffset: 0.01
-  heightMapOffset: 0.501
-  cloudMask3d: {fileID: 11700000, guid: 918c8ea1c23123343a2458bbc6740ab0, type: 3}
-  cloudMaskScale: 0.002
-  cloudMaskWeight: {x: 0.48, y: -0.05, z: 0.49, w: 0}
-  cloudDetail3d: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
-  cloudDetailScale: 0.052
-  cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
-  blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  blueNoiseStrength: 3.64
-  densityMultiplier: 1.4
-  absorption: 2.28
-  phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
-  marchDistance: 1.4
-  maxMarchDistance: 0
-  midToneColor: {r: 1, g: 0.3390638, b: 0.23137254, a: 0}
-  lowToneColor: {r: 0.3019608, g: 0.0039215703, b: 0.24163206, a: 0}
-  shadowPower: 1.631
-  brightnessPower: 1.343
-  shadowThreshold: 1
-  baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
-  weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
-  detailMapAnimation: {x: 2.1, y: 0.94, z: 0, w: 0}
-  gradient:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
 --- !u!81 &2076876967
 AudioListener:
   m_ObjectHideFlags: 0
@@ -678,17 +608,17 @@ MonoBehaviour:
   cloudDetailScale: 0.052
   cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
   blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  blueNoiseStrength: 3.64
-  densityMultiplier: 1.2
-  absorption: 2.67
+  blueNoiseStrength: 5
+  densityMultiplier: 1.09
+  absorption: 4
   phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
   marchDistance: 1.4
   maxMarchDistance: 0
   midToneColor: {r: 2.670157, g: 0, b: 0, a: 0}
   lowToneColor: {r: 0, g: 0.16225311, b: 0.30980393, a: 0}
-  shadowPower: 1.01
-  brightnessPower: 0.935
-  shadowThreshold: 0.823
+  shadowPower: 1.001
+  brightnessPower: 1.57
+  shadowThreshold: 0.748
   baseMapAnimation: {x: 7.75, y: 0, z: 0, w: 0}
   weatherMapAnimation: {x: 4.2, y: 0, z: 0, w: 0}
   detailMapAnimation: {x: 2.1, y: 0.94, z: 0, w: 0}
@@ -703,8 +633,8 @@ MonoBehaviour:
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
-    ctime1: 10794
-    ctime2: 20046
+    ctime1: 7517
+    ctime2: 21588
     ctime3: 30455
     ctime4: 28334
     ctime5: 28334

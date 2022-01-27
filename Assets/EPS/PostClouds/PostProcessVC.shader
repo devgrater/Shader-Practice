@@ -238,7 +238,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float cosAngle = dot(normalizedVector, _WorldSpaceLightPos0.xyz);
                 float3 phaseVal = phase(cosAngle);
                 float transmittancePower = (1 - transmittance);
-                float scatterOffset = saturate(lightEnergy);
+                float scatterOffset = saturate(lightEnergy) + phaseVal;
 
                 float3 finalColor = tex2D(_GradientMap, fixed2(scatterOffset, 0.0f));
 

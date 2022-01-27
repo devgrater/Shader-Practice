@@ -82,6 +82,7 @@ Shader "Unlit/ScreenSpaceReflection"
             float4 sample_reflection_color(float2 uv){
                 //offset the uv to blur it a bit?
                 return tex2D(_GrabTexture, uv);
+                /*
                 float4 averageColor = 0.0f;
                 fixed2 uvNudge = _GrabTexture_TexelSize.xy;
                 //blur out the result:
@@ -91,7 +92,7 @@ Shader "Unlit/ScreenSpaceReflection"
                         averageColor += tex2D(_GrabTexture, uv + uvNudge * fixed2(i, j));
                     }
                 }
-                return averageColor / 9.0f;//tex2D(_GrabTexture, uv);
+                return averageColor / 9.0f;//tex2D(_GrabTexture, uv);*/
             }
 
             float4 trace_reflection(float4 baseColor, float3 viewStart, float3 reflectedVector){
@@ -99,7 +100,7 @@ Shader "Unlit/ScreenSpaceReflection"
                 
                 for(uint i = 0; i < 16; i++){
                     //step exponentially if you need...
-                    viewStart += reflectedVector * exp(i / 16) * _StepSize;
+                    viewStart += reflectedVector * exp(i * 0.0625f) * _StepSize;
                     //and then...
                     float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
                     //normalize the coordinates
@@ -112,7 +113,7 @@ Shader "Unlit/ScreenSpaceReflection"
                         //calculate out uv fade:
 
                         float depthDiff = depth - startDepth + _ReflectionOffset;
-                        float depthFade = saturate(depthDiff / 4);
+                        float depthFade = saturate(depthDiff * 0.25f);
 
 
                         float dstFromEdgeX = min(_EdgeFade, min(screenUV.x, 1 - screenUV.x));

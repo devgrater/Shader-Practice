@@ -110,10 +110,15 @@ Shader "Unlit/ScreenSpaceReflection"
                     float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
                     if(-viewStart.z >= depth && startDepth + _ReflectionOffset < depth){
                         //calculate out uv fade:
+
+                        float depthDiff = depth - startDepth + _ReflectionOffset;
+                        float depthFade = saturate(depthDiff / 4);
+
+
                         float dstFromEdgeX = min(_EdgeFade, min(screenUV.x, 1 - screenUV.x));
                         float dstFromEdgeY = min(_EdgeFade, min(screenUV.y, 1 - screenUV.y));
                         float edgeWeight = max(dstFromEdgeY, dstFromEdgeX) / _EdgeFade;
-                        return lerp(baseColor, sample_reflection_color(screenUV), edgeWeight);
+                        return lerp(baseColor, sample_reflection_color(screenUV), edgeWeight * depthFade);
                     }
                 }
                 //no hit

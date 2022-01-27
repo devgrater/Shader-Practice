@@ -608,11 +608,11 @@ MonoBehaviour:
   cloudDetailScale: 0.052
   cloudDetailWeight: {x: 1.12, y: 0.03, z: -2.02, w: 0.69}
   blueNoise: {fileID: 2800000, guid: 621c8b80565905f42a31fee59bf29f62, type: 3}
-  blueNoiseStrength: 2.5
+  blueNoiseStrength: 5
   densityMultiplier: 1.09
   absorption: 4
   phaseParams: {x: 0.57, y: 0.1, z: 0.12, w: 1.03}
-  marchDistance: 3
+  marchDistance: 2.5
   maxMarchDistance: 0
   midToneColor: {r: 2.670157, g: 0, b: 0, a: 0}
   lowToneColor: {r: 0, g: 0.16225311, b: 0.30980393, a: 0}

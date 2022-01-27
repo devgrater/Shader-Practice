@@ -28,9 +28,9 @@ Material:
         m_Scale: {x: 16, y: 16}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BlueNoiseIntensity: 2
+    - _BlueNoiseIntensity: 5
     - _EdgeFade: 0.1
     - _ReflectionOffset: 0
-    - _StepSize: 1
+    - _StepSize: 1.51
     m_Colors: []
   m_BuildTextureStacks: []

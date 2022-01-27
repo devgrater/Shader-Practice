@@ -51,6 +51,7 @@ Shader "Unlit/ScreenSpaceReflection"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _GrabTexture;
+            float4 _GrabTexture_TexelSize;
             sampler2D _CameraDepthTexture;
             sampler2D _BlueNoise;
             float _StepSize;
@@ -81,14 +82,24 @@ Shader "Unlit/ScreenSpaceReflection"
             float4 sample_reflection_color(float2 uv){
                 //offset the uv to blur it a bit?
                 return tex2D(_GrabTexture, uv);
+                float4 averageColor = 0.0f;
+                fixed2 uvNudge = _GrabTexture_TexelSize.xy;
+                //blur out the result:
+                for(int i = -1; i <= 1; i++){
+                    for(int j = -1; j <= 1; j++){
+                        //do something!
+                        averageColor += tex2D(_GrabTexture, uv + uvNudge * fixed2(i, j));
+                    }
+                }
+                return averageColor / 9.0f;//tex2D(_GrabTexture, uv);
             }
 
             float4 trace_reflection(float4 baseColor, float3 viewStart, float3 reflectedVector){
                 float startDepth = -viewStart.z;
                 
-                for(int i = 0; i < 16; i++){
+                for(uint i = 0; i < 16; i++){
                     //step exponentially if you need...
-                    viewStart += reflectedVector * _StepSize;
+                    viewStart += reflectedVector * exp(i / 16) * _StepSize;
                     //and then...
                     float4 clipPosHead = mul(UNITY_MATRIX_P, float4(viewStart, 1.0f));
                     //normalize the coordinates
@@ -101,7 +112,7 @@ Shader "Unlit/ScreenSpaceReflection"
                         //calculate out uv fade:
                         float dstFromEdgeX = min(_EdgeFade, min(screenUV.x, 1 - screenUV.x));
                         float dstFromEdgeY = min(_EdgeFade, min(screenUV.y, 1 - screenUV.y));
-                        float edgeWeight = min(dstFromEdgeY, dstFromEdgeX) / _EdgeFade;
+                        float edgeWeight = max(dstFromEdgeY, dstFromEdgeX) / _EdgeFade;
                         return lerp(baseColor, sample_reflection_color(screenUV), edgeWeight);
                     }
                 }

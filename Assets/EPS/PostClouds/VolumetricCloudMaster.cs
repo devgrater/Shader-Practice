@@ -54,8 +54,14 @@ public class VolumetricCloudMaster : MonoBehaviour
     [SerializeField] private Vector4 weatherMapAnimation;
     [SerializeField] private Vector4 detailMapAnimation;
     
+    [Header("Colors")]
+    private Texture2D gradientMap;
+    public Gradient gradient = new Gradient();
 
-    
+    void Awake(){
+        RecomputeGradientMap(); // do it here!
+    }
+
     void UpdateMaterialParams(){
         if(targetCamera == null){
             targetCamera = GetComponent<Camera>();
@@ -89,6 +95,7 @@ public class VolumetricCloudMaster : MonoBehaviour
         postProcessMat.SetTexture("_CloudMask", cloudMask3d);
         postProcessMat.SetTexture("_BlueNoise", blueNoise);
         postProcessMat.SetTexture("_WeatherMap", weatherMap);
+        postProcessMat.SetTexture("_GradientMap", gradientMap);
 
         ////////////// ANIMATIONS //////////////////////
         postProcessMat.SetVector("_BaseMapAnim", baseMapAnimation);
@@ -103,9 +110,25 @@ public class VolumetricCloudMaster : MonoBehaviour
         postProcessMat.SetVector("_VBoxMax", new Vector4(boxMax.x, boxMax.y, boxMax.z, 0.0f));
         
     }
+    //never do this in runtime! only when you start.
+    void RecomputeGradientMap(){
+        //no mip
+        gradientMap = new Texture2D(256, 1, TextureFormat.ARGB32, false);
+        for(int i = 0; i < 256; i++){
+            gradientMap.SetPixel(i, 0, gradient.Evaluate(i / 256.0f));
+        }
+        gradientMap.Apply();
+        gradientMap.wrapMode = TextureWrapMode.Clamp;
+    }
 
     void OnRenderImage(RenderTexture src, RenderTexture dest){
         //regardless, you need to pass in some data...
+        if(!Application.isPlaying){
+            // The script is executing inside the editor
+            RecomputeGradientMap();
+        }
+ 
+
         UpdateMaterialParams();
         //command buffer
         Graphics.Blit(src, dest, postProcessMat);

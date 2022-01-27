@@ -18,6 +18,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
             sampler2D _BlueNoise;
             sampler3D _VolumeTex;
             sampler3D _CloudMask;
+            sampler2D _GradientMap;
             
 
             /////////// User Params //////////////
@@ -241,6 +242,11 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 phaseVal = phase(cosAngle);
                 float transmittancePower = (1 - transmittance);
                 float scatterOffset = saturate(lightEnergy);
+
+                float3 finalColor = tex2D(_GradientMap, fixed2(scatterOffset, 0.0f));
+
+                //return scatterOffset;
+                /*
                 float midOffset = saturate(scatterOffset - (1 - _ShadowPower)) / _ShadowPower;
                 float hlOffset = pow(scatterOffset, _BrightnessPower);
                 
@@ -248,7 +254,7 @@ Shader "Hidden/PostProcessing/PostProcessVC"
                 float3 lowToneColor = lerp(_ShadowColor, _MidColor, midOffset);
                 float3 finalColor = lerp(lowToneColor, _LightColor0, hlOffset);
 
-                finalColor += phaseVal;
+                finalColor += phaseVal;*/
                 //return float4((finalColor + phaseVal) * transmittancePower, transmittancePower);
 
                 fixed4 col = tex2D(_MainTex, i.uv);

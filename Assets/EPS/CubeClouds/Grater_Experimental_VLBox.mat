@@ -19,12 +19,16 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BlueNoise:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex:
-        m_Texture: {fileID: 11700000, guid: b90bab75466e0ba409bfcd48be192cd6, type: 3}
+        m_Texture: {fileID: 11700000, guid: 7a2cf47d0468fc4468c1d1bc4c656a19, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VolumeTex2:
@@ -35,18 +39,30 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _WeatherMap:
+        m_Texture: {fileID: 2800000, guid: 309b35fb697357e48aeea07e770b08fc, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _BrightnessPower: 0.99
     - _Depth: -0.5
-    - _FogDensity: 0.05
+    - _FogDensity: 0.009
     - _FogPower: 2.4
+    - _HeightMapOffset: 0.68
     - _LV2Scale: 0.0001
     - _LV3Scale: 0.0338
-    - _Scale: 0.0117
+    - _LightAbsorption: 1.46
+    - _Scale: 0.0005
+    - _ShadowPower: 0.354
+    - _ShadowThreshold: 0.978
     - _StepCount: 63
-    - _StepDistance: 0.25
+    - _StepDistance: 0
     - _TransmittenceOffset: 13.2
+    - _WeatherMapScale: 0.0001
     m_Colors:
-    - _FogColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShadowColor: {r: 0.9274566, g: 0.9198113, b: 1, a: 1}
+    - _FogColor: {r: 0.6981132, g: 0.29627162, b: 0, a: 1}
+    - _Offsets: {r: 200, g: 0, b: 200, a: 0}
+    - _PhaseParams: {r: 0.79, g: -0.92, b: 0, a: 0.36}
+    - _ShadowColor: {r: 1, g: 0.17358488, b: 0.21560605, a: 1}
     - _WorldPos: {r: -79.8, g: 95.7, b: 0, a: 0}
   m_BuildTextureStacks: []

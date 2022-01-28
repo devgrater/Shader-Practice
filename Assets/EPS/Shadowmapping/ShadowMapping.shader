@@ -124,28 +124,30 @@ Shader "Unlit/ShadowMapping"
             
             float2 get_average_occluder_dst(float z, float2 uv){
                 //
-                const int sampleCount = 9; //9 samples, because we want to save more sampling for the bigger ones.
+                const uint sampleCount = 25; //9 samples, because we want to save more sampling for the bigger ones.
                 //get average occluder depth
                 float pixelDepth = (z + _Bias);
-                float2 uvOffset = _DepthMap_TexelSize.xy * pixelDepth / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.xy * _PCFSampleDistance / sampleCount;
                 float averageDepth = 0.0f;
 
                 float occluderCount = 0.0f;
 
                 //just return the depth shall we
-                //return float2(tex2D(_DepthMap, uv).r, pixelDepth);
-
-                for(int i = -1; i <= 1; i++){
-                    for(int j = -1; j <= 1; j++){
-                        half2 offsetUV = float2(i, j) * uvOffset + uv;;
+                for(int i = -2; i <= 2; i++){
+                    for(int j = -2; j <= 2; j++){
+                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = 1 / tex2D(_DepthMap, offsetUV);
                         //calculate how far this is...
                         //averageDepth = max(averageDepth, lightSpaceDepth - pixelDepth);
-                        averageDepth += max(pixelDepth - lightSpaceDepth, 0.0f);//max(pixelDepth - lightSpaceDepth, 0.0f);
-                        occluderCount += pixelDepth > lightSpaceDepth;
+
+                        if(pixelDepth > lightSpaceDepth){
+                            //occluded, add it in.
+                            averageDepth += lightSpaceDepth;//max(pixelDepth - lightSpaceDepth, 0.0f);
+                            occluderCount += 1;
+                        }
                     }
                 }
-                return float2(averageDepth / sampleCount, occluderCount);
+                return float2(averageDepth / occluderCount, occluderCount / sampleCount);
             }
 
             float2 sample_shadow_filter(float z, float2 uv, float penumbraSize){
@@ -168,9 +170,17 @@ Shader "Unlit/ShadowMapping"
                 //the brighter places means that the area has a high occluder distance.
                 //darker = lower.
                 float2 averageDistance = get_average_occluder_dst(z, uv);
-                float penumbraSize = averageDistance.x / (z + _Bias - averageDistance.x);
-                float shadow = sample_shadow_filter(z, uv, _PCFSampleDistance * penumbraSize);//sample_shadow_filter(z, uv, penumbraSize);
-                return shadow;
+                return 10 / averageDistance.x;
+                float penumbraSize = _PCFSampleDistance * (z + _Bias - averageDistance.x) / averageDistance.x;
+                //need to exclude the parts where there is no occluder at all.
+                ///if no occluder -> occluder count == 0;
+                //otherwise sign(occludercount) should return 1
+
+                //return penumbraSize / _PCFSampleDistance;
+                float hasShadow = averageDistance.y;
+                float shadow = sample_shadow_filter(z, uv, penumbraSize);//sample_shadow_filter(z, uv, penumbraSize);
+                float occludedShadow = 1 - (1 - shadow) * hasShadow;
+                return occludedShadow;
             }
 
 
@@ -226,8 +236,8 @@ Shader "Unlit/ShadowMapping"
                 float nDotL = dot_lighting(i.worldNormal, -_cst_LightDir);
                 float shading = saturate(shadow * nDotL);
                 shading = 1 - (1 - shading) * lightmapFade;
-                return lerp(_ShadowColor, _LightColor, shading) * baseTexture * _Color;
-                //return averageDepth;
+                return lerp(_ShadowColor, _LightColor, shading * shading) * baseTexture * _Color;
+                return averageDepth;
             }
             ENDCG
         }

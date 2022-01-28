@@ -414,7 +414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PCFIteration: 2
-  lightSize: 64
+  lightSize: 32
 --- !u!1 &396486381
 GameObject:
   m_ObjectHideFlags: 0

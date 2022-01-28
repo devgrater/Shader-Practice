@@ -30,6 +30,8 @@ Material:
     m_Floats:
     - _Bias: 1
     - _LightMapFadeDistance: 1
+    - _PCFIteration: 2
+    - _PCFSampleDistance: 0.728
     - _PCSSIteration: 3
     - _PCSSSampleDistance: 1
     - _ShadowFade: 8

@@ -10,7 +10,7 @@ public class CameraReplacement : MonoBehaviour
     void Start()
     {
         GetComponent<Camera>().SetReplacementShader(shader, "RenderType");
-        
+        Shader.SetGlobalVector("_LightCameraDir", transform.forward);
     }
 
     // Update is called once per frame

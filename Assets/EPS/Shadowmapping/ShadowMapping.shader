@@ -127,7 +127,7 @@ Shader "Unlit/ShadowMapping"
                 const uint sampleCount = 25; //9 samples, because we want to save more sampling for the bigger ones.
                 //get average occluder depth
                 float pixelDepth = (z + _Bias);
-                float2 uvOffset = _DepthMap_TexelSize.xy * _PCFSampleDistance / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.xy * _PCFSampleDistance * pixelDepth / sampleCount;
                 float averageDepth = 0.0f;
 
                 float occluderCount = 0.0f;
@@ -135,7 +135,7 @@ Shader "Unlit/ShadowMapping"
                 //just return the depth shall we
                 for(int i = -2; i <= 2; i++){
                     for(int j = -2; j <= 2; j++){
-                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
+                        half2 offsetUV = float2(i, j) * uvOffset + uv;//rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = 1 / tex2D(_DepthMap, offsetUV);
                         //calculate how far this is...
                         //averageDepth = max(averageDepth, lightSpaceDepth - pixelDepth);
@@ -151,33 +151,37 @@ Shader "Unlit/ShadowMapping"
             }
 
             float2 sample_shadow_filter(float z, float2 uv, float penumbraSize){
-                int sampleCount = _PCFIteration * 2 + 1;
+                int sampleCount = 5;
                 float pixelDepth = 1  / (z + _Bias);
                 float shadow = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy * penumbraSize / sampleCount;
-                for(int i = -_PCFIteration; i <= _PCFIteration; i++){
-                    for(int j = -_PCFIteration; j <= _PCFIteration; j++){
-                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
+                float2 uvOffset = _DepthMap_TexelSize.xy * penumbraSize * 0.5 / sampleCount;
+                for(int i = -2; i <= 2; i++){
+                    for(int j = -2; j <= 2; j++){
+                        half2 offsetUV = float2(i, j) * uvOffset + uv;//rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
                         //if pixel depth is greater than light space depth, then, the pixel is not occluded.
                         shadow += lightSpaceDepth < pixelDepth;
                     }
                 }
-                return shadow / (sampleCount * sampleCount);
+                return shadow / 25;
             }
 
             float pcss_filter_shadow(float z, float2 uv){
                 //the brighter places means that the area has a high occluder distance.
                 //darker = lower.
                 float2 averageDistance = get_average_occluder_dst(z, uv);
-                return 10 / averageDistance.x;
-                float penumbraSize = _PCFSampleDistance * (z + _Bias - averageDistance.x) / averageDistance.x;
+                //return averageDistance.x / 40;
+                //return averageDistance;
+                //return averageDistance / 25;
+                //return 10 / averageDistance.x;
+                float penumbraSize = _PCFSampleDistance * (averageDistance.x - (z + _Bias)) / averageDistance.x;
                 //need to exclude the parts where there is no occluder at all.
                 ///if no occluder -> occluder count == 0;
                 //otherwise sign(occludercount) should return 1
 
                 //return penumbraSize / _PCFSampleDistance;
                 float hasShadow = averageDistance.y;
+                //return hasShadow;
                 float shadow = sample_shadow_filter(z, uv, penumbraSize);//sample_shadow_filter(z, uv, penumbraSize);
                 float occludedShadow = 1 - (1 - shadow) * hasShadow;
                 return occludedShadow;
@@ -237,7 +241,7 @@ Shader "Unlit/ShadowMapping"
                 float shading = saturate(shadow * nDotL);
                 shading = 1 - (1 - shading) * lightmapFade;
                 return lerp(_ShadowColor, _LightColor, shading * shading) * baseTexture * _Color;
-                return averageDepth;
+                //return averageDepth;
             }
             ENDCG
         }

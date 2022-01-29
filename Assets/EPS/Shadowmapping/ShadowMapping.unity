@@ -515,7 +515,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PCFIteration: 2
-  lightSize: 10
+  lightSize: 50.4
 --- !u!1 &396486381
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,7 +567,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6050f7d68d3cce342bf49c7b54975b3f, type: 2}
+  - {fileID: 2100000, guid: 5cae5c9977c27924084c5e77028afa56, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

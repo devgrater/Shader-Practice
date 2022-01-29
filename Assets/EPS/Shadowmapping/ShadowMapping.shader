@@ -127,7 +127,7 @@ Shader "Unlit/ShadowMapping"
                 const uint sampleCount = 25; //9 samples, because we want to save more sampling for the bigger ones.
                 //get average occluder depth
                 float pixelDepth = (z + _Bias);
-                float2 uvOffset = _DepthMap_TexelSize.yx * _PCFSampleDistance / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.xy * _PCFSampleDistance * 0.5 / sampleCount;
                 float averageDepth = 0.0f;
 
                 float occluderCount = 0.0f;
@@ -154,7 +154,7 @@ Shader "Unlit/ShadowMapping"
                 int sampleCount = 5;
                 float pixelDepth = 1  / (z + _Bias);
                 float shadow = 0;
-                float2 uvOffset = _DepthMap_TexelSize.yx * penumbraSize * 0.5 / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.xy * penumbraSize * 0.3 / sampleCount;
                 for(int i = -2; i <= 2; i++){
                     for(int j = -2; j <= 2; j++){
                         half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;

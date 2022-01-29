@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_ShadowMapping 1
+  m_Name: Unlit_ShadowMapping 2
   m_Shader: {fileID: 4800000, guid: 3443ad7eae5318f42b58a90815ca7e5a, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -25,7 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: b03fa475b5f1f0349bad93d7a590ad98, type: 3}
-        m_Scale: {x: 16, y: 16}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Bias: 1

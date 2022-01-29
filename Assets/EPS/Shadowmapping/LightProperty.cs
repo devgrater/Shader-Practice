@@ -9,7 +9,7 @@ public class LightProperty : MonoBehaviour
 
     [Range(0, 8)][SerializeField] private int PCFIteration;
     
-    [Range(1f, 10.0f)][SerializeField] private float lightSize;
+    [Range(1f, 32.0f)][SerializeField] private float lightSize;
     private Camera mainCamera;
     private float timeElapsed;
     void Start()

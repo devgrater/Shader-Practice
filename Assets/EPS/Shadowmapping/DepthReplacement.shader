@@ -29,7 +29,7 @@ Shader "Unlit/DepthReplacement"
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
-                float3 viewDir : TEXCOORD1;
+                float3 viewVertex : TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -42,8 +42,8 @@ Shader "Unlit/DepthReplacement"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
+                o.viewVertex = mul(UNITY_MATRIX_MV, v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                o.viewDir = WorldSpaceViewDir(v.vertex);
                 return o;
             }
 
@@ -66,9 +66,8 @@ Shader "Unlit/DepthReplacement"
                 //this gives us... a range from 0 to 1.
                 //but we wasted too much precision on the closer areas.
                 //in this case, w is in clip space.
-                float wCoord = i.vertex.w;
+                float wCoord = i.vertex.w * (_cst_NearFar.y) / (_cst_NearFar.y - _cst_NearFar.x);
 
-                float perspectiveCorrection = dot(i.viewDir, _cst_LightDir);
                 //return perspectiveCorrection;
                 //wCoord /= perspectiveCorrection;
                 //remap wCoord so that the near plane gives d = 1 and far plane gives d = 0;

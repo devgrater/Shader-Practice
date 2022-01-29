@@ -140,7 +140,7 @@ Shader "Unlit/ShadowMapping"
                         //calculate how far this is...
                         //averageDepth = max(averageDepth, lightSpaceDepth - pixelDepth);
 
-                        if(pixelDepth > lightSpaceDepth){
+                        if(pixelDepth > lightSpaceDepth && offsetUV.x > 0.0 && offsetUV.x < 1.0 && offsetUV.y > 0.0 && offsetUV.y < 1.0){
                             //occluded, add it in.
                             averageDepth += lightSpaceDepth;//max(pixelDepth - lightSpaceDepth, 0.0f);
                             occluderCount += 1;
@@ -170,11 +170,9 @@ Shader "Unlit/ShadowMapping"
                 //the brighter places means that the area has a high occluder distance.
                 //darker = lower.
                 float2 averageDistance = get_average_occluder_dst(z, uv);
-                //return averageDistance.x / 40;
-                //return averageDistance;
-                //return averageDistance / 25;
-                //return 10 / averageDistance.x;
+                //return averageDistance.y;
                 float penumbraSize = _PCFSampleDistance * (averageDistance.x - (z + _Bias)) / averageDistance.x;
+
                 //need to exclude the parts where there is no occluder at all.
                 ///if no occluder -> occluder count == 0;
                 //otherwise sign(occludercount) should return 1
@@ -215,7 +213,10 @@ Shader "Unlit/ShadowMapping"
                 float4 cameraSpaceCoords = mul(_cst_WorldToCamera, i.worldPos);
                 float2 projectedUV = proj_uv(cameraSpaceCoords);
                 float lightmapFade = lightmap_fadeout(projectedUV);
-                
+
+
+
+
                 #ifdef PCF
                     #ifdef PCSS
                         float averageDepth = pcss_filter_shadow(cameraSpaceCoords.z, projectedUV);
@@ -227,7 +228,7 @@ Shader "Unlit/ShadowMapping"
                     #endif
                 #else
                     float depthDifference = sample_depth_difference(cameraSpaceCoords.z, projectedUV);
-                    
+                    return depth_difference;
                     float shadow = saturate(depthDifference);
                     shadow = 1 - smoothstep(0.01, 0.01, shadow);
                 #endif

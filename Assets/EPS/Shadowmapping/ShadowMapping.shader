@@ -127,7 +127,7 @@ Shader "Unlit/ShadowMapping"
                 const uint sampleCount = 25; //9 samples, because we want to save more sampling for the bigger ones.
                 //get average occluder depth
                 float pixelDepth = (z + _Bias);
-                float2 uvOffset = _DepthMap_TexelSize.xy * _PCFSampleDistance * pixelDepth / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.yx * _PCFSampleDistance / sampleCount;
                 float averageDepth = 0.0f;
 
                 float occluderCount = 0.0f;
@@ -135,7 +135,7 @@ Shader "Unlit/ShadowMapping"
                 //just return the depth shall we
                 for(int i = -2; i <= 2; i++){
                     for(int j = -2; j <= 2; j++){
-                        half2 offsetUV = float2(i, j) * uvOffset + uv;//rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
+                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = 1 / tex2D(_DepthMap, offsetUV);
                         //calculate how far this is...
                         //averageDepth = max(averageDepth, lightSpaceDepth - pixelDepth);
@@ -154,10 +154,10 @@ Shader "Unlit/ShadowMapping"
                 int sampleCount = 5;
                 float pixelDepth = 1  / (z + _Bias);
                 float shadow = 0;
-                float2 uvOffset = _DepthMap_TexelSize.xy * penumbraSize * 0.5 / sampleCount;
+                float2 uvOffset = _DepthMap_TexelSize.yx * penumbraSize * 0.5 / sampleCount;
                 for(int i = -2; i <= 2; i++){
                     for(int j = -2; j <= 2; j++){
-                        half2 offsetUV = float2(i, j) * uvOffset + uv;//rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
+                        half2 offsetUV = rotate_vector(float2(i, j) * uvOffset, get_random_rotation(uv)) + uv;
                         float lightSpaceDepth = tex2D(_DepthMap, offsetUV);
                         //if pixel depth is greater than light space depth, then, the pixel is not occluded.
                         shadow += lightSpaceDepth < pixelDepth;
@@ -220,7 +220,7 @@ Shader "Unlit/ShadowMapping"
                 #ifdef PCF
                     #ifdef PCSS
                         float averageDepth = pcss_filter_shadow(cameraSpaceCoords.z, projectedUV);
-                        float shadow = averageDepth;
+                        float shadow = averageDepth * 2;
                         //and then, filter the shadow
                     #else
                         float pcfShadow = pcf_filter_shadow(cameraSpaceCoords.z, projectedUV);
@@ -236,13 +236,13 @@ Shader "Unlit/ShadowMapping"
 
                 //shadow = saturate(1 - shadow); //now shadow is closer to 0 and light is closer to 1
                 
-                return shadow;
+                //return shadow;
                 //fade out at the edge of the frustum
                 float nDotL = dot_lighting(i.worldNormal, -_cst_LightDir);
                 float shading = saturate(shadow * nDotL);
                 shading = 1 - (1 - shading) * lightmapFade;
                 return lerp(_ShadowColor, _LightColor, shading * shading) * baseTexture * _Color;
-                //return averageDepth;
+                return averageDepth;
             }
             ENDCG
         }

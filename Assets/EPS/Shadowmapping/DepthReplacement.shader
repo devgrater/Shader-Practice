@@ -66,7 +66,7 @@ Shader "Unlit/DepthReplacement"
                 //this gives us... a range from 0 to 1.
                 //but we wasted too much precision on the closer areas.
                 //in this case, w is in clip space.
-                float wCoord = i.vertex.w * (_cst_NearFar.y) / (_cst_NearFar.y - _cst_NearFar.x);
+                float wCoord = i.vertex.w ;
 
                 //return perspectiveCorrection;
                 //wCoord /= perspectiveCorrection;

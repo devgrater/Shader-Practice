@@ -28,7 +28,7 @@ Material:
         m_Scale: {x: 32, y: 32}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Bias: 0
+    - _Bias: 1
     - _LightMapFadeDistance: 1
     - _PCFIteration: 2
     - _PCFSampleDistance: 0.728

@@ -69,9 +69,9 @@ SubShader {
             float2 uv0 : TEXCOORD0;
             float2 uv1 : TEXCOORD1;
             float2 uv2 : TEXCOORD2;
-#if USING_FOG
-            fixed fog : TEXCOORD3;
-#endif
+            #if USING_FOG
+                        fixed fog : TEXCOORD3;
+            #endif
             float4 pos : SV_POSITION;
             UNITY_VERTEX_OUTPUT_STEREO
         };
@@ -90,11 +90,11 @@ SubShader {
             o.uv1 = IN.uv1.xy * unity_Lightmap_ST.xy + unity_Lightmap_ST.zw;
             o.uv2 = IN.uv0.xy * _MainTex_ST.xy + _MainTex_ST.zw;
 
-#if USING_FOG
-            float fogCoord = length(eyePos.xyz);
-            UNITY_CALC_FOG_FACTOR_RAW(fogCoord);
-            o.fog = saturate(unityFogFactor);
-#endif
+            #if USING_FOG
+                float fogCoord = length(eyePos.xyz);
+                UNITY_CALC_FOG_FACTOR_RAW(fogCoord);
+                o.fog = saturate(unityFogFactor);
+            #endif
             o.pos = UnityObjectToClipPos(IN.pos);
             return o;
         }
@@ -117,9 +117,9 @@ SubShader {
 
             clip(col.a - _Cutoff);
 
-#if USING_FOG
-            col.rgb = lerp(unity_FogColor.rgb, col.rgb, IN.fog);
-#endif
+            #if USING_FOG
+                col.rgb = lerp(unity_FogColor.rgb, col.rgb, IN.fog);
+            #endif
             return col;
         }
 

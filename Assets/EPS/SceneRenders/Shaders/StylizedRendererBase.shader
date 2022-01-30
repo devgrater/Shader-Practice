@@ -6,7 +6,7 @@ Shader "Grater/StylizedRendererBase"
     {
         _MainTex ("Texture", 2D) = "white" {}
 
-        _Color ("Color", Color) = (1, 1, 1, 1)
+        //_Color ("Color", Color) = (1, 1, 1, 1)
         _ShadowTex ("Shadow Texture", 2D) = "black" {}
         _BaseTex ("Base Tex", 2D) = "white" {} //controlling alpha
         _Cutoff ("Cutoff", Range(0,1)) = 0.5
@@ -15,25 +15,35 @@ Shader "Grater/StylizedRendererBase"
     }
     SubShader
     {
-
+        LOD 100
         //AlphaTest Greater [_Cutoff]
         CGINCLUDE
-            
-            // make fog work
-            #pragma multi_compile_fog
+
+            //remember to include unity cg before autolight!
+            #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
             #include "AutoLight.cginc"
             #include "StylizedHelper.cginc"
-            #include "UnityCG.cginc"
+            
+            //#include "UnityShadowLibrary.cginc"
 
             struct appdata
             {
-                float4 pos : POSITION;
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
                 float4 vertexColor : COLOR;
             };
 
+            sampler2D _MainTex;
+            sampler2D _ShadowTex;
+            sampler2D _BaseTex;
+            
+            float4 _BaseTex_ST;
+            float4 _MainTex_ST;
+            fixed _Cutoff;
+
+            
             struct v2f
             {
                 float2 uv : TEXCOORD0;
@@ -43,27 +53,18 @@ Shader "Grater/StylizedRendererBase"
                 fixed3 normal : NORMAL;
                 fixed3 viewDir : TEXCOORD4;
                 float4 vertexColor : COLOR;
+                float4 worldPos : TEXCOORD5;
             };
-
-            sampler2D _MainTex;
-            sampler2D _ShadowTex;
-            sampler2D _BaseTex;
-            float4 _OutlineColor;
-            float4 _BaseTex_ST;
-            float4 _MainTex_ST;
-            float4 _Color;
-            fixed _HighlightIntensity;
-            fixed _Cutoff;
-            half _Outline;
 
             v2f vert (appdata v)
             {
                 v2f o;
-                o.pos = UnityObjectToClipPos(v.pos);
+                o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.pos);
                 o.normal = UnityObjectToWorldNormal(v.normal);
-                o.viewDir = WorldSpaceViewDir(v.pos);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+                o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.vertexColor = v.vertexColor;
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
@@ -72,12 +73,16 @@ Shader "Grater/StylizedRendererBase"
 
         ENDCG
 
-        LOD 100
+        
 
         Pass
         {
             Name "Outline"
             Cull Front
+            Tags {
+                "RenderType"="Opaque"
+            }
+
             CGPROGRAM
 
             #pragma vertex outline_vert
@@ -94,10 +99,13 @@ Shader "Grater/StylizedRendererBase"
                 float2 uv : TEXCOORD0;
             };
 
+            half _Outline;
+            float4 _OutlineColor;
+
             outline_v2f outline_vert (appdata v)
             {
                 outline_v2f o;
-                float4 pos = UnityObjectToClipPos(v.pos);
+                float4 pos = UnityObjectToClipPos(v.vertex);
                 float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal.xyz);
                 normal.z = -0.5;
                 float3 ndcNormal = normalize(TransformViewToProjection(normal)) * pos.w; 
@@ -132,11 +140,14 @@ Shader "Grater/StylizedRendererBase"
             }
         
             CGPROGRAM
-                #pragma multi_compile_fwdbase
+
                 #pragma vertex vert
                 #pragma fragment frag_base
 
-                sampler2D _ToonLightingRamp;
+                #pragma multi_compile_fog
+                #pragma multi_compile_fwdbase
+                
+                fixed _HighlightIntensity;
 
                 fixed4 frag_base(v2f i) : SV_Target
                 {
@@ -174,17 +185,10 @@ Shader "Grater/StylizedRendererBase"
                     //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                     rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
 
-                    
-
                     //fixed4 toonLightingColors = tex2D(_ToonLightingRamp, fixed2(compositeShading, 0.0f));
-
-
-
-
 
                     // apply fog
                     //UNITY_APPLY_FOG(i.fogCoord, col);
-                    
                     
                     float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
                     compositeColor.rgb += rimLight * environmentShadow;
@@ -193,6 +197,59 @@ Shader "Grater/StylizedRendererBase"
                     clip(alphaMask - _Cutoff);
 
                     return compositeColor;//compositeShading * col;
+                }
+
+            ENDCG
+        }
+
+        
+        Pass
+        {
+            
+            Name "Additional"
+            Tags {
+                 "RenderType"="Opaque" 
+                 "LightMode"="ForwardAdd"
+            }
+            Blend One One
+            CGPROGRAM
+
+            
+                #pragma vertex vert
+                #pragma fragment frag
+
+                #pragma multi_compile_fog
+                #pragma multi_compile_fwdadd_fullshadows
+
+
+                fixed4 frag(v2f i) : SV_Target
+                {
+                    
+                    fixed3 normal = normalize(i.normal);
+                    fixed3 baseTexVal = tex2D(_BaseTex, i.uv);
+                    fixed selfShadowing = baseTexVal.r;
+                    fixed alphaMask = baseTexVal.b;
+                    //now lets find out about the colors
+                    fixed3 lightDir;
+                    if(_WorldSpaceLightPos0.w == 0){
+                        //directional light
+                        lightDir = normalize(_WorldSpaceLightPos0);
+                    }
+                    else{
+                        lightDir = normalize(_WorldSpaceLightPos0 - i.worldPos);
+                    }
+
+                    fixed normalShading = dot(i.normal, lightDir);
+                    fixed lighting = LIGHT_ATTENUATION(i);
+
+
+                    //mix them together
+                    lighting = combine_shadow(normalShading, lighting);
+                    lighting = combine_shadow(selfShadowing, lighting);
+                    //lighting = toonify(lighting, 1.0f) * _LightColor0;
+                    float4 coloredLighting = float4(light_toonify(lighting, 1.0f) * _LightColor0.xyz, 1.0f);
+                    clip(alphaMask - _Cutoff);
+                    return coloredLighting;
                 }
 
             ENDCG

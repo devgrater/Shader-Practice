@@ -19,3 +19,7 @@ inline float half_lambertify(fixed lighting){
 inline float toonify(fixed lighting, fixed maskValue){
     return smoothstep(0.01, 0.05, lighting);
 }
+
+inline float light_toonify(fixed lighting, fixed maskValue){
+    return smoothstep(0.01, 0.3, lighting);
+}

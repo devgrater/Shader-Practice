@@ -27,7 +27,17 @@ Material:
         m_Texture: {fileID: 2800000, guid: 07396456af45bdc4fa8a02e10cc61698, type: 3}
         m_Scale: {x: 0.25, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ShadowTex:
+        m_Texture: {fileID: 2800000, guid: 56b16057817fdf74e923f6d4b296c299, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _Cutoff: 0.5
     - _HighlightIntensity: 0
-    m_Colors: []
+    - _Outline: 0.5
+    - _Shininess: 0.7
+    m_Colors:
+    - _Color: {r: 0, g: 0, b: 0, a: 0}
+    - _Emission: {r: 0, g: 0, b: 0, a: 0}
+    - _SpecColor: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []

@@ -9,6 +9,11 @@ public class ToonLightingRamp : MonoBehaviour
     
     [Header("Colors")]
     public Gradient gradient = new Gradient();
+    
+
+    [Header("Outlines")]
+    public Color color = new Color();
+
     private Texture2D gradientMap;
 
     void RecomputeGradientMap(){
@@ -25,15 +30,19 @@ public class ToonLightingRamp : MonoBehaviour
     void Start()
     {
         RecomputeGradientMap();
-        Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
+        PassDataToShader();
     }
 
+    void PassDataToShader(){
+        Shader.SetGlobalColor("_OutlineColor", color);
+    }
     void Update(){
         //only in editor
         if(!Application.isPlaying){
         // The script is executing inside the editor
             RecomputeGradientMap();
-            Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
+            //Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
+            PassDataToShader();
         }
     }
 

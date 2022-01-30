@@ -39,6 +39,7 @@ Material:
     - _Cutoff: 0.5
     - _HasHighlight: 1
     - _HighlightIntensity: 0.288
+    - _Outline: 0.5
     - _Shininess: 0.7
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 0}

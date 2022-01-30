@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 Shader "Grater/StylizedRendererBase"
 {
     Properties
@@ -9,6 +11,7 @@ Shader "Grater/StylizedRendererBase"
         _BaseTex ("Base Tex", 2D) = "white" {} //controlling alpha
         _Cutoff ("Cutoff", Range(0,1)) = 0.5
         _HighlightIntensity ("Highlight Intensity", Range(0, 1)) = 0.0
+        _Outline ("Outline Thickness", Range(0.001, 1.0)) = 0.002
     }
     SubShader
     {
@@ -28,6 +31,7 @@ Shader "Grater/StylizedRendererBase"
                 float4 pos : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
+                float4 vertexColor : COLOR;
             };
 
             struct v2f
@@ -38,15 +42,19 @@ Shader "Grater/StylizedRendererBase"
                 float4 pos : SV_POSITION;
                 fixed3 normal : NORMAL;
                 fixed3 viewDir : TEXCOORD4;
+                float4 vertexColor : COLOR;
             };
 
             sampler2D _MainTex;
             sampler2D _ShadowTex;
             sampler2D _BaseTex;
+            float4 _OutlineColor;
+            float4 _BaseTex_ST;
             float4 _MainTex_ST;
             float4 _Color;
             fixed _HighlightIntensity;
             fixed _Cutoff;
+            half _Outline;
 
             v2f vert (appdata v)
             {
@@ -56,6 +64,7 @@ Shader "Grater/StylizedRendererBase"
                 UNITY_TRANSFER_FOG(o,o.pos);
                 o.normal = UnityObjectToWorldNormal(v.normal);
                 o.viewDir = WorldSpaceViewDir(v.pos);
+                o.vertexColor = v.vertexColor;
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
@@ -67,7 +76,55 @@ Shader "Grater/StylizedRendererBase"
 
         Pass
         {
-            
+            Name "Outline"
+            Cull Front
+            CGPROGRAM
+
+            #pragma vertex outline_vert
+            #pragma fragment outline_frag
+            // make fog work
+            #pragma multi_compile_fog
+
+            #include "UnityCG.cginc"
+
+            struct outline_v2f
+            {
+                UNITY_FOG_COORDS(1)
+                float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            outline_v2f outline_vert (appdata v)
+            {
+                outline_v2f o;
+                float4 pos = UnityObjectToClipPos(v.pos);
+                float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal.xyz);
+                normal.z = -0.5;
+                float3 ndcNormal = normalize(TransformViewToProjection(normal)) * pos.w; 
+
+                pos.xy += 0.01 * ndcNormal.xy * _Outline;
+                o.vertex = pos;
+                UNITY_TRANSFER_FOG(o,o.vertex);
+                o.uv = TRANSFORM_TEX(v.uv, _BaseTex);
+                return o;
+            }
+
+            fixed4 outline_frag (outline_v2f i) : SV_Target
+            {
+                // sample the texture
+                //and clip out what we don't need.
+                fixed alphaMask = tex2D(_BaseTex, i.uv).b;
+                fixed4 baseColor = tex2D(_MainTex, i.uv);
+                clip(alphaMask - _Cutoff);
+                return _OutlineColor * baseColor;
+            }
+            ENDCG
+        }
+
+
+        Pass
+        {
+            Name "Base"
             Tags {
                 "RenderType"="Opaque"
                 "LightMode"="ForwardBase"
@@ -83,6 +140,10 @@ Shader "Grater/StylizedRendererBase"
 
                 fixed4 frag_base(v2f i) : SV_Target
                 {
+                    //return i.vertexColor;
+                    //there is no vertex color
+                    //then, where did the adjusted normal go?
+
                     // sample the texture
                     fixed4 col = tex2D(_MainTex, i.uv);
                     fixed4 shadowCol = tex2D(_ShadowTex, i.uv);
@@ -136,50 +197,9 @@ Shader "Grater/StylizedRendererBase"
 
             ENDCG
         }
+
         UsePass "Grater/VertexCutout/CASTER"
-        /*
-        Pass {
-            Name "Caster"
-            Tags { "LightMode" = "ShadowCaster" }
 
-            CGPROGRAM
-                #pragma vertex sc_vert
-                #pragma fragment sc_frag
-                #pragma target 2.0
-                #pragma multi_compile_shadowcaster
-                #pragma multi_compile_instancing
-                #include "UnityCG.cginc"
-
-                struct sc_v2f {
-                    V2F_SHADOW_CASTER;
-                    float2  uv : TEXCOORD1;
-                    UNITY_VERTEX_OUTPUT_STEREO
-                };
-
-                uniform float4 _MainTex_ST;
-
-                sc_v2f sc_vert( appdata_base v )
-                {
-                    sc_v2f o;
-                    UNITY_SETUP_INSTANCE_ID(v);
-                    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                    TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
-                    o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-                    return o;
-                }
-
-                uniform sampler2D _BaseTex;
-                uniform fixed _Cutoff;
-                uniform fixed4 _Color;
-
-                float4 sc_frag( sc_v2f i ) : SV_Target
-                {
-                    fixed4 texcol = tex2D( _BaseTex, i.uv );
-                    clip(texcol.b - _Cutoff);
-                    SHADOW_CASTER_FRAGMENT(i)
-                }
-            ENDCG
-        }*/
     }
     Fallback "VertexLit"
 }

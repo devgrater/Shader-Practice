@@ -1,4 +1,4 @@
-Shader "Unlit/OutlineNPR"
+Shader "Grater/OutlineNPR"
 {
     Properties
     {
@@ -14,6 +14,7 @@ Shader "Unlit/OutlineNPR"
 
         Pass
         {
+            Name "Outline"
             Cull Front
             CGPROGRAM
 
@@ -41,23 +42,15 @@ Shader "Unlit/OutlineNPR"
 
             v2f vert (appdata v)
             {
-                float4 pos = mul(UNITY_MATRIX_MV, v.vertex);
-                //the normal is now in object space...
-                //need to have it in view space
-                //because the scaling could be non-uniform,
-                //IT_MV takes care of this form of transfomration.
-                //when its orthogonal, IT_MV = MV
-                //when its not, IT_MV != MV
-                float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal);
-                //pos.z -= 0.5;
-                normal.z = -0.5;
-                normal = normalize(normal);
-                //put it back to object space
-                
                 v2f o;
-                pos = pos + float4(normal, 0) * _Outline;
-                o.vertex = mul(UNITY_MATRIX_P, pos);
-                //o.viewNormal = mul(v.normal);
+                UNITY_INITIALIZE_OUTPUT(v2f, o);
+                float4 pos = UnityObjectToClipPos(v.vertex);
+                float3 viewNormal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal.xyz);
+                float3 ndcNormal = normalize(TransformViewToProjection(viewNormal.xyz)) * pos.w;
+                //将法线变换到NDC空间
+                pos.xy += 0.01 * _Outline * ndcNormal.xy;
+                o.vertex = pos;
+                return o;
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }

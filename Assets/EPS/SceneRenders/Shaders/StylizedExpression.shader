@@ -6,8 +6,11 @@ Shader "Grater/Stylized/StylizedExpression"
     }
     SubShader
     {
-        Blend One One //additive
-        Tags { "RenderType"="Opaque" }
+        Blend DstColor Zero //additive
+        Tags {
+             "RenderType"="Transparent" 
+             "Queue"="Transparent+1"
+        }
         LOD 100
 
         Pass

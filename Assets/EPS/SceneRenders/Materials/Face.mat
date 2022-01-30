@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Face
-  m_Shader: {fileID: 4800000, guid: aff1634eec8813941ae2568213fa0ae8, type: 3}
+  m_Shader: {fileID: 4800000, guid: 9d66e19cc0bcc544a91f1f318b7c4896, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -39,7 +39,7 @@ Material:
     - _Cutoff: 0.5
     - _HasHighlight: 0
     - _HighlightIntensity: 0
-    - _Outline: 0.001
+    - _Outline: 0.25
     - _Shininess: 0.7
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 0}

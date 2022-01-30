@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Body
+  m_Name: Hair
   m_Shader: {fileID: 4800000, guid: aff1634eec8813941ae2568213fa0ae8, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _HASHIGHLIGHT_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -20,17 +20,23 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseTex:
-        m_Texture: {fileID: 2800000, guid: 38498675651acb842af2d973dba00df4, type: 3}
+        m_Texture: {fileID: 2800000, guid: e5fd96a1fb664254cafac41dbf756c6d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ControlTex:
-        m_Texture: {fileID: 2800000, guid: 38498675651acb842af2d973dba00df4, type: 3}
+        m_Texture: {fileID: 2800000, guid: e5fd96a1fb664254cafac41dbf756c6d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 1a163b3d63674e948b83de3b7597e38e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6ceb4f8318faef6478b6b4a42c1bed1b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Floats: []
+    - _ShadowTex:
+        m_Texture: {fileID: 2800000, guid: 78b7d02f4337aa9499bf3dd4cf6e1b8a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _HasHighlight: 1
+    - _HighlightIntensity: 0.952
     m_Colors: []
   m_BuildTextureStacks: []

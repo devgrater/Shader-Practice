@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class ToonLightingRamp : MonoBehaviour
 {
 
@@ -24,7 +25,16 @@ public class ToonLightingRamp : MonoBehaviour
     void Start()
     {
         RecomputeGradientMap();
+        Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
     }
 
+    void Update(){
+        //only in editor
+        if(!Application.isPlaying){
+        // The script is executing inside the editor
+            RecomputeGradientMap();
+            Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
+        }
+    }
 
 }

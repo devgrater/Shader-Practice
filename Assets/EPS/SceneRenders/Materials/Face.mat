@@ -27,6 +27,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _FaceShadow:
+        m_Texture: {fileID: 2800000, guid: be7c3533c64528e4a93900dbdc4828e4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: fd1205aaa68944142aaba03a8f340140, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -39,7 +43,7 @@ Material:
     - _Cutoff: 0.5
     - _HasHighlight: 0
     - _HighlightIntensity: 0
-    - _Outline: 0.25
+    - _Outline: 0.001
     - _Shininess: 0.7
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 0}

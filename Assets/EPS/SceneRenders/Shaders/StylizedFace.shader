@@ -4,7 +4,8 @@ Shader "Grater/Stylized/StylizedFace"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _ShadowTex ("Shadow Texture", 2D) = "black" {}
-        _BaseTex ("Base Tex", 2D) = "white" {} //controlling alpha
+        _FaceShadow ("Face Shadow Adjustment", 2D) = "gray" {}
+        _BaseTex ("Base Tex", 2D) = "white" {} //controlling alpha //not used really
         _Cutoff ("Cutoff", Range(0,1)) = 0.5
         _HighlightIntensity ("Highlight Intensity", Range(0, 1)) = 0.0
         _Outline ("Outline Thickness", Range(0.001, 1.0)) = 0.002
@@ -48,11 +49,14 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed3 viewDir : TEXCOORD4;
                 float4 vertexColor : COLOR;
                 float4 worldPos : TEXCOORD5;
+                fixed3 upVector : TEXCOORD6;
+                fixed3 forwardVector : TEXCOORD7;
             };
 
             sampler2D _MainTex;
             sampler2D _ShadowTex;
             sampler2D _BaseTex;
+            sampler2D _FaceShadow;
             
             float4 _BaseTex_ST;
             float4 _MainTex_ST;
@@ -71,6 +75,8 @@ Shader "Grater/Stylized/StylizedFace"
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.vertexColor = v.vertexColor;
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
+                o.forwardVector = mul(unity_ObjectToWorld, float4(0, 0, 1, 0));
+                o.upVector = mul(unity_ObjectToWorld, float4(0, 1, 0, 0));
                 return o;
             }
 
@@ -84,20 +90,72 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 viewDir = normalize(i.viewDir);
 
-                fixed3 baseTexVal = tex2D(_BaseTex, i.uv);
+                fixed3 baseTexVal = tex2D(_FaceShadow, i.uv);
                 fixed selfShadowing = baseTexVal.r;
-                fixed specular = baseTexVal.g;
-                fixed alphaMask = baseTexVal.b;
-                
+                fixed faceShadow = baseTexVal.g;
 
-                //half vector
+                fixed cheekLight = faceShadow * 2.0f - 1.0f;
+                fixed noseShadow = (faceShadow * 2.0f);
+
+                //return noseShadow;
+                faceShadow = faceShadow * 2.0f - 1.0f;
+
+                fixed3 rightDir = cross(normalize(i.upVector), normalize(i.forwardVector));
+
+                fixed nDotL = dot(normal, lightDir);
+                fixed horizontalLight = dot(lightDir.xz, i.forwardVector.xz);
+                fixed rDotL = dot(rightDir, lightDir);
+                fixed sideDotL = abs(rDotL);
+
+                //the brightest case:
+                fixed facingLightAtten = abs(cheekLight) + nDotL;
+                
+                fixed uvCutoff = step(0.5f, i.uv.x); //but which side?
+                if(rDotL > 0){
+                    uvCutoff = 1 - uvCutoff;// dont worry because everythign will evaluate to the same reuslt.
+                }
+                
+                //and then, for the dark parts, we need to use the noseShadow version
+                //for the light parts, we use the cheek light version....
+
+                fixed compositeLight = lerp(noseShadow - 1, abs(cheekLight), uvCutoff);
+                //and lerp this with 1
+                compositeLight = lerp(compositeLight, 1.0f, facingLightAtten);
+
+                return compositeLight + nDotL;
+                return uvCutoff;
+                //fixed sideLightAtten = 
+                return sideDotL;
+
+
+                //              v some kind of dummy value for now
+                return horizontalLight * (1.0f);
+
+                /*
+
+
+                
+                fixed rDotL = dot(rightDir, lightDir);
+                fixed lDotL = -rDotL;
+                fixed fDotL =  dot(normalize(i.forwardVector), lightDir);
+                
+                fixed hasNoseDetail = saturate(abs(rDotL));
+                
+                return (-nDotL * faceShadow + 1) * 0.5f;
+                fixed cheekDetail = abs(cheekLight * nDotL);
+                fixed noseDetail = noseShadow * hasNoseDetail; //make it switch across sign:
+                //noseDetail = lerp(noseShadow, -noseShadow, (pow(nDotL, 0.5) * 2 - 1));
+
+                return noseDetail * 2 - 1;*/
+
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
-                fixed normalShading = dot(normal, lightDir);
+
                 fixed environmentShadow = LIGHT_ATTENUATION(i);
                 
-                fixed compositeShading = combine_shadow(normalShading, environmentShadow);
+                fixed compositeShading = combine_shadow(nDotL, environmentShadow);
                 compositeShading = combine_shadow(selfShadowing, compositeShading);
+                //compositeShading = saturate(compositeShading + faceShadow);
                 compositeShading = toonify(compositeShading, 1.0f);
                 //fixed toonShading = half_lambertify(toonify(compositeShading, 1.0f));
                 //sample the ramp with the toon shading value
@@ -114,9 +172,9 @@ Shader "Grater/Stylized/StylizedFace"
                 
                 float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
                 compositeColor.rgb += rimLight * environmentShadow;
-                compositeColor.rgb += specular * col * _HighlightIntensity;
+                //compositeColor.rgb += specular * col * _HighlightIntensity;
 
-                clip(alphaMask - _Cutoff);
+                //clip(alphaMask - _Cutoff);
                 return compositeColor;//compositeShading * col;
             }
 

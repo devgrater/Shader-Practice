@@ -110,10 +110,14 @@ Shader "Grater/Stylized/StylizedFace"
                 //the brightest case:
                 fixed facingLightAtten = abs(cheekLight) + nDotL;
                 
-                fixed uvCutoff = step(0.5f, i.uv.x); //but which side?
-                if(rDotL > 0){
+                fixed uvCutoff = smoothstep(0.4f, 0.6f, i.uv.x); //but which side?
+                /*if(rDotL > 0){
                     uvCutoff = 1 - uvCutoff;// dont worry because everythign will evaluate to the same reuslt.
-                }
+                }*/
+
+                uvCutoff = lerp(1 - uvCutoff, uvCutoff, 1 - (rDotL + 1) * 0.5);
+
+                //return uvCutoff;
                 
                 //and then, for the dark parts, we need to use the noseShadow version
                 //for the light parts, we use the cheek light version....

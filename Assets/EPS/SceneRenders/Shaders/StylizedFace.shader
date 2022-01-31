@@ -120,17 +120,17 @@ Shader "Grater/Stylized/StylizedFace"
 
                 fixed compositeLight = lerp(noseShadow - 1, abs(cheekLight), uvCutoff);
                 //and lerp this with 1
-                compositeLight = lerp(compositeLight, 1.0f, facingLightAtten);
+                //return compositeLight;
+                //compositeLight = lerp(compositeLight, 1.0f, pow(facingLightAtten, 0.5));
 
+                /*
                 return compositeLight + nDotL;
-                return uvCutoff;
-                //fixed sideLightAtten = 
-                return sideDotL;
 
 
                 //              v some kind of dummy value for now
-                return horizontalLight * (1.0f);
-
+                return horizontalLight * (1.0f);*/
+                nDotL = pow((1 - horizontalLight), 0.1) * compositeLight + nDotL;
+                
                 /*
 
 

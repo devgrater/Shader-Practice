@@ -142,7 +142,7 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed rimLightOcclusion = saturate(dot(halfVector, lightDir));
                 //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                 rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
-                rimLight = smoothstep(0.4, 0.4, rimLight) * rimMask;
+                rimLight = smoothstep(0.4, 0.5, rimLight) * rimMask;
                 
                 float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
                 compositeColor.rgb += rimLight * environmentShadow * _LightColor0.rgb;

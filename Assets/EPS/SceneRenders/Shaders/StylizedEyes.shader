@@ -111,7 +111,7 @@ Shader "Grater/Stylized/StylizedEyes"
                     fixed rimLightOcclusion = saturate(dot(halfVector, lightDir));
                     //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                     rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
-                    rimLight = smoothstep(0.4, 0.4, rimLight);
+                    rimLight = smoothstep(0.4, 0.5, rimLight);
 
                     //fixed4 toonLightingColors = tex2D(_ToonLightingRamp, fixed2(compositeShading, 0.0f));
 

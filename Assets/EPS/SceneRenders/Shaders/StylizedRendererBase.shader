@@ -9,9 +9,11 @@ Shader "Grater/Stylized/StylizedRendererBase"
         //_Color ("Color", Color) = (1, 1, 1, 1)
         _ShadowTex ("Shadow Texture", 2D) = "black" {}
         _BaseTex ("Base Tex", 2D) = "white" {} //controlling alpha
+        _ControlTex ("Control Tex", 2D) = "black" {}
         _Cutoff ("Cutoff", Range(0,1)) = 0.5
         _HighlightIntensity ("Highlight Intensity", Range(0, 1)) = 0.0
         _Outline ("Outline Thickness", Range(0.001, 1.0)) = 0.002
+        _EnvLightContrib ("Environment Light Contribution", Range(0, 1)) = 0.5
     }
     SubShader
     {
@@ -24,6 +26,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
             #include "UnityLightingCommon.cginc"
             #include "AutoLight.cginc"
             #include "StylizedHelper.cginc"
+            #include "UnityImageBasedLighting.cginc"
             
             //#include "UnityShadowLibrary.cginc"
 
@@ -31,6 +34,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 uv2 : TEXCOORD1;
                 float3 normal : NORMAL;
                 float4 vertexColor : COLOR;
             };
@@ -38,15 +42,18 @@ Shader "Grater/Stylized/StylizedRendererBase"
             sampler2D _MainTex;
             sampler2D _ShadowTex;
             sampler2D _BaseTex;
+            sampler2D _ControlTex;
             
             float4 _BaseTex_ST;
             float4 _MainTex_ST;
             fixed _Cutoff;
+            fixed _EnvLightContrib;
 
             
             struct v2f
             {
                 float2 uv : TEXCOORD0;
+                float4 uv2 : TEXCOORD1;
                 UNITY_FOG_COORDS(1)
                 LIGHTING_COORDS(2, 3)
                 float4 pos : SV_POSITION;
@@ -66,6 +73,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 o.vertexColor = v.vertexColor;
+                o.uv2 = v.uv2;
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
@@ -151,6 +159,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
 
                 fixed4 frag_base(v2f i) : SV_Target
                 {
+                    //return i.uv2;
                     //return i.vertexColor;
                     //there is no vertex color
                     //then, where did the adjusted normal go?
@@ -166,6 +175,12 @@ Shader "Grater/Stylized/StylizedRendererBase"
                     fixed selfShadowing = baseTexVal.r;
                     fixed specular = baseTexVal.g;
                     fixed alphaMask = baseTexVal.b;
+
+                    fixed3 controlTexVal = tex2D(_ControlTex, i.uv);
+                    fixed rimMask = controlTexVal.b;
+                    fixed envContrib = controlTexVal.g;
+                    //g channel - environment color
+                    //b channel - rim mask
                     
 
                     //half vector
@@ -184,6 +199,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
                     fixed rimLightOcclusion = saturate(dot(halfVector, lightDir));
                     //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                     rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
+                    rimLight = smoothstep(0.4, 0.4, rimLight);
 
                     //fixed4 toonLightingColors = tex2D(_ToonLightingRamp, fixed2(compositeShading, 0.0f));
 
@@ -191,8 +207,9 @@ Shader "Grater/Stylized/StylizedRendererBase"
                     //UNITY_APPLY_FOG(i.fogCoord, col);
                     
                     float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
-                    compositeColor.rgb += rimLight * environmentShadow;
+                    compositeColor.rgb += rimLight * environmentShadow * _LightColor0.rgb * rimMask;
                     compositeColor.rgb += specular * col * _HighlightIntensity;
+                    compositeColor.rgb += _EnvLightContrib * ShadeSH9(float4(normal, 1.0f)) * envContrib;
 
                     clip(alphaMask - _Cutoff);
 

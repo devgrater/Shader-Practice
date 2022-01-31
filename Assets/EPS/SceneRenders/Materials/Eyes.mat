@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Eyes
-  m_Shader: {fileID: 4800000, guid: aff1634eec8813941ae2568213fa0ae8, type: 3}
+  m_Shader: {fileID: 4800000, guid: 2f95247e5ca2d76429e69017a337b9b8, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -26,6 +26,10 @@ Material:
     - _ControlTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HighLight:
+        m_Texture: {fileID: 2800000, guid: 511c60fd9bf81fe48886aa604736a139, type: 3}
+        m_Scale: {x: 1, y: 2}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 1fe9d609c755e7d4d9dcba19bd07c7e1, type: 3}

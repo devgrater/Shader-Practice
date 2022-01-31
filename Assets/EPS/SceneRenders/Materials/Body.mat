@@ -24,7 +24,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ControlTex:
-        m_Texture: {fileID: 2800000, guid: 38498675651acb842af2d973dba00df4, type: 3}
+        m_Texture: {fileID: 2800000, guid: 4c6f47d00d3bf1e4fbe0b21a197fdb8f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -37,6 +37,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Cutoff: 0.5
+    - _EnvLightContrib: 0.5
     - _HasHighlight: 1
     - _HighlightIntensity: 0.288
     - _Outline: 0.5

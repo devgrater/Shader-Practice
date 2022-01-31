@@ -111,47 +111,14 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed facingLightAtten = abs(cheekLight) + nDotL;
                 
                 fixed uvCutoff = smoothstep(0.4f, 0.6f, i.uv.x); //but which side?
-                /*if(rDotL > 0){
-                    uvCutoff = 1 - uvCutoff;// dont worry because everythign will evaluate to the same reuslt.
-                }*/
-
                 uvCutoff = lerp(1 - uvCutoff, uvCutoff, 1 - (rDotL + 1) * 0.5);
-
-                //return uvCutoff;
                 
                 //and then, for the dark parts, we need to use the noseShadow version
                 //for the light parts, we use the cheek light version....
 
                 fixed compositeLight = lerp(noseShadow - 1, facingLightAtten, uvCutoff);
-                //and lerp this with 1
-                //return compositeLight;
-                //compositeLight = lerp(compositeLight, 1.0f, pow(facingLightAtten, 0.5));
-
-                /*
-                return compositeLight + nDotL;
-
-
-                //              v some kind of dummy value for now
-                return horizontalLight * (1.0f);*/
                 nDotL = lerp(compositeLight, nDotL, 1 - facingLightAtten);
                 
-                /*
-
-
-                
-                fixed rDotL = dot(rightDir, lightDir);
-                fixed lDotL = -rDotL;
-                fixed fDotL =  dot(normalize(i.forwardVector), lightDir);
-                
-                fixed hasNoseDetail = saturate(abs(rDotL));
-                
-                return (-nDotL * faceShadow + 1) * 0.5f;
-                fixed cheekDetail = abs(cheekLight * nDotL);
-                fixed noseDetail = noseShadow * hasNoseDetail; //make it switch across sign:
-                //noseDetail = lerp(noseShadow, -noseShadow, (pow(nDotL, 0.5) * 2 - 1));
-
-                return noseDetail * 2 - 1;*/
-
                 fixed3 halfVector = normalize(viewDir + lightDir);
 
 
@@ -168,15 +135,10 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed rimLightOcclusion = saturate(dot(halfVector, lightDir));
                 //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                 rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
-
-                //fixed4 toonLightingColors = tex2D(_ToonLightingRamp, fixed2(compositeShading, 0.0f));
-
-                // apply fog
-                //UNITY_APPLY_FOG(i.fogCoord, col);
+                rimLight = smoothstep(0.4, 0.4, rimLight);
                 
                 float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
-                compositeColor.rgb += rimLight * environmentShadow;
-                //compositeColor.rgb += specular * col * _HighlightIntensity;
+                compositeColor.rgb += rimLight * environmentShadow * _LightColor0.rgb;
 
                 //clip(alphaMask - _Cutoff);
                 return compositeColor;//compositeShading * col;

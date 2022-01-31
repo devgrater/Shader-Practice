@@ -118,7 +118,7 @@ Shader "Grater/Stylized/StylizedFace"
                 //and then, for the dark parts, we need to use the noseShadow version
                 //for the light parts, we use the cheek light version....
 
-                fixed compositeLight = lerp(noseShadow - 1, abs(cheekLight), uvCutoff);
+                fixed compositeLight = lerp(noseShadow - 1, facingLightAtten, uvCutoff);
                 //and lerp this with 1
                 //return compositeLight;
                 //compositeLight = lerp(compositeLight, 1.0f, pow(facingLightAtten, 0.5));
@@ -129,7 +129,7 @@ Shader "Grater/Stylized/StylizedFace"
 
                 //              v some kind of dummy value for now
                 return horizontalLight * (1.0f);*/
-                nDotL = pow((1 - horizontalLight), 0.1) * compositeLight + nDotL;
+                nDotL = lerp(compositeLight, nDotL, 1 - facingLightAtten);
                 
                 /*
 

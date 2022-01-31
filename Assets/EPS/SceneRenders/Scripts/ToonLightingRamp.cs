@@ -38,12 +38,12 @@ public class ToonLightingRamp : MonoBehaviour
     }
     void Update(){
         //only in editor
-        if(!Application.isPlaying){
+        //if(!Application.isPlaying){
         // The script is executing inside the editor
             RecomputeGradientMap();
             //Shader.SetGlobalTexture("_ToonLightingRamp", gradientMap);
             PassDataToShader();
-        }
+        //}
     }
 
 }

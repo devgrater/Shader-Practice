@@ -9,6 +9,8 @@ Shader "Grater/Stylized/StylizedFace"
         _Cutoff ("Cutoff", Range(0,1)) = 0.5
         _HighlightIntensity ("Highlight Intensity", Range(0, 1)) = 0.0
         _Outline ("Outline Thickness", Range(0.001, 1.0)) = 0.002
+        _ControlTex ("Control Tex", 2D) = "black" {}
+        _EnvLightContrib ("Environment Light Contribution", Range(0, 1)) = 0.5
     }
     SubShader
     {
@@ -57,6 +59,7 @@ Shader "Grater/Stylized/StylizedFace"
             sampler2D _ShadowTex;
             sampler2D _BaseTex;
             sampler2D _FaceShadow;
+            sampler2D _ControlTex;
             
             float4 _BaseTex_ST;
             float4 _MainTex_ST;
@@ -93,6 +96,10 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed3 baseTexVal = tex2D(_FaceShadow, i.uv);
                 fixed selfShadowing = baseTexVal.r;
                 fixed faceShadow = baseTexVal.g;
+
+                fixed3 controlTexVal = tex2D(_ControlTex, i.uv);
+                fixed rimMask = controlTexVal.b;
+                fixed envContrib = controlTexVal.g;
 
                 fixed cheekLight = faceShadow * 2.0f - 1.0f;
                 fixed noseShadow = (faceShadow * 2.0f);
@@ -135,7 +142,7 @@ Shader "Grater/Stylized/StylizedFace"
                 fixed rimLightOcclusion = saturate(dot(halfVector, lightDir));
                 //rimLight = 1 - (1 - rimLightOcclusion) * (rimLight);
                 rimLight = saturate(pow(1.0f - rimLight, 6.0f) * (1.0f - rimLightOcclusion));
-                rimLight = smoothstep(0.4, 0.4, rimLight);
+                rimLight = smoothstep(0.4, 0.4, rimLight) * rimMask;
                 
                 float4 compositeColor = lerp(shadowCol, col, compositeShading);//compositeShading * col;
                 compositeColor.rgb += rimLight * environmentShadow * _LightColor0.rgb;

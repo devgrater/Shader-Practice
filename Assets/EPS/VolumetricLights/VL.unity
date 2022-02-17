@@ -698,6 +698,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   preserve: {x: 0, y: 0, z: 0}
+  directions: {x: 0, y: 1, z: 0}
   speed: -240
 --- !u!1 &473449307
 GameObject:
@@ -1063,6 +1064,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   preserve: {x: 1, y: 1, z: 0}
+  directions: {x: 0, y: 1, z: 0}
   speed: 15
 --- !u!1 &874062198
 GameObject:
@@ -1887,6 +1889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   preserve: {x: 1, y: 1, z: 0}
+  directions: {x: 0, y: 1, z: 0}
   speed: 15
 --- !u!1001 &1551674405
 PrefabInstance:

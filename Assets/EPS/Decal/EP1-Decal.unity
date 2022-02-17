@@ -581,8 +581,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.14907026, y: 0.4010578, z: -0.06632505, w: 0.9014054}
-  m_LocalPosition: {x: 0.03, y: 1.164, z: -6.52}
+  m_LocalRotation: {x: 0.33710742, y: 0.50074184, z: -0.23373829, w: 0.7622222}
+  m_LocalPosition: {x: -5.277, y: 7.032, z: -5.655}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -600,6 +600,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 136331b69bb0eb8409f1f7dfe5906347, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  depthTextureMode: 1
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -659,7 +660,9 @@ MonoBehaviour:
   breakBeforeColorGrading: 0
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
-  m_AfterStackBundles: []
+  m_AfterStackBundles:
+  - assemblyQualifiedName: VCloud, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
 --- !u!1 &1332079655
 GameObject:
   m_ObjectHideFlags: 0
@@ -893,7 +896,7 @@ Transform:
   m_GameObject: {fileID: 1680303551}
   m_LocalRotation: {x: -0.21873334, y: 0.48537785, z: -0.0037982247, w: 0.8464926}
   m_LocalPosition: {x: 0.32, y: 0.3, z: -3.57}
-  m_LocalScale: {x: 7.8183827, y: -5.8823276, z: 7.8183827}
+  m_LocalScale: {x: 13.787684, y: -10.37346, z: 13.787684}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 5

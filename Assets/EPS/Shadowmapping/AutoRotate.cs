@@ -7,6 +7,7 @@ public class AutoRotate : MonoBehaviour
     // Start is called before the first frame update
     Vector3 rotation = new Vector3();
     [SerializeField]Vector3 preserve;
+    [SerializeField]Vector3 directions = new Vector3(0, 1, 0);
     [SerializeField]float speed = 15;
     void Start()
     {
@@ -18,7 +19,7 @@ public class AutoRotate : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rotation.y += Time.deltaTime * speed;
+        rotation += Time.deltaTime * speed * directions;
         transform.eulerAngles = preserve + rotation;
     }
 }

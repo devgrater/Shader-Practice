@@ -52,7 +52,7 @@ Shader "Hidden/Custom/VHS Effect"
             screenColor = screenColor > 0 ? 1 : 0;
             float4 finalColor = lerp(color, prevColor, screenColor);
             //return finalColor;
-            return lerp(finalColor, randomVal.rrrr, noiseWeight * randomVal > 0.5);
+            return lerp(finalColor, randomVal.rrrr, (noiseWeight * randomVal > 0.5) * 0.3);
 
         }
     ENDHLSL

@@ -1496,4 +1496,4 @@ MonoBehaviour:
     value: 480
   chromaAberrationDistance:
     overrideState: 1
-    value: 2
+    value: 5

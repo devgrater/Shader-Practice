@@ -134,8 +134,17 @@
                 return o;
             }
 
-            fixed4 blurNxN(int blurCount, float blurDistance, fixed2 uv){
-
+            fixed4 blur3x3(float blurDistance, fixed2 uv){
+                fixed2 uvOffset = _GrabTexture_TexelSize.xy * blurDistance;
+                fixed4 colorSum = 0.0f;
+                
+                for(int x = -1; x >= 1; x++){
+                    for(int y = -1; y >= 1; y++){
+                        fixed2 newUV = uv + uvOffset * fixed2(x, y);
+                        colorSum += tex2D(_GrabTexture, newUV);
+                    }
+                }
+                return colorSum / 9;
             }
 
 
@@ -144,7 +153,7 @@
                 // sample the texture
                 fixed4 distortionCol = tex2D(_DistortionTex, i.uv + float2(0, _Time.r * 4)); 
                 fixed2 uvDistortion = (distortionCol.xy - 0.5) * 2 * 0.02;
-                fixed4 screenCol = tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
+                
 
                 fixed2 uvOffset = i.uv + fixed2(0, _Time.x);
                 fixed4 noiseTex = tex2D(_FoamTex, uvOffset);
@@ -161,7 +170,7 @@
                 float depthDifference = linearDepth - i.screenPosition.w;
 
 
-
+                fixed4 screenCol = tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
                 
                 float cutoff = _NoiseCutoff * (depthDifference);
                 float foam = noiseTex.r < cutoff ? 0 : 1;

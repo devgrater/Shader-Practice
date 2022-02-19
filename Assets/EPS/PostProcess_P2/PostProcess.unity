@@ -155,6 +155,7 @@ GameObject:
   - component: {fileID: 333500977}
   - component: {fileID: 333500976}
   - component: {fileID: 333500975}
+  - component: {fileID: 333500979}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -238,6 +239,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &333500979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 333500974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d7db97da538954aa39c7c06d6ed085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  amplitudeX: 24
+  amplitudeY: 24
 --- !u!1 &523644147
 GameObject:
   m_ObjectHideFlags: 0
@@ -507,6 +522,8 @@ MonoBehaviour:
   - assemblyQualifiedName: VCloud, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
   - assemblyQualifiedName: VHS, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  - assemblyQualifiedName: Glitch, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
 --- !u!114 &1220563992
 MonoBehaviour:

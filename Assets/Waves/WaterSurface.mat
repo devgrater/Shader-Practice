@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: WaterSurface
+  m_Shader: {fileID: 4800000, guid: 668dcdf83b07f4b40a667b19b7548381, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CausticTex:
+        m_Texture: {fileID: 2800000, guid: 44d4db1c6f6f53f49bae5136be945346, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DistortionTex:
+        m_Texture: {fileID: 2800000, guid: 5126f3304d2084d7e824deb2e79c69ae, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamTex:
+        m_Texture: {fileID: 2800000, guid: 44d4db1c6f6f53f49bae5136be945346, type: 3}
+        m_Scale: {x: 32, y: 32}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise:
+        m_Texture: {fileID: 2800000, guid: 44d4db1c6f6f53f49bae5136be945346, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _Amplitude: 1.1
+    - _CausticBaseDepth: 884.19
+    - _CausticPower: 0.47
+    - _CausticTiling: 0.06
+    - _MaxWaterDepth: 3.78
+    - _NoiseCutoff: 0.76
+    - _OffsetBase: -2.03
+    - _OffsetCeil: 1
+    - _Speed: -12
+    - _Steepness: 0.209
+    - _WaterTransparency: 0.748
+    - _Wavelength: 8.36
+    m_Colors:
+    - _CausticBlendColor: {r: 0, g: 1, b: 0.8862746, a: 1}
+    - _DeepColor: {r: 0, g: 1, b: 0.83921576, a: 1}
+    - _Direction: {r: 0.71, g: 8.9, b: 0.31, a: -12.21}
+    - _ShallowColor: {r: 0, g: 0.7169812, b: 0.6716551, a: 1}
+    - _Wave1: {r: 9.81, g: 4.52, b: 0.3, a: 3.84}
+    - _Wave2: {r: 2.04, g: 3.2, b: 0.18, a: 1.56}
+    - _Wave3: {r: 13.9, g: 3.16, b: 0.05, a: 2.3}
+  m_BuildTextureStacks: []

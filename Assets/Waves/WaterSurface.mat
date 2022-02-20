@@ -54,7 +54,7 @@ Material:
     - _OffsetCeil: 1
     - _Speed: -12
     - _Steepness: 0.209
-    - _WaterTransparency: 0.748
+    - _WaterTransparency: 0.832
     - _Wavelength: 8.36
     m_Colors:
     - _CausticBlendColor: {r: 0, g: 1, b: 0.8862746, a: 1}

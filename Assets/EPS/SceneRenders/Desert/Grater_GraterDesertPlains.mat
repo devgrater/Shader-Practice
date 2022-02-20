@@ -24,15 +24,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 10ec507c1bded8e42b4128aa7e2498b9, type: 3}
-        m_Scale: {x: 32, y: 32}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 16, y: 16}
         m_Offset: {x: 0, y: 0}
     - _MetallicTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 9d422f4f56c6dde4690bf5e54c6103c4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SmoothnessTex:
@@ -45,5 +45,5 @@ Material:
     - _RoughnessWorflow: 0
     - _Smoothness: 0
     m_Colors:
-    - _Color: {r: 0.9921569, g: 0.654902, b: 0.48627454, a: 1}
+    - _Color: {r: 0.7169812, g: 0.4887176, b: 0.39569244, a: 1}
   m_BuildTextureStacks: []

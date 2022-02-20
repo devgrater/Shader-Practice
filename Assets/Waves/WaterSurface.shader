@@ -24,13 +24,11 @@
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent+1" }
-        //AlphaToMask On
-        //Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite On
-        Cull Off
-        
-        LOD 100
+            Tags {
+                "RenderType"="Transparent"
+                "Queue"="Transparent+1" 
+                
+            }
 
         GrabPass{
 
@@ -38,14 +36,30 @@
 
         Pass
         {
+            Tags {
+                "RenderType"="Transparent"
+                "Queue"="Transparent+1" 
+                
+            }
+
+            //AlphaToMask On
+            //Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite On
+            Cull Off
+            
+            LOD 100
+
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
+            #pragma multi_compile_fwdbase
 
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
+            //#include "AutoLight.cginc"
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -56,11 +70,12 @@
             {
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
+                float4 pos : SV_POSITION;
                 float4 screenPosition : TEXCOORD2;
                 float3 viewDir : TEXCOORD3;
                 float3 normal : NORMAL;
                 float3 worldPos : TEXCOORD4;
+                //LIGHTING_COORDS(5, 6)
             };
 
             sampler2D _CameraDepthTexture;
@@ -156,13 +171,14 @@
                 
                 
 
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.pos = UnityObjectToClipPos(v.vertex);
                 //o.vertex.y = 0.5 * sin(_Time.r * 32 - v.vertex.z * 4);
                 //o.vertex.x += cos(_Time.r * 16 + v.vertex.x);
                 o.uv = TRANSFORM_TEX(v.uv, _FoamTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
-                o.screenPosition = ComputeScreenPos(o.vertex);
+                UNITY_TRANSFER_FOG(o,o.pos);
+                o.screenPosition = ComputeScreenPos(o.pos);
                 o.viewDir = WorldSpaceViewDir(v.vertex);
+                //TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
 
@@ -193,8 +209,16 @@
                 fixed3 halfDir = normalize(normalize(i.viewDir) + _WorldSpaceLightPos0.xyz);
 
                 fixed highlight = pow(saturate(dot(halfDir, normalize(i.normal))), 8);
-                highlight = smoothstep(0.99, 0.991, highlight);
+                highlight = smoothstep(0.99, 0.991, highlight) * 0.2;
                 //return float4(i.normal, 1.0f);
+
+                //fixed atten = LIGHT_ATTENUATION(i);
+                fixed lighting = dot(normalize(i.normal), _WorldSpaceLightPos0.xyz);
+                //return atten;
+                //lighting = min(atten, lighting);
+                lighting = smoothstep(0.5, 0.51, lighting);
+                
+                //return lighting;
                 
 
                 fixed2 uvOffset = i.uv + fixed2(0, _Time.x);
@@ -227,7 +251,7 @@
                 //Sample using world UV.
                 float3 causticWorldUV = i.viewDir / i.screenPosition.w * linearDepth - _WorldSpaceCameraPos;
                 fixed4 caustic = tex2D(_CausticTex, causticWorldUV.xz * _CausticTiling + uvDistortion * 2) * saturate(depthDifference / _CausticBaseDepth); 
-                caustic = pow(caustic, _CausticPower);
+                caustic = pow(caustic, _CausticPower) * lighting;
                 
 
                 float4 finalColor = lerp(_ShallowColor, _DeepColor, _WaterTransparency - saturate(depthDifference / _MaxWaterDepth));

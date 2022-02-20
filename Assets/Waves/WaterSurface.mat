@@ -45,7 +45,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Amplitude: 1.1
-    - _CausticBaseDepth: 884.19
+    - _CausticBaseDepth: 741.79
     - _CausticPower: 0.3
     - _CausticTiling: 0.06
     - _MaxWaterDepth: 4.88

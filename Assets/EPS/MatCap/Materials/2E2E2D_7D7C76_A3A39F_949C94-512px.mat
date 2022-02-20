@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Grater_Matcap
+  m_Name: 2E2E2D_7D7C76_A3A39F_949C94-512px
   m_Shader: {fileID: 4800000, guid: 074b896043d1a024f818a2a34b902223, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -20,7 +20,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: c77f279180d87d049bc4cc6de6245418, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5369da15e1a8e234d81b30307f80ab24, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats: []

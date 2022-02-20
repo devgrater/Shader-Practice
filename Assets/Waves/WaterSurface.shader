@@ -189,14 +189,14 @@
                 float4 colorSum = 0.0f;
                 
                 
-                for(int x = -1; x <= 1; x++){
-                    for(int y = -1; y <= 1; y++){
+                for(int x = -2; x <= 2; x++){
+                    for(int y = -2; y <= 2; y++){
                         fixed2 newUV = xOffset * x + yOffset * y + uv;
                         colorSum += tex2D(_GrabTexture, newUV);
                         //return colorSum;
                     }
                 }
-                return colorSum / 9;
+                return colorSum / 25;
             }
 
 
@@ -213,10 +213,6 @@
                 //return float4(i.normal, 1.0f);
 
                 //fixed atten = LIGHT_ATTENUATION(i);
-                fixed lighting = dot(normalize(i.normal), _WorldSpaceLightPos0.xyz);
-                //return atten;
-                //lighting = min(atten, lighting);
-                lighting = smoothstep(0.5, 0.51, lighting);
                 
                 //return lighting;
                 
@@ -240,7 +236,7 @@
                 //return blurAmount;
 
                 //return tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
-                fixed4 screenCol = blur3x3(blurAmount * 8, i.screenPosition.xy / i.screenPosition.w + uvDistortion);//
+                fixed4 screenCol = blur3x3(blurAmount * 12, i.screenPosition.xy / i.screenPosition.w + uvDistortion);//
                 //return screenCol;
 
                 float cutoff = _NoiseCutoff * (depthDifference);
@@ -251,7 +247,8 @@
                 //Sample using world UV.
                 float3 causticWorldUV = i.viewDir / i.screenPosition.w * linearDepth - _WorldSpaceCameraPos;
                 fixed4 caustic = tex2D(_CausticTex, causticWorldUV.xz * _CausticTiling + uvDistortion * 2) * saturate(depthDifference / _CausticBaseDepth); 
-                caustic = pow(caustic, _CausticPower) * lighting;
+                caustic = pow(caustic, _CausticPower);
+                caustic = lerp(0, caustic, 1 - blurAmount);
                 
 
                 float4 finalColor = lerp(_ShallowColor, _DeepColor, _WaterTransparency - saturate(depthDifference / _MaxWaterDepth));

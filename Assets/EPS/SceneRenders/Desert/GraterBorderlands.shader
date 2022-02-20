@@ -204,7 +204,7 @@ Shader "Grater/GraterNPBR"
                 lighting = min(nDotL, lighting);
 
                 //welp!
-                lighting = smoothstep(0.1, 0.12, lighting);
+                lighting = smoothstep(0.5, 0.52, lighting);
                 
                 //return dfg_d(nDotH, roughness);
                 //return float4(dfg_f(nDotV, f0, roughness), 1.0);

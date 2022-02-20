@@ -174,5 +174,5 @@ Shader "Grater/Experimental/VLBox"
             ENDCG
         }
     }
-    Fallback "VertexLit"
+    //Fallback "VertexLit"
 }

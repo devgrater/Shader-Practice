@@ -1,4 +1,4 @@
-Shader "Grater/Experimental/VLBox"
+Shader "Grater/Experimental/VCBox"
 {
     Properties
     {

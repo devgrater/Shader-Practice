@@ -18,7 +18,7 @@ MonoBehaviour:
     value: 1
   gradingMode:
     overrideState: 1
-    value: 1
+    value: 0
   externalLut:
     overrideState: 0
     value: {fileID: 0}
@@ -1379,13 +1379,13 @@ MonoBehaviour:
     value: 0
   color:
     overrideState: 1
-    value: {r: 0, g: 0, b: 0, a: 1}
+    value: {r: 0.3018868, g: 0, b: 0, a: 1}
   center:
     overrideState: 1
     value: {x: 0.5, y: 0.5}
   intensity:
     overrideState: 1
-    value: 0.399
+    value: 0.373
   smoothness:
     overrideState: 0
     value: 0.2
@@ -1440,10 +1440,10 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 0.47
+    value: 0.22
   color:
     overrideState: 1
-    value: {r: 0.30776075, g: 0.3853798, b: 0.49056602, a: 1}
+    value: {r: 0.49019608, g: 0.3165903, b: 0.30588236, a: 1}
   ambientOnly:
     overrideState: 0
     value: 1

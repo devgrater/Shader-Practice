@@ -45,7 +45,7 @@
             #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
-
+            #include "UnityLightingCommon.cginc"
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -59,6 +59,8 @@
                 float4 vertex : SV_POSITION;
                 float4 screenPosition : TEXCOORD2;
                 float3 viewDir : TEXCOORD3;
+                float3 normal : NORMAL;
+                float3 worldPos : TEXCOORD4;
             };
 
             sampler2D _CameraDepthTexture;
@@ -85,7 +87,7 @@
             float _OffsetBase;
 
 
-            float3 gerstner(float4 data, float4 vertex){
+            float3 gerstner(float4 data, float4 vertex, out float3 tangent, out float3 binormal){
                 //r channel: angle (convert to vector)
                 //g channel: wavelength
                 //b channel: steepness
@@ -97,6 +99,20 @@
                 float f = k * (dot(d, vertex.xz) - data.a * _Time.y);
                 float a = data.b / k;
 
+                tangent = float3(
+                    -d.x * d.x * (data.b * sin(f)),
+                    d.x * (data.b * cos(f)),
+                    -d.x * d.y * (data.b * sin(f))
+                );
+                binormal = float3(
+                    -d.x * d.y * (data.b * sin(f)),
+                    d.y * (data.b * cos(f)),
+                    -d.y * d.y * (data.b * sin(f))
+                );
+
+
+                //float3 tangent = normalize(float3(1, k * a * cos(f), 0));
+                //normal = fixed3(-tangent.y, tangent.x, 0.0f);
                 return float3(d.x * cos(f) * a, sin(f) * a, d.y * cos(f) * a);
             }
 
@@ -113,14 +129,30 @@
                 v.vertex.x += d.x * cos(f) * a;
                 v.vertex.z += d.y * cos(f) * a;
                 v.vertex.y = sin(f) * a;*/
+                float3 tangent = float3(1, 0, 0), bitangent = float3(0, 0, 1);
+                float3 newTangent, newBitangent;
+                float3 wave1 = gerstner(_Wave1, v.vertex, newTangent, newBitangent);
+                tangent += newTangent;
+                bitangent += newBitangent;
+                
+                float3 wave2 = gerstner(_Wave2, v.vertex, newTangent, newBitangent);
+                tangent += newTangent;
+                bitangent += newBitangent;
 
-                float3 wave1 = gerstner(_Wave1, v.vertex);
-                float3 wave2 = gerstner(_Wave2, v.vertex);
-                float3 wave3 = gerstner(_Wave3, v.vertex);
-                float3 wavesum = wave1 + wave2 + wave3;
+                float3 wave3 = gerstner(_Wave3, v.vertex, newTangent, newBitangent);
+                tangent += newTangent;
+                bitangent += newBitangent;
+
+                o.normal = normalize(cross(normalize(bitangent), normalize(tangent)));
+                o.normal = UnityObjectToWorldNormal(o.normal);
+
+
+                float3 wavesum = wave1;// + wave2 + wave3;
 
                 v.vertex.xz += wavesum.xz;
                 v.vertex.y = wavesum.y;
+
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 
                 
 
@@ -135,13 +167,17 @@
             }
 
             fixed4 blur3x3(float blurDistance, fixed2 uv){
-                fixed2 uvOffset = _GrabTexture_TexelSize.xy * blurDistance;
-                fixed4 colorSum = 0.0f;
+                fixed2 xOffset = fixed2(_GrabTexture_TexelSize.x * blurDistance, 0.0f);
+                fixed2 yOffset = fixed2(0.0f, _GrabTexture_TexelSize.y * blurDistance);
+                //fixed2 uvOffset = _GrabTexture_TexelSize.xy * blurDistance;
+                float4 colorSum = 0.0f;
                 
-                for(int x = -1; x >= 1; x++){
-                    for(int y = -1; y >= 1; y++){
-                        fixed2 newUV = uv + uvOffset * fixed2(x, y);
+                
+                for(int x = -1; x <= 1; x++){
+                    for(int y = -1; y <= 1; y++){
+                        fixed2 newUV = xOffset * x + yOffset * y + uv;
                         colorSum += tex2D(_GrabTexture, newUV);
+                        //return colorSum;
                     }
                 }
                 return colorSum / 9;
@@ -153,6 +189,12 @@
                 // sample the texture
                 fixed4 distortionCol = tex2D(_DistortionTex, i.uv + float2(0, _Time.r * 4)); 
                 fixed2 uvDistortion = (distortionCol.xy - 0.5) * 2 * 0.02;
+
+                fixed3 halfDir = normalize(normalize(i.viewDir) + _WorldSpaceLightPos0.xyz);
+
+                fixed highlight = pow(saturate(dot(halfDir, normalize(i.normal))), 8);
+                highlight = smoothstep(0.99, 0.991, highlight);
+                //return float4(i.normal, 1.0f);
                 
 
                 fixed2 uvOffset = i.uv + fixed2(0, _Time.x);
@@ -168,10 +210,15 @@
                 //w of the vertex is the depth it seems.
                 float surfaceDepth = i.screenPosition.w;
                 float depthDifference = linearDepth - i.screenPosition.w;
+                fixed blurAmount = 1 - 1 / max(depthDifference, 0.01);
+                blurAmount = saturate(blurAmount);
+                blurAmount = blurAmount * blurAmount;
+                //return blurAmount;
 
+                //return tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
+                fixed4 screenCol = blur3x3(blurAmount * 8, i.screenPosition.xy / i.screenPosition.w + uvDistortion);//
+                //return screenCol;
 
-                fixed4 screenCol = tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
-                
                 float cutoff = _NoiseCutoff * (depthDifference);
                 float foam = noiseTex.r < cutoff ? 0 : 1;
 
@@ -187,7 +234,7 @@
                 finalColor = lerp(finalColor * (1+caustic * 0.1), screenCol * (1+caustic*2), 1-saturate(depthDifference / _MaxWaterDepth) * _WaterTransparency) + float4(foam, foam, foam, 1.0);
                 UNITY_APPLY_FOG(i.fogCoord, finalColor);
                 
-                return finalColor;//saturate(depthDifference / 10);//finalColor;
+                return finalColor + highlight;//saturate(depthDifference / 10);//finalColor;
             }
             ENDCG
         }

@@ -223,6 +223,7 @@ Shader "Grater/GraterDesertPlains"
                 //extract highlight
                 fixed r1 = tex2D(_Noise, i.uv);
                 fixed r2 = tex2D(_Noise, i.uv * 1.3f);
+                fixed r3 = tex2D(_Noise, i.uv * 0.1 + _Time.rr * 0.2);
 
                 float3 randomNormal = random_normal_from_noise(r1, r2);
                 fixed3 normal = normalize(i.normal);
@@ -250,7 +251,7 @@ Shader "Grater/GraterDesertPlains"
                 fixed baseNormal = saturate(dot(worldNormal, halfDir));
                 baseNormal = pow(baseNormal, 32);
                 fixed highlight = saturate(dot(normalize(i.viewDir), wsRandomNormal));
-                highlight = pow(highlight, 16) * 0.8;
+                highlight = pow(highlight, 16) * 0.8 * r3;
             
 
                 worldNormal = normal;

@@ -10,6 +10,7 @@ public class RandomMove : MonoBehaviour
     float time_elapsed = 0;
     [SerializeField] float amplitudeX = 1;
     [SerializeField] float amplitudeY = 1;
+    [SerializeField] float timeScale = 2;
     void Start()
     {
         basePos = transform.position;
@@ -21,13 +22,13 @@ public class RandomMove : MonoBehaviour
     {
         time_elapsed += Time.deltaTime;
         Vector3 offset = new Vector3();
-        offset += Mathf.Cos(time_elapsed * 2) * Vector3.right * amplitudeX;
-        offset += Mathf.Sin(time_elapsed) * Vector3.up * amplitudeY;
+        offset += Mathf.Cos(time_elapsed * timeScale) * Vector3.right * amplitudeX;
+        offset += Mathf.Sin(time_elapsed * timeScale) * Vector3.up * amplitudeY;
         transform.position = basePos + offset;
 
         Vector3 forwardOffset = new Vector3();
-        forwardOffset -= Mathf.Cos(time_elapsed * 2) * Vector3.right * 0.4f;
-        forwardOffset -= Mathf.Sin(time_elapsed * 2) * Vector3.up * 0.4f;
+        forwardOffset -= Mathf.Cos(time_elapsed * timeScale) * Vector3.right * 0.4f;
+        forwardOffset -= Mathf.Sin(time_elapsed * timeScale) * Vector3.up * 0.4f;
         forwardOffset.z = 0.01f;
 
         transform.forward = (baseForward + forwardOffset).normalized;

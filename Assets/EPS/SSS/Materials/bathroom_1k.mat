@@ -7,28 +7,25 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_ApproximateSSS
-  m_Shader: {fileID: 4800000, guid: 8d3a0a001826dbb43b815305fe1bfe9f, type: 3}
+  m_Name: bathroom_1k
+  m_Shader: {fileID: 103, guid: 0000000000000000f000000000000000, type: 0}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3001
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 0}
+    - _Tex:
+        m_Texture: {fileID: 8900000, guid: 7d2df91358b57e04288dd9f264783e26, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BackSurfaceDistortion: 1.44
-    - _FrontSurfaceDistortion: 0.57
-    - _SSIntensity: 8
-    - _SurfaceDistortion: 0.72
+    - _Exposure: 1
+    - _Rotation: 0
     m_Colors:
-    - _InnerColor: {r: 0, g: 1, b: 0.9654484, a: 1}
-    - _Tint: {r: 0.254717, g: 0, b: 0.088171236, a: 0}
+    - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
   m_BuildTextureStacks: []

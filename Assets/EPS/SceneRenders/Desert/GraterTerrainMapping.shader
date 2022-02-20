@@ -2,8 +2,9 @@ Shader "Grater/GraterDesertPlains"
 {
     Properties
     {
+        _HighlightColor ("Highlight Color", color) = (1, 1, 1, 1)
         _MainTex ("Texture", 2D) = "white" {}
-        
+        _Noise ("Noise", 2D) = "gray" {}
         _Normal ("Normal Map", 2D) = "bump" {}
         _NormalIntensity ("Normal Intensity", Range(0, 1)) = 1.0
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
@@ -55,6 +56,7 @@ Shader "Grater/GraterDesertPlains"
 
             sampler2D _MainTex;
             sampler2D _Normal;
+            sampler2D _Noise;
             sampler2D _MetallicTex;
             sampler2D _SmoothnessTex;
             sampler2D _BRDF_Lut;
@@ -62,6 +64,7 @@ Shader "Grater/GraterDesertPlains"
             fixed _Smoothness;
             fixed _Metallic;
             fixed4 _Color;
+            fixed4 _HighlightColor;
             fixed _NormalIntensity;
             int _RoughnessWorflow;
             int _AlphaIsSmoothness;
@@ -180,6 +183,34 @@ Shader "Grater/GraterDesertPlains"
             #pragma multi_compile_fog
             #pragma multi_compile_fwdbase
 
+            static const float3 random_vector = float3(1.334f, 2.241f, 3.919f);
+            static const float two_pi = 6.28;
+            float random_from_pos(float3 pos){
+                return frac(dot(pos, random_vector) * 383.8438);
+            }
+
+            float3 random_normal_from_pos(float3 pos){
+                fixed r1 = random_from_pos(pos);
+                fixed r2 = random_from_pos(pos + random_vector);
+                fixed oneminusr1 = sqrt(1 - r1 * r1);
+                
+                return float3(
+                    oneminusr1 * cos(two_pi * r2),
+                    oneminusr1 * sin(two_pi * r2),
+                    r1
+                );
+            }
+            
+            float3 random_normal_from_noise(float r1, float r2){
+                fixed oneminusr1 = sqrt(1 - r1 * r1);
+                
+                return float3(
+                    oneminusr1 * cos(two_pi * r2),
+                    oneminusr1 * sin(two_pi * r2),
+                    r1
+                );
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 ///////////// SAMPLING TEXTURES ////////////////
@@ -189,8 +220,43 @@ Shader "Grater/GraterDesertPlains"
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
 
+                //extract highlight
+                fixed r1 = tex2D(_Noise, i.uv);
+                fixed r2 = tex2D(_Noise, i.uv * 1.3f);
+
+                float3 randomNormal = random_normal_from_noise(r1, r2);
+                fixed3 normal = normalize(i.normal);
+                fixed3 tangent = normalize(i.tangent);
+                fixed3 bitangent = normalize(i.bitangent);
+                float3x3 tbn = float3x3(
+                    tangent.x, bitangent.x, normal.x,
+                    tangent.y, bitangent.y, normal.y,
+                    tangent.z, bitangent.z, normal.z
+                );
+                float3 wsRandomNormal = normalize(mul(tbn, randomNormal));
+            
+
+
+                //return float4(randomNormal, 1.0f);
+
+                fixed3 halfDir = normalize(i.viewDir + _WorldSpaceLightPos0.xyz);
+               
+                //return float4(randomNormal, 1.0f);
+
+
                 ///////////// BASE COMPUTATIONS /////////////////
-                fixed3 worldNormal = map_normal(i.uv, normalize(i.normal), normalize(i.tangent), normalize(i.bitangent));//normalize(i.normal);
+                fixed3 worldNormal = map_normal(i.uv, normal, tangent, bitangent);//normalize(i.normal);
+
+                fixed baseNormal = saturate(dot(worldNormal, halfDir));
+                baseNormal = pow(baseNormal, 32);
+                fixed highlight = saturate(dot(normalize(i.viewDir), wsRandomNormal));
+                highlight = pow(highlight, 16) * 0.8;
+            
+
+                worldNormal = normal;
+
+                //return baseNormal * highlight;
+
 
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
@@ -214,6 +280,8 @@ Shader "Grater/GraterDesertPlains"
                 //welp!
                 lighting = smoothstep(0.5, 0.52, lighting);
                 
+                highlight *= lighting;
+
                 //return dfg_d(nDotH, roughness);
                 //return float4(dfg_f(nDotV, f0, roughness), 1.0);
                 //return dfg_g(nDotV, lightDir, roughness);
@@ -228,10 +296,12 @@ Shader "Grater/GraterDesertPlains"
                 float4 composite = float4(direct * lightAmount + indirect, 1.0);
                 UNITY_APPLY_FOG(i.fogCoord, composite);
                 //return float4(ShadeSH9(float4(worldNormal, 1)), 1);
-                return composite;
+                return composite + lerp(highlight * _HighlightColor, 1.0, highlight * 0.3);
             }
             ENDCG
         }
+
+
         
         Pass
         {
@@ -255,6 +325,9 @@ Shader "Grater/GraterDesertPlains"
                 sample_smoothness_metallic(i.uv, smoothness, metallic);
                 //since everything is in gamma space...
                 //we should probably convert the color to gamma space too...
+
+                //extract highlight
+
 
                 //////////// DIRECTIONAL OR POINT? ///////////////
                 fixed3 lightDir;

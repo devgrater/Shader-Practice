@@ -252,7 +252,8 @@
                 
 
                 float4 finalColor = lerp(_ShallowColor, _DeepColor, _WaterTransparency - saturate(depthDifference / _MaxWaterDepth));
-                finalColor = lerp(finalColor * (1+caustic * 0.1), screenCol * (1+caustic*2), 1-saturate(depthDifference / _MaxWaterDepth) * _WaterTransparency) + float4(foam, foam, foam, 1.0);
+                finalColor = lerp(finalColor * (1+caustic * 0.1), screenCol * (1+caustic*2), 1-saturate(depthDifference / _MaxWaterDepth) * _WaterTransparency);
+                finalColor += finalColor * foam * 0.5;
                 UNITY_APPLY_FOG(i.fogCoord, finalColor);
                 
                 return finalColor + highlight;//saturate(depthDifference / 10);//finalColor;

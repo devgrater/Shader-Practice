@@ -25,9 +25,9 @@ Shader "Unlit/ApproximateSSS"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
-                float4 screenPos : TEXCOORD1;
-                float3 worldPos : TEXCOORD2;
-                float3 viewDir : TEXCOORD3;
+                float4 screenPos : TEXCOORD2;
+                float3 worldPos : TEXCOORD3;
+                float3 viewDir : TEXCOORD4;
                 float3 normal : NORMAL;
             };
 

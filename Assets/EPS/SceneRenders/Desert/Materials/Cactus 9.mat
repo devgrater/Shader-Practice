@@ -43,7 +43,7 @@ Material:
     - _AlphaIsSmoothness: 0
     - _Metallic: 0
     - _RoughnessWorflow: 1
-    - _Smoothness: 0
+    - _Smoothness: 0.023
     m_Colors:
     - _Color: {r: 1, g: 0.9009434, b: 0.97956717, a: 1}
   m_BuildTextureStacks: []

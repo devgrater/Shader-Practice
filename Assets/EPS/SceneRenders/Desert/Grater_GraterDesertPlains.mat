@@ -42,6 +42,7 @@ Material:
     m_Floats:
     - _AlphaIsSmoothness: 0
     - _Metallic: 0
+    - _NormalIntensity: 0
     - _RoughnessWorflow: 0
     - _Smoothness: 0
     m_Colors:

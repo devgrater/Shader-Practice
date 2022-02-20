@@ -3,7 +3,9 @@ Shader "Grater/GraterDesertPlains"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        
         _Normal ("Normal Map", 2D) = "bump" {}
+        _NormalIntensity ("Normal Intensity", Range(0, 1)) = 1.0
         _Color ("Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _MetallicTex ("Metallic Texture", 2D) = "white" {} //default to white, so we can multiply thsi with the metallic value
         [Gamma]_Metallic ("Metallic", Range(0, 1)) = 1.0
@@ -60,6 +62,7 @@ Shader "Grater/GraterDesertPlains"
             fixed _Smoothness;
             fixed _Metallic;
             fixed4 _Color;
+            fixed _NormalIntensity;
             int _RoughnessWorflow;
             int _AlphaIsSmoothness;
             //UNITY_DECLARE_TEXCUBE(_CubeMap);
@@ -105,6 +108,7 @@ Shader "Grater/GraterDesertPlains"
 
             inline fixed3 map_normal(float2 uv, fixed3 normal, fixed3 tangent, fixed3 bitangent){
                 fixed3 tangentSpaceNormal = UnpackNormal(tex2D(_Normal, uv));
+                tangentSpaceNormal = lerp(fixed3(0, 0, 1.0), tangentSpaceNormal, _NormalIntensity);
                 float3x3 tbn = float3x3(
                     tangent.x, bitangent.x, normal.x,
                     tangent.y, bitangent.y, normal.y,
@@ -187,6 +191,7 @@ Shader "Grater/GraterDesertPlains"
 
                 ///////////// BASE COMPUTATIONS /////////////////
                 fixed3 worldNormal = map_normal(i.uv, normalize(i.normal), normalize(i.tangent), normalize(i.bitangent));//normalize(i.normal);
+
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0);
                 fixed3 halfVector = normalize(viewDir + lightDir);

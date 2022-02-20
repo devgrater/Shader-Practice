@@ -54,14 +54,14 @@ Material:
     - _OffsetCeil: 1
     - _Speed: -12
     - _Steepness: 0.209
-    - _WaterTransparency: 0.832
+    - _WaterTransparency: 0.72
     - _Wavelength: 8.36
     m_Colors:
     - _CausticBlendColor: {r: 0, g: 1, b: 0.8862746, a: 1}
     - _DeepColor: {r: 0, g: 1, b: 0.83921576, a: 1}
     - _Direction: {r: 0.71, g: 8.9, b: 0.31, a: -12.21}
-    - _ShallowColor: {r: 0, g: 0.7176471, b: 0.5920411, a: 1}
-    - _Wave1: {r: 61.1, g: 3.72, b: 0.32, a: 5}
+    - _ShallowColor: {r: 0, g: 0.7176471, b: 0.507311, a: 1}
+    - _Wave1: {r: 61.1, g: 3.72, b: 0.2, a: 5}
     - _Wave2: {r: 3.88, g: 8.01, b: 0.39, a: 1}
     - _Wave3: {r: 8.63, g: 7.66, b: 0.53, a: 1}
   m_BuildTextureStacks: []

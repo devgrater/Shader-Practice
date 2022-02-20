@@ -45,5 +45,5 @@ Material:
     - _RoughnessWorflow: 1
     - _Smoothness: 0
     m_Colors:
-    - _Color: {r: 1, g: 0.9019608, b: 0.924378, a: 1}
+    - _Color: {r: 1, g: 0.8374576, b: 0.7971698, a: 1}
   m_BuildTextureStacks: []

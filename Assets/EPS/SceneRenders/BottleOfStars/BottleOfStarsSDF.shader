@@ -55,6 +55,14 @@ Shader "Hidden/BottleOfStars"
             //equivalent of map() in iq's example
             float evalScene(float3 checkPoint){
                 float minDist;
+                minDist = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 3.0f);
+                float tube = cylinderSDF(checkPoint, float3(0.0f, 2.8f, 0.0f), 2.4f, 0.8f);
+                minDist = sdfSmoothUnion(minDist, tube, 0.6f);
+
+                float torus = torusSDF(checkPoint, float3(0.0f, 5.2f, 0.0f), 0.8f, 0.3f);
+                minDist = sdfSmoothUnion(minDist, torus, 0.2f);
+                //return torus;
+                /*
                 float sphere1 = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 1.0f);
                 float sphere2 = sphereSDF(checkPoint, float3(1.0f, 0.0f, 0.0f), 1.5f);
                 minDist = sdfSmoothUnion(sphere1, sphere2, 0.2f);
@@ -63,7 +71,7 @@ Shader "Hidden/BottleOfStars"
                 float box1 = boxSDF(checkPoint, float3(1.5f + sin(_Time.g), 1.5f, 1.5f), float3(1.0f, 2.0f, 1.0f));
                 minDist = sdfSmoothSubtract(minDist, box1, 0.2f);
                 float box2 = boxSDF(checkPoint, float3(4.0f, 2.0f, 5.0f), float3(1.5f, 1.0f, 2.0f));
-                minDist = min(box2, minDist);
+                minDist = min(box2, minDist);*/
 
                 return minDist;
             }
@@ -126,13 +134,22 @@ Shader "Hidden/BottleOfStars"
                 highlight = saturate(highlight);
                 highlight = pow(highlight, 512);
 
-                return (lighting + highlight) * hit;
+                fixed rimlight = saturate(dot(-viewDir, normal));
+                
+                rimlight = 1 - rimlight;
+                rimlight = pow(rimlight, 2);
+
+                //return hit;
+                //return (lighting + highlight) * hit;
                 normal = (normal + 1.0f) * 0.5f;
                 //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
                 fixed4 outNormal = fixed4(normal, 1.0f);
 
                 hit = saturate(hit);
 
+                return highlight + rimlight;
+
+                //return outNormal;
                 //return float4(worldPos, 1.0f);
                 //return lerp(screenCol, 0.0f, hit);
                 return max(outNormal, 0.0f) * hit + screenCol * (1 - hit);

@@ -16,6 +16,10 @@ Shader "Hidden/BottleOfStars"
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc"
+            #include "GraterSDFShapes.cginc"
+            #include "GraterSDFOperators.cginc"
+            
 
             struct appdata
             {
@@ -43,32 +47,21 @@ Shader "Hidden/BottleOfStars"
             sampler2D _MainTex;
 
 
-            float sphereSDF(float3 checkPoint, float3 origin, float radius){
-                return length(checkPoint - origin) - radius;
-            }
-
-            float boxSDF(float3 checkPoint, float3 center, float3 bounds){
-                float3 sdVector = checkPoint - center;
-                float3 diff = abs(sdVector) - bounds;
-                return length(max(diff, 0.0f)) + min(max(diff.x, max(diff.y, diff.z)), 0.0f);
-            }
 
 
-            float smoothUnion(float d1, float d2, float k){
-                float h = clamp(0.5f + 0.5f * (d2 - d1) / k, 0.0f, 1.0f);
-                return lerp(d2, d1, h) - k * h * (1.0f - h);
-            }
+
+
 
             //equivalent of map() in iq's example
             float evalScene(float3 checkPoint){
                 float minDist;
                 float sphere1 = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 1.0f);
                 float sphere2 = sphereSDF(checkPoint, float3(1.0f, 0.0f, 0.0f), 1.5f);
-                minDist = smoothUnion(sphere1, sphere2, 0.2f);
+                minDist = sdfSmoothUnion(sphere1, sphere2, 0.2f);
                 float sphere3 = sphereSDF(checkPoint, float3(0.5f, 1.0f, 1.0f), 2.0f);
-                minDist = smoothUnion(sphere3, minDist, 0.2f);
-                float box1 = boxSDF(checkPoint, float3(1.5f, 1.5f, 1.5f), float3(1.0f, 2.0f, 1.0f));
-                minDist = min(box1, minDist);
+                minDist = sdfSmoothUnion(sphere3, minDist, 0.2f);
+                float box1 = boxSDF(checkPoint, float3(1.5f + sin(_Time.g), 1.5f, 1.5f), float3(1.0f, 2.0f, 1.0f));
+                minDist = sdfSmoothSubtract(minDist, box1, 0.2f);
                 float box2 = boxSDF(checkPoint, float3(4.0f, 2.0f, 5.0f), float3(1.5f, 1.0f, 2.0f));
                 minDist = min(box2, minDist);
 
@@ -85,7 +78,7 @@ Shader "Hidden/BottleOfStars"
                     minDist = evalScene(headPos);
                     headPos += minDist * viewDir;
                     dstTravelled += minDist;
-                    if(abs(minDist) <= 0.011f){
+                    if(abs(minDist) <= 0.005f){
                         hit = 1.0f;
                         break;
                     }
@@ -115,7 +108,10 @@ Shader "Hidden/BottleOfStars"
             {
                 fixed4 screenCol = tex2D(_MainTex, i.uv);
 
+                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 fixed3 viewDir = normalize(i.viewDir);
+                fixed3 halfDir = normalize(lightDir - viewDir);
+
                 float3 worldCamPos = _WorldSpaceCameraPos;
                 float dst, hit;
                 float3 col;
@@ -125,6 +121,12 @@ Shader "Hidden/BottleOfStars"
                 float4 pos = float4(worldPos, 1.0f);
 
                 fixed3 normal = findNormal(worldPos);
+                fixed lighting = dot(lightDir, normal);
+                fixed highlight = dot(halfDir, normal);
+                highlight = saturate(highlight);
+                highlight = pow(highlight, 512);
+
+                return (lighting + highlight) * hit;
                 normal = (normal + 1.0f) * 0.5f;
                 //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
                 fixed4 outNormal = fixed4(normal, 1.0f);

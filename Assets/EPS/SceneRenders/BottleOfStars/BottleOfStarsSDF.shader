@@ -53,6 +53,7 @@ Shader "Hidden/BottleOfStars"
                 return length(max(diff, 0.0f)) + min(max(diff.x, max(diff.y, diff.z)), 0.0f);
             }
 
+            //equivalent of map() in iq's example
             float evalScene(float3 checkPoint){
                 float minDist;
                 float sphere1 = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 1.0f);
@@ -78,7 +79,7 @@ Shader "Hidden/BottleOfStars"
                     minDist = evalScene(headPos);
                     headPos += minDist * viewDir;
                     dstTravelled += minDist;
-                    if(abs(minDist) <= 0.01f){
+                    if(abs(minDist) <= 0.011f){
                         hit = 1.0f;
                         break;
                     }
@@ -88,6 +89,19 @@ Shader "Hidden/BottleOfStars"
                 
             }
 
+            
+            //No idea what this is all about yet... thanks regardless iq
+            fixed3 findNormal(float3 pos){
+                
+                fixed2 eps = fixed2(1.0, -1.0) * 0.5773 * 0.0005;
+                return normalize(
+                    eps.xyy * evalScene(pos + eps.xyy).x + 
+                    eps.yyx * evalScene(pos + eps.yyx).x + 
+                    eps.yxy * evalScene(pos + eps.yxy).x + 
+                    eps.xxx * evalScene(pos + eps.xxx).x
+                );
+                
+            }
 
 
 
@@ -104,13 +118,21 @@ Shader "Hidden/BottleOfStars"
                 float3 worldPos = worldCamPos + viewDir * dst;
                 float4 pos = float4(worldPos, 1.0f);
 
+                fixed3 normal = findNormal(worldPos);
+                //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
+                fixed4 outNormal = fixed4(normal, 1.0f);
+
                 hit = saturate(hit);
 
                 //return float4(worldPos, 1.0f);
                 //return lerp(screenCol, 0.0f, hit);
-                return saturate(hit * pos) + screenCol * (1 - hit);
+                return max(outNormal, 0.0f) * hit + screenCol * (1 - hit);
                 return screenCol * (1 - hit);
                 return lerp(float4(worldPos, 1.0) * hit, screenCol, hit);
+
+
+
+
                 /*
 
 

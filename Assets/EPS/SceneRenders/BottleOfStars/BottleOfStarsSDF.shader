@@ -53,14 +53,20 @@ Shader "Hidden/BottleOfStars"
                 return length(max(diff, 0.0f)) + min(max(diff.x, max(diff.y, diff.z)), 0.0f);
             }
 
+
+            float smoothUnion(float d1, float d2, float k){
+                float h = clamp(0.5f + 0.5f * (d2 - d1) / k, 0.0f, 1.0f);
+                return lerp(d2, d1, h) - k * h * (1.0f - h);
+            }
+
             //equivalent of map() in iq's example
             float evalScene(float3 checkPoint){
                 float minDist;
                 float sphere1 = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 1.0f);
                 float sphere2 = sphereSDF(checkPoint, float3(1.0f, 0.0f, 0.0f), 1.5f);
-                minDist = min(sphere1, sphere2);
+                minDist = smoothUnion(sphere1, sphere2, 0.2f);
                 float sphere3 = sphereSDF(checkPoint, float3(0.5f, 1.0f, 1.0f), 2.0f);
-                minDist = min(sphere3, minDist);
+                minDist = smoothUnion(sphere3, minDist, 0.2f);
                 float box1 = boxSDF(checkPoint, float3(1.5f, 1.5f, 1.5f), float3(1.0f, 2.0f, 1.0f));
                 minDist = min(box1, minDist);
                 float box2 = boxSDF(checkPoint, float3(4.0f, 2.0f, 5.0f), float3(1.5f, 1.0f, 2.0f));
@@ -119,6 +125,7 @@ Shader "Hidden/BottleOfStars"
                 float4 pos = float4(worldPos, 1.0f);
 
                 fixed3 normal = findNormal(worldPos);
+                normal = (normal + 1.0f) * 0.5f;
                 //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
                 fixed4 outNormal = fixed4(normal, 1.0f);
 

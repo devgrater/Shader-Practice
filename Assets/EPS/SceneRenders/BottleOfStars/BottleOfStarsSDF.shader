@@ -175,7 +175,9 @@ Shader "Hidden/BottleOfStars"
                 
 
                 fixed3 reflDir = reflect(viewDir, normal);
-                fixed highlight = dot(reflDir, lightDir);
+                //this gives a really long highlight, which looks amazing
+                
+                fixed highlight = dot(reflDir, normalize(lightDir + viewDir));
                 highlight = saturate(highlight);
                 highlight = pow(highlight, 192);
                 //highlight = smoothstep(0.5, 0.7, highlight);
@@ -205,7 +207,7 @@ Shader "Hidden/BottleOfStars"
 
                 fixed3 innerColor = lerp(screenCol * 0.8, rgbm.rgb, rimlight);
                 innerColor = lerp(innerColor, 4.0f, highlight + fresnel);
-                innerColor -= fresnel * 3;
+                innerColor -= fresnel * 3.8;
                 innerColor += pow(saturate(rimlight), 2) * 0.1;
                 //innerColor += highlight + fresnel;
 

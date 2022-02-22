@@ -156,15 +156,18 @@ Shader "Hidden/BottleOfStars"
                 fixed lighting = dot(lightDir, normal);
                 fixed highlight = dot(halfDir, normal);
                 highlight = saturate(highlight);
-                highlight = pow(highlight, 256);
+                highlight = pow(highlight, 512);
+                //highlight /= cos(highlight);
 
                 fixed rimlight = saturate(dot(-viewDir, normal));
                 rimlight = 1 - rimlight;
                 rimlight = pow(rimlight, 4);
 
                 fixed inLight = saturate(dot(halfDir, -normal));
+                fixed innerDim = inLight * 0.2;
                 inLight = pow(inLight, 64);
                 //return inLight;
+                
                 
 
                 //return hit;
@@ -173,28 +176,24 @@ Shader "Hidden/BottleOfStars"
                 fixed3 tangent = cross(normal, fixed3(0, 1, 0));
                 //return float4((tangent + 1) * 0.5, 1.0f);
                 fixed3 bitangent = cross(normal, tangent);
-            
-                fixed horizontalRim = dot(tangent, normalize(lightDir + normal));
-                horizontalRim = saturate(cos(horizontalRim * 12));
-                fixed verticalRim = dot(viewDir, bitangent);
-                verticalRim = saturate(cos(verticalRim * 12));
-
-
-                //return cos(horizontalRim) * 0.1;
-
 
                 //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
                 fixed4 outNormal = fixed4(normal, 1.0f);
 
+                //fixed innerNormal = 
+                
+
                 hit = saturate(hit);
-                return horizontalRim * verticalRim;
+                //return horizontalRim * verticalRim;
                 //this is just the hull
-                return (highlight + rimlight + verticalRim * 0.4) * hit;
+                //return (highlight + rimlight) * hit;
+
+                fixed glossyParts =  (highlight + rimlight + innerDim) * hit;
 
                 //return outNormal;
                 //return float4(worldPos, 1.0f);
                 //return lerp(screenCol, 0.0f, hit);
-                return max(outNormal, 0.0f) * hit + screenCol * (1 - hit);
+                return glossyParts + screenCol * (1 - glossyParts);
                 return screenCol * (1 - hit);
                 return lerp(float4(worldPos, 1.0) * hit, screenCol, hit);
 

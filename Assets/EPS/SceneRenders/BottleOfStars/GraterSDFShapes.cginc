@@ -20,3 +20,8 @@ float torusSDF(float3 checkPoint, float3 center, float torusHeight, float ringRa
     float2 q = float2(length(sdVector.xz) - torusHeight, sdVector.y);
     return length(q) - ringRadius;
 }
+
+float planeSDF(float3 checkPoint, float planeHeight, float inverse){
+    
+    return (checkPoint.y - planeHeight) * inverse;
+}

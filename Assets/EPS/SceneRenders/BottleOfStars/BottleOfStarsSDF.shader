@@ -3,6 +3,8 @@ Shader "Hidden/BottleOfStars"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Galaxy ("Galaxy", 2D) = "black" {}
+        _Stars ("StarMap", 2D) = "white" {}
     }
     SubShader
     {
@@ -45,6 +47,8 @@ Shader "Hidden/BottleOfStars"
             }
 
             sampler2D _MainTex;
+            sampler2D _Galaxy;
+            sampler2D _Stars;
 
 
 
@@ -76,20 +80,18 @@ Shader "Hidden/BottleOfStars"
             }
 
             float waveDisplace(float3 sdfPoint){
+                float dfc = length(sdfPoint.xz);
+                return (sin(4 * (dfc - _Time.g * 3))) * 0.1 + (sin(2 * (sdfPoint.x + _Time.g))) * 0.1;
                 
-                return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
+                //return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
             }
 
             float evalInner(float3 checkPoint){
                 float minDist;
                 minDist = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 2.8f);
-
-                float3 ddt = checkPoint - float3(1.5f + sin(_Time.g), 1.5f, 1.5f);
-                float box = boxSDF(checkPoint, float3(1.5f + sin(_Time.g), 1.5f, 1.5f), float3(1.0f, 1.0f, 1.0f));
+                float3 ddt = checkPoint;
                 float plane = planeSDF(checkPoint, 1.0f, -1.0f) + waveDisplace(ddt);
-                return sdfSubtract(plane, minDist);
-                return box + waveDisplace(ddt);
-                return box;
+                return sdfSmoothSubtract(plane, minDist, 0.1f);
             }
 
             void rayMarchGlassSDF(float3 startPos, float3 viewDir, out float hit, out float3 col, out float dst){
@@ -176,7 +178,7 @@ Shader "Hidden/BottleOfStars"
 
                 fixed3 reflDir = reflect(viewDir, normal);
                 //this gives a really long highlight, which looks amazing
-                
+
                 fixed highlight = dot(reflDir, normalize(lightDir + viewDir));
                 highlight = saturate(highlight);
                 highlight = pow(highlight, 192);
@@ -233,10 +235,38 @@ Shader "Hidden/BottleOfStars"
                 rayMarchInnerSDF(worldCamPos, viewDir, hit, col, dst);
                 float3 worldPos = worldCamPos + viewDir * dst;
                 fixed3 normal = findInnerNormal(worldPos);
-                normal = (normal + 1) * 0.5f;
+                fixed3 fakeNormal = normalize(worldPos);
+                //normal = (normal + 1) * 0.5f;
 
-                float3 outCol = saturate(normal) * hit + (1.0f - hit) * screenCol.rgb;
+                
+                fixed3 tangent = normalize(cross(fixed3(0, 1, 0), fakeNormal));
+                fixed3 bitangent = normalize(cross(fakeNormal, tangent));
+                float3 texSum = 0.0f;
 
+                float stepDistance = 0.0f;
+                float2 baseUV;
+
+                float theta = (atan2(fakeNormal.x, fakeNormal.z) + UNITY_PI) / UNITY_TWO_PI;
+                float phi = (fakeNormal.y + 1) * 0.5;
+                baseUV = float2(theta + _Time.r, phi + _Time.r * 10);
+
+                fixed lighting = dot(normal, lightDir);
+                lighting = (lighting + 1.0f) * 0.5;
+                lighting = lighting * 0.25 + 0.75;
+                float3 head = worldPos;
+                for(uint i = 1; i < 16; i++){
+                    head += viewDir * 0.04;
+                    theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
+                    phi = (head.y + 1) * 0.5;
+                    baseUV = float2(theta + _Time.r, (phi + _Time.g * 2) * 0.25);
+                    fixed3 tex = tex2D(_Galaxy, baseUV);
+
+                    texSum += tex; 
+                }
+                texSum /= 10;
+                texSum *= lighting;
+                //texSum = tex2D(_Galaxy, baseUV);
+                float3 outCol = max(texSum, 0) * hit + (1.0f - hit) * screenCol.rgb;
                 return float4(outCol, 1.0f);
 
 
@@ -255,62 +285,6 @@ Shader "Hidden/BottleOfStars"
                 fixed4 innerColor = fragInner(screenCol, lightDir, viewDir, halfDir);
                 fixed4 glassColor = fragGlass(innerColor, lightDir, viewDir, halfDir);
                 return glassColor;
-
-                /*
-                float3 worldCamPos = _WorldSpaceCameraPos;
-                float dst, hit;
-                float3 col;
-                //rayMarchGlassSDF(worldCamPos, viewDir, hit, col, dst);
-                rayMarchInnerSDF(worldCamPos, viewDir, hit, col, dst);
-
-                float3 worldPos = worldCamPos + viewDir * dst;
-                float4 pos = float4(worldPos, 1.0f);
-
-                fixed3 normal = findInnerNormal(worldPos);
-                fixed lighting = dot(lightDir, normal);
-                fixed highlight = dot(halfDir, normal);
-                highlight = saturate(highlight);
-                highlight = pow(highlight, 512);
-                //highlight /= cos(highlight);
-
-                fixed rimlight = saturate(dot(-viewDir, normal));
-                rimlight = 1 - rimlight;
-                rimlight = pow(rimlight, 4);
-
-                fixed inLight = saturate(dot(halfDir, -normal));
-                fixed innerDim = inLight * 0.2;
-                inLight = pow(inLight, 64);
-                //return inLight;
-                
-                
-
-                //return hit;
-                //return (lighting + highlight) * hit;
-                normal = (normal + 1.0f) * 0.5f;
-                fixed3 tangent = cross(normal, fixed3(0, 1, 0));
-                //return float4((tangent + 1) * 0.5, 1.0f);
-                fixed3 bitangent = cross(normal, tangent);
-
-                //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
-                fixed4 outNormal = fixed4(normal, 1.0f);
-
-                //fixed innerNormal = 
-                
-
-                hit = saturate(hit);
-                //return horizontalRim * verticalRim;
-                //this is just the hull
-                //return (highlight + rimlight) * hit;
-
-                fixed glossyParts =  (highlight + rimlight + innerDim) * hit;
-
-                return outNormal;
-                //return float4(worldPos, 1.0f);
-                //return lerp(screenCol, 0.0f, hit);
-                return glossyParts + screenCol * (1 - glossyParts);
-                return screenCol * (1 - hit);
-                return lerp(float4(worldPos, 1.0) * hit, screenCol, hit);
-                */
 
             }
             ENDCG

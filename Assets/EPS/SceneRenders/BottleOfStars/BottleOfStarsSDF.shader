@@ -76,6 +76,10 @@ Shader "Hidden/BottleOfStars"
                 return minDist;
             }
 
+            float evalInner(float3 checkPoint){
+
+            }
+
             void rayMarchSDF(float3 startPos, float3 viewDir, out float hit, out float3 col, out float dst){
                 float minDist = 3.402823466e+38F;
                 float dstTravelled = 0.0f;
@@ -95,6 +99,26 @@ Shader "Hidden/BottleOfStars"
                 col = float3(1, 1, 1);
                 
             }
+            void rayMarchInnerSDF(float3 startPos, float3 viewDir, out float hit, out float3 col, out float dst){
+                float minDist = 3.402823466e+38F;
+                float dstTravelled = 0.0f;
+                float3 headPos = startPos;
+                hit = 0.0f;
+                for(int i = 0; i < 70; i++){
+                    //raymarch!
+                    minDist = evalScene(headPos);
+                    headPos += minDist * viewDir;
+                    dstTravelled += minDist;
+                    if(abs(minDist) <= 0.005f){
+                        hit = 1.0f;
+                        break;
+                    }
+                }
+                dst = dstTravelled;
+                col = float3(1, 1, 1);
+                
+            }
+            
 
             
             //No idea what this is all about yet... thanks regardless iq
@@ -132,22 +156,40 @@ Shader "Hidden/BottleOfStars"
                 fixed lighting = dot(lightDir, normal);
                 fixed highlight = dot(halfDir, normal);
                 highlight = saturate(highlight);
-                highlight = pow(highlight, 512);
+                highlight = pow(highlight, 256);
 
                 fixed rimlight = saturate(dot(-viewDir, normal));
-                
                 rimlight = 1 - rimlight;
-                rimlight = pow(rimlight, 2);
+                rimlight = pow(rimlight, 4);
+
+                fixed inLight = saturate(dot(halfDir, -normal));
+                inLight = pow(inLight, 64);
+                //return inLight;
+                
 
                 //return hit;
                 //return (lighting + highlight) * hit;
                 normal = (normal + 1.0f) * 0.5f;
+                fixed3 tangent = cross(normal, fixed3(0, 1, 0));
+                //return float4((tangent + 1) * 0.5, 1.0f);
+                fixed3 bitangent = cross(normal, tangent);
+            
+                fixed horizontalRim = dot(tangent, normalize(lightDir + normal));
+                horizontalRim = saturate(cos(horizontalRim * 12));
+                fixed verticalRim = dot(viewDir, bitangent);
+                verticalRim = saturate(cos(verticalRim * 12));
+
+
+                //return cos(horizontalRim) * 0.1;
+
+
                 //fixed3 normal = fixed3(1.0, 1.0, 1.0f);
                 fixed4 outNormal = fixed4(normal, 1.0f);
 
                 hit = saturate(hit);
-
-                return highlight + rimlight;
+                return horizontalRim * verticalRim;
+                //this is just the hull
+                return (highlight + rimlight + verticalRim * 0.4) * hit;
 
                 //return outNormal;
                 //return float4(worldPos, 1.0f);

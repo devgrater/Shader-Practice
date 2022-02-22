@@ -61,24 +61,23 @@ Shader "Hidden/BottleOfStars"
 
                 float torus = torusSDF(checkPoint, float3(0.0f, 5.2f, 0.0f), 0.8f, 0.3f);
                 minDist = sdfSmoothUnion(minDist, torus, 0.2f);
-                //return torus;
-                /*
-                float sphere1 = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 1.0f);
-                float sphere2 = sphereSDF(checkPoint, float3(1.0f, 0.0f, 0.0f), 1.5f);
-                minDist = sdfSmoothUnion(sphere1, sphere2, 0.2f);
-                float sphere3 = sphereSDF(checkPoint, float3(0.5f, 1.0f, 1.0f), 2.0f);
-                minDist = sdfSmoothUnion(sphere3, minDist, 0.2f);
-                float box1 = boxSDF(checkPoint, float3(1.5f + sin(_Time.g), 1.5f, 1.5f), float3(1.0f, 2.0f, 1.0f));
-                minDist = sdfSmoothSubtract(minDist, box1, 0.2f);
-                float box2 = boxSDF(checkPoint, float3(4.0f, 2.0f, 5.0f), float3(1.5f, 1.0f, 2.0f));
-                minDist = min(box2, minDist);*/
+                return minDist;
+            }
 
+            float evalBackGlass(float3 checkPoint){
+                float minDist;
+                minDist = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 3.0f);
+                float tube = cylinderSDF(checkPoint, float3(0.0f, 2.8f, 0.0f), 2.4f, 0.8f);
+                minDist = sdfSmoothUnion(minDist, tube, 0.6f);
+
+                float torus = torusSDF(checkPoint, float3(0.0f, 5.2f, 0.0f), 0.8f, 0.3f);
+                minDist = sdfSmoothUnion(minDist, torus, 0.2f);
                 return minDist;
             }
 
             float waveDisplace(float3 sdfPoint){
                 
-                return (sin(5 * (sdfPoint.z + _Time.g))) * 0.05;
+                return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
             }
 
             float evalInner(float3 checkPoint){
@@ -89,21 +88,7 @@ Shader "Hidden/BottleOfStars"
                 float box = boxSDF(checkPoint, float3(1.5f + sin(_Time.g), 1.5f, 1.5f), float3(1.0f, 1.0f, 1.0f));
                 float plane = planeSDF(checkPoint, 1.0f, -1.0f) + waveDisplace(ddt);
                 return sdfSubtract(plane, minDist);
-
-
-
                 return box + waveDisplace(ddt);
-
-
-                //return sdfSubtract(sphere);
-
-
-                //float tube = cylinderSDF(checkPoint, float3(0.0f, 2.8f, 0.0f), 2.4f, 0.8f);
-                //minDist = sdfSmoothUnion(minDist, tube, 0.6f);
-
-                //float torus = torusSDF(checkPoint, float3(0.0f, 5.2f, 0.0f), 0.8f, 0.3f);
-                //minDist = sdfSmoothUnion(minDist, torus, 0.2f);
-
                 return box;
             }
 
@@ -128,8 +113,9 @@ Shader "Hidden/BottleOfStars"
                 }*/
                 dst = dstTravelled;
                 col = float3(1, 1, 1);
-                
             }
+
+
             void rayMarchInnerSDF(float3 startPos, float3 viewDir, out float hit, out float3 col, out float dst){
                 float minDist = 3.402823466e+38F;
                 float dstTravelled = 0.0f;
@@ -187,23 +173,41 @@ Shader "Hidden/BottleOfStars"
                 float3 worldPos = worldCamPos + viewDir * dst;
                 fixed3 normal = findGlassNormal(worldPos);
                 fixed lighting = dot(lightDir, normal);
-                fixed highlight = dot(halfDir, normal);
+                
+
+                fixed3 reflDir = reflect(viewDir, normal);
+                fixed highlight = dot(reflDir, lightDir);
                 highlight = saturate(highlight);
-                highlight = pow(highlight, 512);
+                highlight = pow(highlight, 192);
+                //highlight = smoothstep(0.5, 0.7, highlight);
+
+
 
                 fixed rimlight = saturate(dot(-viewDir, normal));
                 
                 rimlight = 1 - rimlight;
                 rimlight = pow(rimlight, 3);
 
+                fixed fresnel = pow(rimlight, 4);
+
                 fixed lerpFactor = rimlight;
 
-                rimlight = sin(rimlight * 6.28);
+                rimlight = sin(rimlight * 4.5);
                 rimlight = saturate(rimlight);
                 rimlight = pow(rimlight, 4);
 
+            
+            
 
-                fixed3 innerColor = lerp(screenCol * 0.8, 1.0f, rimlight);
+                
+
+                half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflDir, 0);
+                //return rgbm;
+
+                fixed3 innerColor = lerp(screenCol * 0.8, rgbm.rgb, rimlight);
+                innerColor = lerp(innerColor, 1.0f, highlight + fresnel);
+                innerColor -= fresnel;
+                //innerColor += highlight + fresnel;
 
                 
                 //return float4(innerColor, 1.0f);

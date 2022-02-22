@@ -134,7 +134,6 @@ Shader "Hidden/BottleOfStars"
                 }
                 dst = dstTravelled;
                 col = float3(1, 1, 1);
-                
             }
             
 
@@ -205,8 +204,9 @@ Shader "Hidden/BottleOfStars"
                 //return rgbm;
 
                 fixed3 innerColor = lerp(screenCol * 0.8, rgbm.rgb, rimlight);
-                innerColor = lerp(innerColor, 1.0f, highlight + fresnel);
-                innerColor -= fresnel;
+                innerColor = lerp(innerColor, 4.0f, highlight + fresnel);
+                innerColor -= fresnel * 3;
+                innerColor += pow(saturate(rimlight), 2) * 0.1;
                 //innerColor += highlight + fresnel;
 
                 

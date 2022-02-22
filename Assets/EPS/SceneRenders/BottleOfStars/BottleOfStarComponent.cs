@@ -17,7 +17,7 @@ public class BottleOfStarComponent : MonoBehaviour
         
         
     }
-
+    [ImageEffectOpaque]
     void OnRenderImage(RenderTexture src, RenderTexture dest){
         //regardless, you need to pass in some data...
         UpdateMaterialParams();

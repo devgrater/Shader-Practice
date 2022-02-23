@@ -88,9 +88,18 @@ Shader "Hidden/BottleOfStars"
 
             float evalInner(float3 checkPoint){
                 float minDist;
+
+                float3 dst = checkPoint - float3(0.0f, 1.0f, 0.0f);
+                //inverse transform dst
+                float3 cosx = cos(-UNITY_PI / 6);
+                float3 sinx = sin(-UNITY_PI / 6);
+                dst.x = cosx * dst.x - sinx * dst.y;
+                dst.y = sinx * dst.x + cosx * dst.y;
+
                 minDist = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 2.8f);
                 float3 ddt = checkPoint;
-                float plane = planeSDF(checkPoint, 1.0f, -1.0f) + waveDisplace(ddt);
+                float plane = planeSDFDft(dst, -1.0f) + waveDisplace(ddt);
+
                 return sdfSmoothSubtract(plane, minDist, 0.3f);
             }
 
@@ -181,7 +190,7 @@ Shader "Hidden/BottleOfStars"
 
                 fixed highlight = dot(reflDir, normalize(lightDir + viewDir));
                 highlight = saturate(highlight);
-                highlight = pow(highlight, 192);
+                highlight = pow(highlight, 512);
                 //highlight = smoothstep(0.5, 0.7, highlight);
 
 
@@ -199,18 +208,13 @@ Shader "Hidden/BottleOfStars"
                 rimlight = saturate(rimlight);
                 rimlight = pow(rimlight, 4);
 
-            
-            
-
-                
-
                 half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflDir, 0);
                 //return rgbm;
 
                 fixed3 innerColor = lerp(screenCol * 0.8, rgbm.rgb, rimlight);
-                innerColor = lerp(innerColor, 4.0f, highlight + fresnel);
+                innerColor = lerp(innerColor, 4.0f, highlight * 0.3 + fresnel);
                 innerColor -= fresnel * 3.8;
-                innerColor += pow(saturate(rimlight), 2) * 0.1;
+                innerColor += pow(saturate(rimlight), 2) * 0.03;
                 //innerColor += highlight + fresnel;
 
                 
@@ -253,12 +257,12 @@ Shader "Hidden/BottleOfStars"
                 lighting = (lighting + 1.0f) * 0.5;
                 lighting = lighting * 0.4 + 0.6;
                 float3 head = worldPos;
-                for(uint i = 1; i < 16; i++){
+                for(uint i = 1; i < 8; i++){
                     head += viewDir;
-                    fixed3 newNormal = normalize(head + normal * 0.5);
-                    float theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
+                    fixed3 newNormal = normalize(head + normal * 0.1);
+                    float theta = (atan2(head.x, head.z) + 3.1415926535f) / 6.283185307;
                     float phi = (newNormal.y + 1) * 0.5;
-                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.6, (phi - _Time.g * 0.2) * 0.25);
+                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.6, (2 * phi - _Time.g * 0.2) * 0.25);
                     fixed3 tex = tex2D(_Galaxy, baseUV);
 
                     texSum += tex * weight; 
@@ -269,8 +273,13 @@ Shader "Hidden/BottleOfStars"
                 fixed highlight = saturate(dot(normal, halfDir));
                 highlight = pow(highlight, 32);
 
-                float3 plainTex = tex2D(_Stars, screenUV);
+                //float3 plainTex = tex2D(_Stars, screenUV);
                 float3 compositeCol = texSum + highlight * texSum * 0.9;
+
+                fixed fresnel = saturate(dot(normal, -viewDir));
+                fresnel = 1 - fresnel;
+                fresnel = pow(fresnel, 2) * hit;
+                compositeCol += lerp(fixed3(0.0, 0.6, 1.0), fixed3(0.0, 0.9, 1.0), fresnel * fresnel) * fresnel;
 
                 //texSum = tex2D(_Galaxy, baseUV);
                 float3 outCol = max(compositeCol, 0) * hit + (1.0f - hit) * screenCol.rgb;

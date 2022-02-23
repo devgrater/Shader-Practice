@@ -39,8 +39,8 @@ public class IKJoint : MonoBehaviour, IJointables, IJointTarget
         return transform.position;
     }
 
-    public void GetJointEnd(){
-
+    public Vector3 GetJointEnd(){
+        return transform.position + transform.forward * handLength;
     }
 
     public Vector3 GetJointTarget(){
@@ -53,7 +53,7 @@ public class IKJoint : MonoBehaviour, IJointables, IJointTarget
 public interface IJointables
 {
     Vector3 GetJointBase();
-    void GetJointEnd();
+    Vector3 GetJointEnd();
 }
 
 public interface IJointTarget

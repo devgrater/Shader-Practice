@@ -70,6 +70,7 @@ public class IKHandSystem : MonoBehaviour
         //Once everything is done,
         //we backwards propagate everything back to the origin.
         Vector3 backwardsPropagateVector = instantiatedIKs[0].GetJointBase() - transform.position;
+        //Debug.Log(backwardsPropagateVector);
         for(i = 0; i < instantiatedIKs.Count; i++){
             IKHandInfo currentSegment = instantiatedIKs[i];
             currentSegment.ApplyConstraintOffset(backwardsPropagateVector);

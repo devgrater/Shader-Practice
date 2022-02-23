@@ -81,7 +81,7 @@ Shader "Hidden/BottleOfStars"
 
             float waveDisplace(float3 sdfPoint){
                 float dfc = length(sdfPoint.xz);
-                return (sin(4 * (dfc - _Time.g * 3))) * 0.05 + (sin(2 * (sdfPoint.x + _Time.b * 2))) * 0.1;
+                return (sin(4 * (dfc - _Time.g * 1.5))) * 0.05 + (sin(2 * (sdfPoint.x + _Time.b * 1))) * 0.1;
                 
                 //return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
             }
@@ -247,26 +247,29 @@ Shader "Hidden/BottleOfStars"
                 float2 baseUV;
 
                 //baseUV = float2(theta + _Time.r, phi + _Time.r);
-                float weight = 0.0000625f;
+                float weight = 0.5f;
 
                 fixed lighting = dot(normal, lightDir);
                 lighting = (lighting + 1.0f) * 0.5;
-                lighting = lighting * 0.25 + 0.75;
+                lighting = lighting * 0.4 + 0.6;
                 float3 head = worldPos;
                 for(uint i = 1; i < 16; i++){
                     head += viewDir * 0.08;
                     fixed3 newNormal = normalize(head + normal * 0.5);
                     float theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
                     float phi = (newNormal.y + 1) * 0.5;
-                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.3, (phi + _Time.g) * 0.25);
+                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.6, (phi - _Time.g * 0.2) * 0.25);
                     fixed3 tex = tex2D(_Galaxy, baseUV);
 
                     texSum += tex * weight; 
-                    weight *= 2.0f;
+                    weight *= 0.5f;
                 }
                 texSum *= lighting;
+
+                fixed highlight = saturate(dot(normal, halfDir));
+                highlight = pow(highlight, 32);
                 //texSum = tex2D(_Galaxy, baseUV);
-                float3 outCol = max(texSum, 0) * hit + (1.0f - hit) * screenCol.rgb;
+                float3 outCol = max(texSum + highlight * texSum * 0.5, 0) * hit + (1.0f - hit) * screenCol.rgb;
                 return float4(outCol, 1.0f);
 
 

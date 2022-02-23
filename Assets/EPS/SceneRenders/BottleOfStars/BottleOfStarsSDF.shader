@@ -154,10 +154,10 @@ Shader "Hidden/BottleOfStars"
                 
                 fixed2 eps = fixed2(1.0, -1.0) * 0.5773 * 0.0005;
                 return normalize(
-                    eps.xyy * evalInner(pos + eps.xyy).x + 
-                    eps.yyx * evalInner(pos + eps.yyx).x + 
-                    eps.yxy * evalInner(pos + eps.yxy).x + 
-                    eps.xxx * evalInner(pos + eps.xxx).x
+                    eps.xyy * evalInner(pos + eps.xyy) + 
+                    eps.yyx * evalInner(pos + eps.yyx) + 
+                    eps.yxy * evalInner(pos + eps.yxy) + 
+                    eps.xxx * evalInner(pos + eps.xxx)
                 );
                 
             }
@@ -167,10 +167,10 @@ Shader "Hidden/BottleOfStars"
                 
                 fixed2 eps = fixed2(1.0, -1.0) * 0.5773 * 0.0005;
                 return normalize(
-                    eps.xyy * evalGlass(pos + eps.xyy).x + 
-                    eps.yyx * evalGlass(pos + eps.yyx).x + 
-                    eps.yxy * evalGlass(pos + eps.yxy).x + 
-                    eps.xxx * evalGlass(pos + eps.xxx).x
+                    eps.xyy * evalGlass(pos + eps.xyy) + 
+                    eps.yyx * evalGlass(pos + eps.yyx) + 
+                    eps.yxy * evalGlass(pos + eps.yxy) + 
+                    eps.xxx * evalGlass(pos + eps.xxx)
                 );
                 
             }

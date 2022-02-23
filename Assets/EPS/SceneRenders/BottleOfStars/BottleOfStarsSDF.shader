@@ -81,7 +81,7 @@ Shader "Hidden/BottleOfStars"
 
             float waveDisplace(float3 sdfPoint){
                 float dfc = length(sdfPoint.xz);
-                return (sin(4 * (dfc - _Time.g * 3))) * 0.1 + (sin(2 * (sdfPoint.x + _Time.g))) * 0.1;
+                return (sin(4 * (dfc - _Time.g * 3))) * 0.05 + (sin(2 * (sdfPoint.x + _Time.b * 2))) * 0.1;
                 
                 //return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
             }
@@ -235,7 +235,7 @@ Shader "Hidden/BottleOfStars"
                 rayMarchInnerSDF(worldCamPos, viewDir, hit, col, dst);
                 float3 worldPos = worldCamPos + viewDir * dst;
                 fixed3 normal = findInnerNormal(worldPos);
-                fixed3 fakeNormal = normalize(worldPos);
+                fixed3 fakeNormal = normalize(worldPos * 0.2 + normal * 0.8);
                 //normal = (normal + 1) * 0.5f;
 
                 
@@ -246,24 +246,24 @@ Shader "Hidden/BottleOfStars"
                 float stepDistance = 0.0f;
                 float2 baseUV;
 
-                float theta = (atan2(fakeNormal.x, fakeNormal.z) + UNITY_PI) / UNITY_TWO_PI;
-                float phi = (fakeNormal.y + 1) * 0.5;
-                baseUV = float2(theta + _Time.r, phi + _Time.r * 10);
+                //baseUV = float2(theta + _Time.r, phi + _Time.r);
+                float weight = 0.0000625f;
 
                 fixed lighting = dot(normal, lightDir);
                 lighting = (lighting + 1.0f) * 0.5;
                 lighting = lighting * 0.25 + 0.75;
                 float3 head = worldPos;
                 for(uint i = 1; i < 16; i++){
-                    head += viewDir * 0.04;
-                    theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
-                    phi = (head.y + 1) * 0.5;
-                    baseUV = float2(theta + _Time.r, (phi + _Time.g * 2) * 0.25);
+                    head += viewDir * 0.08;
+                    fixed3 newNormal = normalize(head + normal * 0.5);
+                    float theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
+                    float phi = (newNormal.y + 1) * 0.5;
+                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.3, (phi + _Time.g) * 0.25);
                     fixed3 tex = tex2D(_Galaxy, baseUV);
 
-                    texSum += tex; 
+                    texSum += tex * weight; 
+                    weight *= 2.0f;
                 }
-                texSum /= 10;
                 texSum *= lighting;
                 //texSum = tex2D(_Galaxy, baseUV);
                 float3 outCol = max(texSum, 0) * hit + (1.0f - hit) * screenCol.rgb;

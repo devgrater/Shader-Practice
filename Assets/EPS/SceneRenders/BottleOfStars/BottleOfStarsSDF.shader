@@ -81,7 +81,7 @@ Shader "Hidden/BottleOfStars"
 
             float waveDisplace(float3 sdfPoint){
                 float dfc = length(sdfPoint.xz);
-                return (sin(4 * (dfc - _Time.g * 1.5))) * 0.05 + (sin(2 * (sdfPoint.x + _Time.b * 1))) * 0.1;
+                return (sin(4 * (dfc - _Time.g * 1.5))) * 0.01 + (sin(2 * (sdfPoint.x + _Time.b * 1))) * 0.1;
                 
                 //return (sin(2 * (sdfPoint.x + _Time.g * 3))) * 0.2;
             }
@@ -254,7 +254,7 @@ Shader "Hidden/BottleOfStars"
                 lighting = lighting * 0.4 + 0.6;
                 float3 head = worldPos;
                 for(uint i = 1; i < 16; i++){
-                    head += viewDir * 0.08;
+                    head += viewDir;
                     fixed3 newNormal = normalize(head + normal * 0.5);
                     float theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
                     float phi = (newNormal.y + 1) * 0.5;

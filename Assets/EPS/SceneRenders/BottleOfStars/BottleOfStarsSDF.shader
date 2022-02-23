@@ -91,7 +91,7 @@ Shader "Hidden/BottleOfStars"
                 minDist = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 2.8f);
                 float3 ddt = checkPoint;
                 float plane = planeSDF(checkPoint, 1.0f, -1.0f) + waveDisplace(ddt);
-                return sdfSmoothSubtract(plane, minDist, 0.1f);
+                return sdfSmoothSubtract(plane, minDist, 0.3f);
             }
 
             void rayMarchGlassSDF(float3 startPos, float3 viewDir, out float hit, out float3 col, out float dst){
@@ -227,7 +227,7 @@ Shader "Hidden/BottleOfStars"
                 return float4(outCol, 1.0f);
             }
 
-            fixed4 fragInner(fixed4 screenCol, fixed3 lightDir, fixed3 viewDir, fixed3 halfDir){
+            fixed4 fragInner(float2 screenUV, fixed4 screenCol, fixed3 lightDir, fixed3 viewDir, fixed3 halfDir){
 
                 float3 worldCamPos = _WorldSpaceCameraPos;
                 float dst, hit;
@@ -268,8 +268,12 @@ Shader "Hidden/BottleOfStars"
 
                 fixed highlight = saturate(dot(normal, halfDir));
                 highlight = pow(highlight, 32);
+
+                float3 plainTex = tex2D(_Stars, screenUV);
+                float3 compositeCol = texSum + highlight * texSum * 0.9;
+
                 //texSum = tex2D(_Galaxy, baseUV);
-                float3 outCol = max(texSum + highlight * texSum * 0.5, 0) * hit + (1.0f - hit) * screenCol.rgb;
+                float3 outCol = max(compositeCol, 0) * hit + (1.0f - hit) * screenCol.rgb;
                 return float4(outCol, 1.0f);
 
 
@@ -285,7 +289,7 @@ Shader "Hidden/BottleOfStars"
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfDir = normalize(lightDir - viewDir);
 
-                fixed4 innerColor = fragInner(screenCol, lightDir, viewDir, halfDir);
+                fixed4 innerColor = fragInner(i.uv, screenCol, lightDir, viewDir, halfDir);
                 fixed4 glassColor = fragGlass(innerColor, lightDir, viewDir, halfDir);
                 return glassColor;
 

@@ -48,6 +48,7 @@ Shader "Hidden/BottleOfStars"
 
             sampler2D _MainTex;
             sampler2D _Galaxy;
+            float4 _Galaxy_TexelSize;
             sampler2D _Stars;
 
 
@@ -183,7 +184,6 @@ Shader "Hidden/BottleOfStars"
                 float3 worldPos = worldCamPos + viewDir * dst;
                 fixed3 normal = findGlassNormal(worldPos);
                 fixed lighting = dot(lightDir, normal);
-                
 
                 fixed3 reflDir = reflect(viewDir, normal);
                 //this gives a really long highlight, which looks amazing
@@ -191,14 +191,19 @@ Shader "Hidden/BottleOfStars"
                 fixed highlight = dot(reflDir, normalize(lightDir + viewDir));
                 highlight = saturate(highlight);
                 highlight = pow(highlight, 512);
-                //highlight = smoothstep(0.5, 0.7, highlight);
 
+                /*
+                fixed highlight2 = dot(reflDir, lightDir);
+                highlight2 = saturate(highlight2);
+                highlight2 = pow(highlight2, 128);*/
 
-
+                //highlight = highlight + highlight2;
+                
                 fixed rimlight = saturate(dot(-viewDir, normal));
                 
                 rimlight = 1 - rimlight;
                 rimlight = pow(rimlight, 3);
+                
 
                 fixed fresnel = pow(rimlight, 4);
 
@@ -208,18 +213,17 @@ Shader "Hidden/BottleOfStars"
                 rimlight = saturate(rimlight);
                 rimlight = pow(rimlight, 4);
 
+                //return (rimlight * 0.4 + highlight) * hit;
+
                 half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflDir, 0);
                 //return rgbm;
 
                 fixed3 innerColor = lerp(screenCol * 0.8, rgbm.rgb, rimlight);
                 innerColor = lerp(innerColor, 4.0f, highlight * 0.3 + fresnel);
                 innerColor -= fresnel * 3.8;
+
+                //return float4(innerColor * hit + (1 - hit) * screenCol, 1.0f);
                 innerColor += pow(saturate(rimlight), 2) * 0.03;
-                //innerColor += highlight + fresnel;
-
-                
-                //return float4(innerColor, 1.0f);
-
 
                 fixed lerpAmount = rimlight * hit;
 
@@ -259,11 +263,11 @@ Shader "Hidden/BottleOfStars"
                 float3 head = worldPos;
                 for(uint i = 1; i < 8; i++){
                     head += viewDir;
-                    fixed3 newNormal = normalize(head + normal * 0.1);
+                    fixed3 newNormal = normalize(head);
                     float theta = (atan2(head.x, head.z) + 3.1415926535f) / 6.283185307;
                     float phi = (newNormal.y + 1) * 0.5;
                     baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.6, (2 * phi - _Time.g * 0.2) * 0.25);
-                    fixed3 tex = tex2D(_Galaxy, baseUV);
+                    fixed3 tex = tex2D(_Galaxy, baseUV, _Galaxy_TexelSize.x, _Galaxy_TexelSize.y);
 
                     texSum += tex * weight; 
                     weight *= 0.5f;

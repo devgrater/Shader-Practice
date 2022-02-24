@@ -135,7 +135,7 @@ Shader "Grater/Parallax"
                     float stepDistance = weight * _RoomDepth;
                     //float tangentOffset = stepDistance * dot(viewDir, i.objectSpaceTangent);
                     //float binormalOffset = stepDistance * dot(viewDir, i.objectSpaceBinormal);
-                    float2 uv = i.uv + stepDistance * normalize(i.tangentSpaceViewDir);//i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
+                    float2 uv = i.uv + stepDistance * normalize(i.tangentSpaceViewDir) * (1 - weight);//i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
                     fixed4 col = tex2D(_MainTex, uv);
 
                     //fixed height = 1 - tex2D(_HeightMap, uv).r;

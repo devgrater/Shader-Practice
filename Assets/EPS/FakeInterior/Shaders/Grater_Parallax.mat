@@ -33,7 +33,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Intensity: 0.133
-    - _RoomDepth: 0.414
+    - _RoomDepth: 1.107
     - _StepCount: 16
     m_Colors:
     - _FadeToColor: {r: 0.25657892, g: 0.20305268, b: 0.3679245, a: 0}

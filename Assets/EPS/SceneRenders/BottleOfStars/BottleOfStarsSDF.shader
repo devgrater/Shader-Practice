@@ -266,7 +266,7 @@ Shader "Hidden/BottleOfStars"
                     fixed3 newNormal = normalize(head);
                     float theta = (atan2(head.x, head.z) + 3.1415926535f) / 6.283185307;
                     float phi = (newNormal.y + 1) * 0.5;
-                    baseUV = float2(theta + _Time.r * 4 + i * 0.003 - (1 - phi) * 0.6, (2 * phi - _Time.g * 0.2) * 0.25);
+                    baseUV = float2(theta + _Time.r * 4 - (1 - phi) * 0.6, (2 * phi - _Time.g * 0.2) * 0.25);
                     fixed3 tex = tex2D(_Galaxy, baseUV, _Galaxy_TexelSize.x, _Galaxy_TexelSize.y);
 
                     texSum += tex * weight; 

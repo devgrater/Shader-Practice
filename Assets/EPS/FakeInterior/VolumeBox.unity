@@ -269,6 +269,10 @@ MonoBehaviour:
   m_AfterStackBundles:
   - assemblyQualifiedName: VCloud, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+  - assemblyQualifiedName: Glitch, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  - assemblyQualifiedName: VHS, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
 --- !u!1 &259077291
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,7 +289,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &259077292
 MonoBehaviour:
   m_ObjectHideFlags: 0

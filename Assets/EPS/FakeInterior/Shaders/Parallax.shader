@@ -5,7 +5,7 @@ Shader "Grater/Parallax"
         _MainTex ("Texture", 2D) = "white" {}
         _Tint("Tint", Color) = (1, 1, 1, 1)
         _FadeToColor("Fade To Color", Color) = (0, 0, 0, 0)
-        _RoomDepth ("Room Depth", Range(0, 0.5)) = 0.25
+        _RoomDepth ("Room Depth", Range(0, 2)) = 0.25
         _HeightMap ("Height Map", 2D) = "white" {}
         _AmbientOcclusion ("Ambient Occlusion", 2D) = "white" {}
         _Intensity ("AO Intensity", Range(0, 1)) = 0.2
@@ -54,6 +54,7 @@ Shader "Grater/Parallax"
                 float3 objectSpaceTangent : TANGENT;
                 float3 objectSpaceBinormal : BINORMAL;
                 float3 worldSpaceNormal : TEXCOORD5;
+                float3 tangentSpaceViewDir : TEXCOORD6;
             };
 
             sampler2D _MainTex;
@@ -85,7 +86,17 @@ Shader "Grater/Parallax"
                 //mainly we need tangent and binormal to offset stuff..
                 o.objectSpaceTangent = v.tangent;
                 o.objectSpaceBinormal = cross(v.normal, v.tangent.xyz) * v.tangent.w;
+                o.objectSpaceBinormal = normalize(o.objectSpaceBinormal);
                 o.worldSpaceNormal = UnityObjectToWorldNormal(v.normal);
+
+                float3 viewDir = v.vertex.xyz - o.objectSpaceCamPos.xyz;
+
+                
+                o.tangentSpaceViewDir = float3(
+                    dot(viewDir, o.objectSpaceTangent.xyz),
+                    dot(viewDir, o.objectSpaceBinormal),
+                    dot(viewDir, o.objectSpaceNormal.xyz)
+                );
 
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
@@ -118,19 +129,21 @@ Shader "Grater/Parallax"
                 //col.rgb *= lighting + indirectColor;
 
                 //step for n times
-                float3 averageColor = fixed3(0, 0, 0);
+                float3 averageColor = float3(0, 0, 0);
                 for(float id = 0; id < 32; id += 1.0){
-                    float weight = (1 - id / 32);
+                    float weight = (id / 32);
                     float stepDistance = weight * _RoomDepth;
-                    float tangentOffset = stepDistance * dot(viewDir, i.objectSpaceTangent);
-                    float binormalOffset = stepDistance * dot(viewDir, i.objectSpaceBinormal);
-                    float2 uv = i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
+                    //float tangentOffset = stepDistance * dot(viewDir, i.objectSpaceTangent);
+                    //float binormalOffset = stepDistance * dot(viewDir, i.objectSpaceBinormal);
+                    float2 uv = i.uv + stepDistance * normalize(i.tangentSpaceViewDir);//i.uv - float2(tangentOffset, binormalOffset) / dot(normal, viewDir);
                     fixed4 col = tex2D(_MainTex, uv);
-                    fixed height = 1 - tex2D(_HeightMap, uv).r;
-                    fixed ao = tex2D(_AmbientOcclusion, uv).r;
-                    averageColor = lerp(averageColor, lerp(col.rgb * _Tint, _FadeToColor, height) * 1 - (1 - ao) * _Intensity, pow(weight, 0.5) > height);
+
+                    //fixed height = 1 - tex2D(_HeightMap, uv).r;
+                    ///fixed ao = tex2D(_AmbientOcclusion, uv).r;
+                    //averageColor = lerp(averageColor, lerp(col.rgb * _Tint, _FadeToColor, height) * 1 - (1 - ao) * _Intensity, pow(weight, 0.5) > height);
+                    averageColor += col.rgb;
                 }
-                //averageColor /= 16;\
+                averageColor /= 32;
 
 
                 //UNITY_APPLY_FOG(i.fogCoord, col);

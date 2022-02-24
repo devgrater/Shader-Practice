@@ -1,0 +1,32 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+struct BoidData{
+    float3 position;
+    float3 velocity;
+};
+
+RWStructuredBuffer<BoidData> _Boids;
+//RWTexture2D<float4> Result;
+float _Step;
+uint _Resolution;
+
+float2 GetUV(uint3 id){
+    return (id.xy + 0.5) * _Step - 1.0f;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    //Result[id.xy] = float4(id.x / 256.0f, id.y / 256.0f, 0.0f, 1.0f);
+    BoidData data;
+    data.position = float3(id.x / 256.0f, id.y / 256.0f, 0.0f);
+    data.velocity = float3(0.0f, 0.0f, id.x + id.y);
+    _Boids[id.y * _Resolution + id.x] = data;
+    //_Boids[id.xy] 
+    //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+}

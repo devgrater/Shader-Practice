@@ -42,7 +42,7 @@ public class ComputeFlocker : MonoBehaviour
 
         material.SetBuffer("_Boids", outputDataBuffer);
         var bounds = new Bounds(Vector3.zero, Vector3.one * 256);
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, buffer.count);
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, numFish);
     }
 
     void OnDisable(){

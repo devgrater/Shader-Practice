@@ -11,12 +11,14 @@ public class ComputeFlocker : MonoBehaviour
     [SerializeField] Mesh mesh;
     [SerializeField] Material material;
     ComputeBuffer buffer;
+    ComputeBuffer outputDataBuffer;
     //public RenderTexture rt;
     // Start is called before the first frame update
     void OnEnable()
     {
         //                                                  float3 position, float3 vector
-        buffer = new ComputeBuffer(32 * 32, 4 * 3 * 2);
+        buffer = new ComputeBuffer(resolution * resolution, 4 * 3 * 2);
+        outputDataBuffer = new ComputeBuffer(resolution * resolution, 4 * 3);
         /*
         rt = new RenderTexture(256, 256, 24);
         rt.enableRandomWrite = true;
@@ -33,11 +35,12 @@ public class ComputeFlocker : MonoBehaviour
     void UpdateFunctionOnGPU(){
         //draw stuff
         computeShader.SetBuffer(0, "_Boids", buffer);
+        computeShader.SetBuffer(0, "_Output", outputDataBuffer);
         computeShader.SetVector("_Resolution", new Vector4(resolution, 0, 0, 0));
         int groups = Mathf.CeilToInt(resolution / 8f);
         computeShader.Dispatch(0, groups, groups, 1);
 
-        material.SetBuffer("_Boids", buffer);
+        material.SetBuffer("_Boids", outputDataBuffer);
         var bounds = new Bounds(Vector3.zero, Vector3.one * 256);
         Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, buffer.count);
     }

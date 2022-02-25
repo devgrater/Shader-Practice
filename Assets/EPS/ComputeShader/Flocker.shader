@@ -46,7 +46,7 @@ Shader "Unlit/Flocker"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                StructuredBuffer<BoidData> _Boids;
+                StructuredBuffer<float3> _Boids;
             #endif
             
 
@@ -59,11 +59,11 @@ Shader "Unlit/Flocker"
                 v2f o;
                 o.color = fixed3(0, 0, 0);
                 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                    float3 position = _Boids[instanceID].position;
+                    float3 position = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
-                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(position, 1.0f);
-                    unity_ObjectToWorld._m00_m11_m22 = 0.1f;
-                    o.color = fixed3(position);
+                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(position * 32, 1.0f);
+                    unity_ObjectToWorld._m00_m11_m22 = 0.2f;
+                    o.color = fixed3(position  * 32);
 			    #endif
 
                // unity_ObjectToWorld._m00_m11_m22 = 0.1f;

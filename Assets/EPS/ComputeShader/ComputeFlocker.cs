@@ -25,17 +25,19 @@ public class ComputeFlocker : MonoBehaviour
         //                         v how many 8x8 groups gets calculated*/
 
 
-        computeShader.SetBuffer(0, "_Boids", buffer);
-        computeShader.SetInt("_Resolution", resolution);
-        int groups = Mathf.CeilToInt(resolution / 8f);
-        computeShader.Dispatch(0, groups, groups, 1);
+        
+        
         //right now nothing updates, but thats fine.
     }
 
     void UpdateFunctionOnGPU(){
         //draw stuff
+        computeShader.SetBuffer(0, "_Boids", buffer);
+        computeShader.SetVector("_Resolution", new Vector4(resolution, 0, 0, 0));
+        int groups = Mathf.CeilToInt(resolution / 8f);
+        computeShader.Dispatch(0, groups, groups, 1);
+
         material.SetBuffer("_Boids", buffer);
-        
         var bounds = new Bounds(Vector3.zero, Vector3.one * 256);
         Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, buffer.count);
     }

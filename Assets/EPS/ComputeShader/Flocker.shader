@@ -12,13 +12,14 @@ Shader "Unlit/Flocker"
         Pass
         {
             CGPROGRAM
+            #pragma instancing_options procedural:ConfigureProcedural
             #pragma vertex vert
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
             #pragma target 4.5
             #pragma multi_compile_instancing 
-            #pragma instancing_options procedural:ConfigureProcedural
+            
 
             #include "UnityCG.cginc"
 
@@ -33,6 +34,7 @@ Shader "Unlit/Flocker"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float3 color : COLOR;
             };
 
             struct BoidData{
@@ -43,20 +45,27 @@ Shader "Unlit/Flocker"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            StructuredBuffer<BoidData> _Boids;
+            #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
+                StructuredBuffer<BoidData> _Boids;
+            #endif
+            
 
             void ConfigureProcedural(){
-                #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                    float3 position = _Boids[unity_InstanceID].position;
-                    unity_ObjectToWorld = 0.0;
-                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(position, 1.0f);
-                    unity_ObjectToWorld._m00_m11_m22 = 0.1f;
-			    #endif
+
             }
 
             v2f vert (appdata v)
             {
                 v2f o;
+                o.color = fixed3(0, 0, 0);
+                #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
+                    float3 position = _Boids[unity_InstanceID].position;
+                    unity_ObjectToWorld = 0.0;
+                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(position, 1.0f);
+                    unity_ObjectToWorld._m00_m11_m22 = 0.1f;
+                    o.color = fixed3(1, 0, 0);
+			    #endif
+
                // unity_ObjectToWorld._m00_m11_m22 = 0.1f;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 //o.vertex = mul(unity_ObjectToWorld, v.vertex);
@@ -71,6 +80,7 @@ Shader "Unlit/Flocker"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
+                col.rgb *= i.color;
                 return col;
             }
             ENDCG

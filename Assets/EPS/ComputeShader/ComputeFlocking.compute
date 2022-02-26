@@ -20,11 +20,29 @@ RWStructuredBuffer<BoidOutputData> _Output;
 //RWTexture2D<float4> Result;
 float _TimeStep;
 float _MaxSpeed;
-uint4 _Resolution;
 
+//data from computeflocker.cs
+float _SeparationWeight;
+float _AlignmentWeight;
+float _CohesionWeight;
+float _SeparationRange;
+float _AlignmentRange;
+float _CohesionRange;
 
 void Avoidance(uint id){
     //for each of the stuff in the boids.... find the nearest few?
+}
+
+//make sure the speed doesn't go off the max speed
+float3 ClampToMaxSpeed(float3 currentSpeed){
+    float3 speedNormalized = normalize(currentSpeed);
+    float speedMagnitude = length(currentSpeed);
+    if(speedMagnitude > _MaxSpeed){
+        return speedNormalized * _MaxSpeed;
+    }
+    else{
+        return currentSpeed;
+    }
 }
 
 [numthreads(64,1,1)]
@@ -44,10 +62,57 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //cohesion: try to move to the average position of the neighbours
     //alignment: try to have the average velocity of the neighbours
 
+    //alignment
+    float nearbyBoidVelocity = 0.0f;
+    float alignmentCount = 0.0f;
+
+    //cohesion
+    float nearbyBoidPosition = 0.0f;
+    float cohesionCount = 0.0f;
+
+    //separation
+    float nearbyBoidRepulsion = 0.0f;
+    float separationCount = 0.0f;
+    
+
     //we'll tackle separation first.
-    //for(uint i = 0; i < 1024; i++){
+    for(uint i = 0; i < 1024; i++){
         //we'll just compute a falloff, based on the distance.
-    //}
+        if(i == id.x) continue;
+        BoidData queryBoid = _Boids[i];
+        float3 boidDistanceVector = data.position - queryBoid.position; // gives off a vector to move away from.
+        nearbyBoidRepulsion += boidDistanceVector;
+
+        //check if the vector is within range
+        float distance = length(boidDistanceVector);
+        if(distance < _SeparationRange){
+            nearbyBoidRepulsion += boidDistanceVector;
+            separationCount += 1.0f;
+        }
+        if(distance < _AlignmentRange){
+            nearbyBoidVelocity += queryBoid.velocity;
+            alignmentCount += 1.0f;
+        }
+        if(distance < _CohesionRange){
+            nearbyBoidPosition += queryBoid.position;
+            cohesionCount += 1.0f;
+        }
+    }
+
+    //compute based on the weights the next velocity
+    float3 newVelocity = data.velocity;
+    //avoid division by zero
+    if(separationCount != 0.0f){
+        newVelocity += _SeparationWeight * nearbyBoidRepulsion / separationCount;
+    }
+    if(alignmentCount != 0.0f){
+        newVelocity += _AlignmentWeight * nearbyBoidVelocity / alignmentCount;
+    }
+    if(cohesionCount != 0.0f){
+        newVelocity += _CohesionWeight * nearbyBoidPosition / cohesionCount;
+    }
+    data.velocity = ClampToMaxSpeed(newVelocity);
+
 
     //update the velocity based off the accleration
     //update the position first:

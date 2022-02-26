@@ -205,6 +205,13 @@ MonoBehaviour:
   computeShader: {fileID: 7200000, guid: 36a5a5b0758fbab4e88caf007ba742ba, type: 3}
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
+  maxSpeed: 0.3
+  separationRange: 1
+  separationWeight: 0.05
+  cohesionRange: 2
+  cohesionWeight: 0.05
+  alignmentRange: 2
+  alignmentWeight: 0.05
 --- !u!4 &1417813894
 Transform:
   m_ObjectHideFlags: 0

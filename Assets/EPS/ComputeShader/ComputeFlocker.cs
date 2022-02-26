@@ -13,10 +13,19 @@ public class ComputeFlocker : MonoBehaviour
 
     [SerializeField, Range(10, 200)] int resolution = 32;
     [SerializeField] int numFish = 1024; //this should be more than enough?
-    [SerializeField] float maxSpeed = 3f;
     [SerializeField] ComputeShader computeShader;
     [SerializeField] Mesh mesh;
     [SerializeField] Material material;
+
+    [Header("Boid Simulation Settings")]
+    [SerializeField] float maxSpeed = 0.3f;
+    [SerializeField] float separationRange = 0.6f;
+    [SerializeField] float separationWeight = 1.0f;
+    [SerializeField] float cohesionRange = 1.0f;
+    [SerializeField] float cohesionWeight = 1.0f;
+    [SerializeField] float alignmentRange = 1.0f;
+    [SerializeField] float alignmentWeight = 1.0f;
+
     ComputeBuffer boidBuffer;
     ComputeBuffer outputDataBuffer;
 
@@ -36,8 +45,18 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetBuffer(0, "_Boids", boidBuffer);
         computeShader.SetBuffer(0, "_Output", outputDataBuffer);
         computeShader.SetFloat("_TimeStep", Time.deltaTime);
+
+        ///////////////////////  Boid Settings /////////////////////////////
         computeShader.SetFloat("_MaxSpeed", maxSpeed);
-        computeShader.SetVector("_Resolution", new Vector4(resolution, 0, 0, 0));
+        //set separation properties to shader
+        //thanks, copilot for writing out the rest 5 lines for me
+        computeShader.SetFloat("_SeparationRange", separationRange);
+        computeShader.SetFloat("_SeparationWeight", separationWeight);
+        computeShader.SetFloat("_CohesionRange", cohesionRange);
+        computeShader.SetFloat("_CohesionWeight", cohesionWeight);
+        computeShader.SetFloat("_AlignmentRange", alignmentRange);
+        computeShader.SetFloat("_AlignmentWeight", alignmentWeight);
+
         int groups = Mathf.CeilToInt(resolution / 8f);
         computeShader.Dispatch(0, groups * groups, 1, 1);
 

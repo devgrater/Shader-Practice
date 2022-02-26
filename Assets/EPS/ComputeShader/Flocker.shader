@@ -37,16 +37,16 @@ Shader "Unlit/Flocker"
                 float3 color : COLOR;
             };
 
-            struct BoidData{
+            struct BoidData {
                 float3 position;
-                float3 velocity;
+                float3 color;
             };
 
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
             #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                StructuredBuffer<float3> _Boids;
+                StructuredBuffer<BoidData> _Boids;
             #endif
             
 
@@ -59,11 +59,11 @@ Shader "Unlit/Flocker"
                 v2f o;
                 o.color = fixed3(0, 0, 0);
                 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                    float3 position = _Boids[instanceID];
+                    BoidData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
-                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(position * 8, 1.0f);
+                    unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
                     unity_ObjectToWorld._m00_m11_m22 = 0.1f;
-                    o.color = fixed3(position * 4);
+                    o.color = fixed3(bd.color * 4);
 			    #endif
 
                // unity_ObjectToWorld._m00_m11_m22 = 0.1f;

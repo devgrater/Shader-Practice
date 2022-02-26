@@ -27,7 +27,7 @@ public class ComputeFlocker : MonoBehaviour
         //                                                  float3 position, float3 vector, float3 accleration
         boidBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 3);
         //                                                            float3 position
-        outputDataBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3);
+        outputDataBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 2);
         InitializeBoids();
     }
 

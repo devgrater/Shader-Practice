@@ -10,8 +10,13 @@ struct BoidData{
     float3 color;
 };
 
+struct BoidOutputData {
+    float3 position;
+    float3 color;
+};
+
 RWStructuredBuffer<BoidData> _Boids;
-RWStructuredBuffer<float3> _Output;
+RWStructuredBuffer<BoidOutputData> _Output;
 //RWTexture2D<float4> Result;
 float _Step;
 float _TimeStep;
@@ -47,7 +52,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //update the velocity based off the accleration
 
     //_Boids[id.x] = data;
-    _Output[id.x] = data.position;
+    _Output[id.x].position = data.position;
+    _Output[id.x].color = data.color;
     //_Boids[id.xy] 
     //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
 }

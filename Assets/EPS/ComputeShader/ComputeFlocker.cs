@@ -38,7 +38,7 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetBuffer(0, "_Output", outputDataBuffer);
         computeShader.SetVector("_Resolution", new Vector4(resolution, 0, 0, 0));
         int groups = Mathf.CeilToInt(resolution / 8f);
-        computeShader.Dispatch(0, groups, groups, 1);
+        computeShader.Dispatch(0, groups * groups, 1, 1);
 
         material.SetBuffer("_Boids", outputDataBuffer);
         var bounds = new Bounds(Vector3.zero, Vector3.one * 256);

@@ -88,9 +88,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
             //check if the vector is within range
             float distance = length(boidDistanceVector);
+            
             if(distance < _SeparationRange){
-                
-                nearbyBoidRepulsion += normalize(boidDistanceVector) * _SeparationRange;
+                float pc = distance / _SeparationRange;    
+                nearbyBoidRepulsion += boidDistanceVector * _SeparationRange / (distance * distance);
                 separationCount += 1.0f;
             }
             if(distance < _AlignmentRange){
@@ -106,28 +107,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     //compute based on the weights the next velocity
-    float3 newVelocity = data.velocity;
+    float3 newAcclr = 0.0f;
     //avoid division by zero
     if(separationCount > 0.0f){
         //data.color = float3(1.0f, 0.0f, 0.0f);
-        float3 steer = nearbyBoidRepulsion / separationCount - data.velocity;
-        //steer = normalize(steer);
-        data.accleration += _SeparationWeight * steer;
-        
+        float3 steer = nearbyBoidRepulsion - data.velocity;
+        steer = normalize(steer);
+        newAcclr += _SeparationWeight * steer;
+        data.color = abs(newAcclr) / 32;
     }
     if(alignmentCount > 0.0f){
         //get average velocity
         float3 steer = nearbyBoidVelocity / alignmentCount - data.velocity;
-        //steer = normalize(steer);
-        data.accleration += _AlignmentWeight * steer;
+        steer = normalize(steer);
+        newAcclr += _AlignmentWeight * steer;
     }
     if(cohesionCount > 0.0f){
         float3 steer = nearbyBoidPosition / cohesionCount - data.position - data.velocity;
-        //steer = normalize(steer);
-        data.accleration += _CohesionWeight * steer;
+        steer = normalize(steer);
+        newAcclr += _CohesionWeight * steer;
     }
+    data.accleration += newAcclr;
+    data.accleration = normalize(data.accleration);
+    data.accleration *= _MaxSpeed;
+    //data.accleration = lerp(data.accleration, newAcclr, 0.2f);
     data.velocity += data.accleration * _TimeStep;
     data.velocity = ClampToMaxSpeed(data.velocity);
+    
 
     //update the velocity based off the accleration
     //update the position first:

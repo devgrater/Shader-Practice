@@ -18,8 +18,8 @@ struct BoidOutputData {
 RWStructuredBuffer<BoidData> _Boids;
 RWStructuredBuffer<BoidOutputData> _Output;
 //RWTexture2D<float4> Result;
-float _Step;
 float _TimeStep;
+float _MaxSpeed;
 uint4 _Resolution;
 
 
@@ -50,6 +50,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //}
 
     //update the velocity based off the accleration
+    //update the position first:
+    data.position += data.velocity * _TimeStep * _MaxSpeed;
+    _Boids[id.x] = data;
 
     //_Boids[id.x] = data;
     _Output[id.x].position = data.position;

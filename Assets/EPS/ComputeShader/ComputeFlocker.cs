@@ -13,7 +13,7 @@ public class ComputeFlocker : MonoBehaviour
 
     [SerializeField, Range(10, 200)] int resolution = 32;
     [SerializeField] int numFish = 1024; //this should be more than enough?
-    [SerializeField] float maxSpeed = 0.3f;
+    [SerializeField] float maxSpeed = 3f;
     [SerializeField] ComputeShader computeShader;
     [SerializeField] Mesh mesh;
     [SerializeField] Material material;
@@ -36,6 +36,7 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetBuffer(0, "_Boids", boidBuffer);
         computeShader.SetBuffer(0, "_Output", outputDataBuffer);
         computeShader.SetFloat("_TimeStep", Time.deltaTime);
+        computeShader.SetFloat("_MaxSpeed", maxSpeed);
         computeShader.SetVector("_Resolution", new Vector4(resolution, 0, 0, 0));
         int groups = Mathf.CeilToInt(resolution / 8f);
         computeShader.Dispatch(0, groups * groups, 1, 1);

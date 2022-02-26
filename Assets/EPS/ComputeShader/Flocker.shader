@@ -63,7 +63,7 @@ Shader "Unlit/Flocker"
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
                     unity_ObjectToWorld._m00_m11_m22 = 0.1f;
-                    o.color = fixed3(bd.color * 4);
+                    o.color = fixed3(bd.color);
 			    #endif
 
                // unity_ObjectToWorld._m00_m11_m22 = 0.1f;

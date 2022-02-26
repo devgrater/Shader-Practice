@@ -5,6 +5,7 @@
 // with cs.SetTexture
 
 struct BoidData{
+    float3 accleration;
     float3 position;
     float3 velocity;
     float3 color;
@@ -55,7 +56,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //start position, keep as is for now.
     //data.position = float3(cos(id.x * 6.28f / 1024.0f), sin(id.x * 6.28f / 1024.0f), 0.0f);
     //data.velocity = float3(0.0f, 0.0f, 1.0f);
-    //data.accleration = 0.0f;
 
     //3 behaviors:
     //separation: avoid things that get too close
@@ -78,45 +78,85 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //we'll tackle separation first.
     for(uint i = 0; i < 1024; i++){
         //we'll just compute a falloff, based on the distance.
-        if(i == id.x) continue;
-        BoidData queryBoid = _Boids[i];
-        float3 boidDistanceVector = data.position - queryBoid.position; // gives off a vector to move away from.
-        nearbyBoidRepulsion += boidDistanceVector;
-
-        //check if the vector is within range
-        float distance = length(boidDistanceVector);
-        if(distance < _SeparationRange){
+        if(i != id.x){
+            //this is not triggered somehow...?
+            //and yet why do you have knowledge of how many boids are nearby?
+            
+            BoidData queryBoid = _Boids[i];
+            float3 boidDistanceVector = data.position - queryBoid.position; // gives off a vector to move away from.
             nearbyBoidRepulsion += boidDistanceVector;
-            separationCount += 1.0f;
+
+            //check if the vector is within range
+            float distance = length(boidDistanceVector);
+            if(distance < _SeparationRange){
+                
+                nearbyBoidRepulsion += normalize(boidDistanceVector) * _SeparationRange;
+                separationCount += 1.0f;
+            }
+            if(distance < _AlignmentRange){
+                nearbyBoidVelocity += queryBoid.velocity;
+                alignmentCount += 1.0f;
+            }
+            if(distance < _CohesionRange){
+                nearbyBoidPosition += queryBoid.position;
+                cohesionCount += 1.0f;
+            }
         }
-        if(distance < _AlignmentRange){
-            nearbyBoidVelocity += queryBoid.velocity;
-            alignmentCount += 1.0f;
-        }
-        if(distance < _CohesionRange){
-            nearbyBoidPosition += queryBoid.position;
-            cohesionCount += 1.0f;
-        }
+
     }
 
     //compute based on the weights the next velocity
     float3 newVelocity = data.velocity;
     //avoid division by zero
-    if(separationCount != 0.0f){
-        newVelocity += _SeparationWeight * nearbyBoidRepulsion / separationCount;
+    if(separationCount > 0.0f){
+        //data.color = float3(1.0f, 0.0f, 0.0f);
+        float3 steer = nearbyBoidRepulsion / separationCount - data.velocity;
+        //steer = normalize(steer);
+        data.accleration += _SeparationWeight * steer;
+        
     }
-    if(alignmentCount != 0.0f){
-        newVelocity += _AlignmentWeight * nearbyBoidVelocity / alignmentCount;
+    if(alignmentCount > 0.0f){
+        //get average velocity
+        float3 steer = nearbyBoidVelocity / alignmentCount - data.velocity;
+        //steer = normalize(steer);
+        data.accleration += _AlignmentWeight * steer;
     }
-    if(cohesionCount != 0.0f){
-        newVelocity += _CohesionWeight * nearbyBoidPosition / cohesionCount;
+    if(cohesionCount > 0.0f){
+        float3 steer = nearbyBoidPosition / cohesionCount - data.position - data.velocity;
+        //steer = normalize(steer);
+        data.accleration += _CohesionWeight * steer;
     }
-    data.velocity = ClampToMaxSpeed(newVelocity);
-
+    data.velocity += data.accleration * _TimeStep;
+    data.velocity = ClampToMaxSpeed(data.velocity);
 
     //update the velocity based off the accleration
     //update the position first:
-    data.position += data.velocity * _TimeStep * _MaxSpeed;
+    data.position += data.velocity * _TimeStep;
+
+    
+    //wrap around when we go off the screen
+    if(data.position.x > 4.0f){
+        data.position.x = -4.0f;
+    }
+    if(data.position.x < -4.0f){
+        data.position.x = 4.0f;
+    }
+    if(data.position.y > 4.0f){
+        data.position.y = -4.0f;
+    }
+    if(data.position.y < -4.0f){
+        data.position.y = 4.0f;
+    }
+    if(data.position.z > 4.0f){
+        data.position.z = -4.0f;
+    }
+    if(data.position.z < -4.0f){
+        data.position.z = 4.0f;
+    }
+
+
+    //data.color = float3(alignmentCount, cohesionCount, separationCount) / 8;//length(data.accleration);//
+
     _Boids[id.x] = data;
 
     //_Boids[id.x] = data;

@@ -7,16 +7,19 @@
 struct BoidData{
     float3 position;
     float3 velocity;
+    float3 color;
 };
 
 RWStructuredBuffer<BoidData> _Boids;
 RWStructuredBuffer<float3> _Output;
 //RWTexture2D<float4> Result;
 float _Step;
+float _TimeStep;
 uint4 _Resolution;
 
-float2 GetUV(uint3 id){
-    return (id.xy + 0.5) * _Step - 1.0f;
+
+void Avoidance(uint id){
+    //for each of the stuff in the boids.... find the nearest few?
 }
 
 [numthreads(64,1,1)]
@@ -24,12 +27,27 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // TODO: insert actual code here!
     //Result[id.xy] = float4(id.x / 256.0f, id.y / 256.0f, 0.0f, 1.0f);
-    BoidData data;
-    uint newID = id.z * 64 + id.x;//id.z * 64 + id.y * 8 + id.x;
-    data.position = float3(cos(newID * 6.28f / 1024.0f), sin(newID * 6.28f / 1024.0f), 0.0f);
-    data.velocity = float3(0.0f, 0.0f, id.x + id.y);
-    _Boids[id.y * _Resolution.x + id.x] = data;
-    _Output[id.y * _Resolution.x + id.x] = data.position;
+    BoidData data = _Boids[id.x];
+    //uint newID = id.z * 64 + id.x;//id.z * 64 + id.y * 8 + id.x;
+    //start position, keep as is for now.
+    //data.position = float3(cos(id.x * 6.28f / 1024.0f), sin(id.x * 6.28f / 1024.0f), 0.0f);
+    //data.velocity = float3(0.0f, 0.0f, 1.0f);
+    //data.accleration = 0.0f;
+
+    //3 behaviors:
+    //separation: avoid things that get too close
+    //cohesion: try to move to the average position of the neighbours
+    //alignment: try to have the average velocity of the neighbours
+
+    //we'll tackle separation first.
+    //for(uint i = 0; i < 1024; i++){
+        //we'll just compute a falloff, based on the distance.
+    //}
+
+    //update the velocity based off the accleration
+
+    //_Boids[id.x] = data;
+    _Output[id.x] = data.position;
     //_Boids[id.xy] 
     //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
 }

@@ -84,7 +84,7 @@ public class ComputeFlocker : MonoBehaviour
         for(int i = 0; i < numFish; i++){
             initValue[i].color = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             initValue[i].position = Random.insideUnitSphere * 3f;
-            initValue[i].velocity = Random.insideUnitSphere * maxSpeed;
+            initValue[i].velocity = Random.onUnitSphere * maxSpeed;
         }
         boidBuffer.SetData(initValue);
         //boidBuffer.SetCounterValue()

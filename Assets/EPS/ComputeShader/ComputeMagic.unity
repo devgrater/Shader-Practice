@@ -205,10 +205,10 @@ MonoBehaviour:
   computeShader: {fileID: 7200000, guid: 36a5a5b0758fbab4e88caf007ba742ba, type: 3}
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
-  maxSpeed: 0.6
+  maxSpeed: 4
   separationRange: 0.2
   separationWeight: 6
-  cohesionRange: 1.5
+  cohesionRange: 1
   cohesionWeight: 0.2
   alignmentRange: 2
   alignmentWeight: 2

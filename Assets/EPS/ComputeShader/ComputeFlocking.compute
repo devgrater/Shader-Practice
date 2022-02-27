@@ -13,6 +13,7 @@ struct BoidData{
 struct BoidOutputData {
     float3 position;
     float3 velocity;
+    float3 param3;
 };
 
 RWStructuredBuffer<BoidData> _Boids;

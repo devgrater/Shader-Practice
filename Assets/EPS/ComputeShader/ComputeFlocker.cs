@@ -35,7 +35,7 @@ public class ComputeFlocker : MonoBehaviour
         //                                                  float3 position, float3 vector, float4 individualData
         boidBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 2 + sizeof(float) * 4);
         //                                                            float3 position
-        outputDataBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 2);
+        outputDataBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 3);
         InitializeBoids();
     }
 
@@ -70,6 +70,9 @@ public class ComputeFlocker : MonoBehaviour
     void OnDisable(){
         boidBuffer.Release();
         boidBuffer = null;
+
+        outputDataBuffer.Release();
+        outputDataBuffer = null;
     }
 
     // Update is called once per frame

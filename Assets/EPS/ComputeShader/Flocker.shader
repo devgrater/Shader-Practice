@@ -49,16 +49,17 @@ Shader "Unlit/Flocker"
                 float3 worldViewDir : TEXCOORD3;
             };
 
-            struct BoidData {
+            struct BoidOutputData {
                 float3 position;
                 float3 velocity;
+                float3 param3;
             };
 
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
             #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                StructuredBuffer<BoidData> _Boids;
+                StructuredBuffer<BoidOutputData> _Boids;
             #endif
             
 
@@ -71,7 +72,7 @@ Shader "Unlit/Flocker"
                 v2f o;
                 o.color = fixed3(0, 0, 0);
                 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                    BoidData bd = _Boids[instanceID];
+                    BoidOutputData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
                     unity_ObjectToWorld._m00_m11_m22 = 0.3f;
@@ -157,15 +158,15 @@ Shader "Unlit/Flocker"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-
-            struct BoidData {
+            struct BoidOutputData {
                 float3 position;
                 float3 velocity;
+                float3 param3;
             };
 
 
             #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                StructuredBuffer<BoidData> _Boids;
+                StructuredBuffer<BoidOutputData> _Boids;
             #endif
 
             uniform float4 _MainTex_ST;
@@ -178,7 +179,7 @@ Shader "Unlit/Flocker"
             {
                 v2f o;
                 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-                    BoidData bd = _Boids[instanceID];
+                    BoidOutputData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
                     unity_ObjectToWorld._m00_m11_m22 = 0.3f;

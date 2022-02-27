@@ -23,12 +23,15 @@ float _TimeStep;
 float _MaxSpeed;
 
 //data from computeflocker.cs
+float3 _SACWeight;
+float3 _SACRange;
+/*
 float _SeparationWeight;
 float _AlignmentWeight;
 float _CohesionWeight;
 float _SeparationRange;
 float _AlignmentRange;
-float _CohesionRange;
+float _CohesionRange;*/
 
 void Avoidance(uint id){
     //for each of the stuff in the boids.... find the nearest few?
@@ -94,15 +97,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             //check if the vector is within range
             float distance = length(boidDistanceVector);
             
-            if(distance < _SeparationRange){
-                nearbyBoidRepulsion += boidDistanceVector * _SeparationRange / (distance * distance);
+            if(distance < _SACRange.x){
+                nearbyBoidRepulsion += boidDistanceVector * _SACRange.x / (distance * distance);
                 separationCount += 1.0f;
             }
-            if(distance < _AlignmentRange){
+            if(distance < _SACRange.y){
                 nearbyBoidVelocity += queryBoid.velocity;
                 alignmentCount += 1.0f;
             }
-            if(distance < _CohesionRange){
+            if(distance < _SACRange.z){
                 nearbyBoidPosition += queryBoid.position;
                 cohesionCount += 1.0f;
             }
@@ -116,27 +119,27 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     if(separationCount > 0.0f){
         //data.color = float3(1.0f, 0.0f, 0.0f);
         float3 steer = safeNormalize(nearbyBoidRepulsion) * _MaxSpeed - data.velocity;
-        newAcclr += _SeparationWeight * steer;
-        data.color = abs(newAcclr) / 32;
+        newAcclr += _SACWeight.x * ClampToMaxSpeed(steer);
     }
     if(alignmentCount > 0.0f){
         //this one uses the sum of all velocities, and just normalize it and be done.
         float3 sumVec = safeNormalize(nearbyBoidVelocity) * _MaxSpeed;
         float3 steer = sumVec - data.velocity;
-        newAcclr += _AlignmentWeight * steer;
+        newAcclr += _SACWeight.y * ClampToMaxSpeed(steer);
     }
     if(cohesionCount > 0.0f){
         //only this one need to use the average position
         float3 sumVec = nearbyBoidPosition / cohesionCount - data.position;
         float3 steer = safeNormalize(sumVec) * _MaxSpeed - data.velocity;
-        newAcclr += _CohesionWeight * steer;
+        newAcclr += _SACWeight.z * ClampToMaxSpeed(steer);
+        //data.color = newAcclr;
     }
     //data.accleration += newAcclr;
     //data.accleration = normalize(data.accleration);
     //data.accleration *= _MaxSpeed;
     //data.accleration = lerp(data.accleration, newAcclr, 0.2f);
-    data.accleration += newAcclr;
-    data.accleration = ClampToMaxSpeed(data.accleration);
+    //data.accleration += newAcclr;
+    data.accleration = ClampToMaxSpeed(newAcclr);
     data.velocity += data.accleration * _TimeStep;
     data.velocity = ClampToMaxSpeed(data.velocity);
     
@@ -147,25 +150,25 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     
     //wrap around when we go off the screen
-    /*
-    if(data.position.x > 4.0f){
-        data.position.x = -4.0f;
+    
+    if(data.position.x > 16.0f){
+        data.position.x = -16.0f;
     }
-    if(data.position.x < -4.0f){
-        data.position.x = 4.0f;
+    if(data.position.x < -16.0f){
+        data.position.x = 16.0f;
     }
-    if(data.position.y > 4.0f){
-        data.position.y = -4.0f;
+    if(data.position.y > 16.0f){
+        data.position.y = -16.0f;
     }
-    if(data.position.y < -4.0f){
-        data.position.y = 4.0f;
+    if(data.position.y < -16.0f){
+        data.position.y = 16.0f;
     }
-    if(data.position.z > 4.0f){
-        data.position.z = -4.0f;
+    if(data.position.z > 16.0f){
+        data.position.z = -16.0f;
     }
-    if(data.position.z < -4.0f){
-        data.position.z = 4.0f;
-    }*/
+    if(data.position.z < -16.0f){
+        data.position.z = 16.0f;
+    }
 
 
     //data.color = float3(alignmentCount, cohesionCount, separationCount) / 8;//length(data.accleration);//

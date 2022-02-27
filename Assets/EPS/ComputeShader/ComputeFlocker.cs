@@ -51,12 +51,15 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetFloat("_MaxSpeed", maxSpeed);
         //set separation properties to shader
         //thanks, copilot for writing out the rest 5 lines for me
+        /*
         computeShader.SetFloat("_SeparationRange", separationRange);
         computeShader.SetFloat("_SeparationWeight", separationWeight);
         computeShader.SetFloat("_CohesionRange", cohesionRange);
         computeShader.SetFloat("_CohesionWeight", cohesionWeight);
         computeShader.SetFloat("_AlignmentRange", alignmentRange);
-        computeShader.SetFloat("_AlignmentWeight", alignmentWeight);
+        computeShader.SetFloat("_AlignmentWeight", alignmentWeight);*/
+        computeShader.SetVector("_SACWeight", new Vector4(separationWeight, alignmentWeight, cohesionWeight));
+        computeShader.SetVector("_SACRange", new Vector4(separationRange, alignmentRange, cohesionRange));
 
         int groups = Mathf.CeilToInt(resolution / 8f);
         computeShader.Dispatch(0, groups * groups, 1, 1);
@@ -82,8 +85,8 @@ public class ComputeFlocker : MonoBehaviour
         for(int i = 0; i < numFish; i++){
             initValue[i].color = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             initValue[i].position = Random.insideUnitSphere * 4f;
-            initValue[i].velocity = Random.insideUnitSphere * maxSpeed;
-            initValue[i].accleration = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f)) * 5;
+            initValue[i].velocity = Vector3.zero;//Random.insideUnitSphere * maxSpeed;
+            initValue[i].accleration = Random.insideUnitSphere * maxSpeed;
         }
         boidBuffer.SetData(initValue);
         //boidBuffer.SetCounterValue()

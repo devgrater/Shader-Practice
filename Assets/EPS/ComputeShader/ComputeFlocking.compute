@@ -34,10 +34,21 @@ void Avoidance(uint id){
     //for each of the stuff in the boids.... find the nearest few?
 }
 
+float3 safeNormalize(float3 val){
+    if(length(val) == 0){
+        return val;
+    }
+    return normalize(val);
+}
+
 //make sure the speed doesn't go off the max speed
 float3 ClampToMaxSpeed(float3 currentSpeed){
-    float3 speedNormalized = normalize(currentSpeed);
+   
     float speedMagnitude = length(currentSpeed);
+    if(speedMagnitude == 0){
+        return currentSpeed;
+    }
+    float3 speedNormalized = normalize(currentSpeed);
     if(speedMagnitude > _MaxSpeed){
         return speedNormalized * _MaxSpeed;
     }
@@ -49,13 +60,7 @@ float3 ClampToMaxSpeed(float3 currentSpeed){
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    // TODO: insert actual code here!
-    //Result[id.xy] = float4(id.x / 256.0f, id.y / 256.0f, 0.0f, 1.0f);
     BoidData data = _Boids[id.x];
-    //uint newID = id.z * 64 + id.x;//id.z * 64 + id.y * 8 + id.x;
-    //start position, keep as is for now.
-    //data.position = float3(cos(id.x * 6.28f / 1024.0f), sin(id.x * 6.28f / 1024.0f), 0.0f);
-    //data.velocity = float3(0.0f, 0.0f, 1.0f);
 
     //3 behaviors:
     //separation: avoid things that get too close
@@ -84,13 +89,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             
             BoidData queryBoid = _Boids[i];
             float3 boidDistanceVector = data.position - queryBoid.position; // gives off a vector to move away from.
-            nearbyBoidRepulsion += boidDistanceVector;
+            //nearbyBoidRepulsion += boidDistanceVector;
 
             //check if the vector is within range
             float distance = length(boidDistanceVector);
             
             if(distance < _SeparationRange){
-                float pc = distance / _SeparationRange;    
                 nearbyBoidRepulsion += boidDistanceVector * _SeparationRange / (distance * distance);
                 separationCount += 1.0f;
             }
@@ -111,26 +115,28 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //avoid division by zero
     if(separationCount > 0.0f){
         //data.color = float3(1.0f, 0.0f, 0.0f);
-        float3 steer = nearbyBoidRepulsion - data.velocity;
-        steer = normalize(steer);
+        float3 steer = safeNormalize(nearbyBoidRepulsion) * _MaxSpeed - data.velocity;
         newAcclr += _SeparationWeight * steer;
         data.color = abs(newAcclr) / 32;
     }
     if(alignmentCount > 0.0f){
-        //get average velocity
-        float3 steer = nearbyBoidVelocity / alignmentCount - data.velocity;
-        steer = normalize(steer);
+        //this one uses the sum of all velocities, and just normalize it and be done.
+        float3 sumVec = safeNormalize(nearbyBoidVelocity) * _MaxSpeed;
+        float3 steer = sumVec - data.velocity;
         newAcclr += _AlignmentWeight * steer;
     }
     if(cohesionCount > 0.0f){
-        float3 steer = nearbyBoidPosition / cohesionCount - data.position - data.velocity;
-        steer = normalize(steer);
+        //only this one need to use the average position
+        float3 sumVec = nearbyBoidPosition / cohesionCount - data.position;
+        float3 steer = safeNormalize(sumVec) * _MaxSpeed - data.velocity;
         newAcclr += _CohesionWeight * steer;
     }
-    data.accleration += newAcclr;
-    data.accleration = normalize(data.accleration);
-    data.accleration *= _MaxSpeed;
+    //data.accleration += newAcclr;
+    //data.accleration = normalize(data.accleration);
+    //data.accleration *= _MaxSpeed;
     //data.accleration = lerp(data.accleration, newAcclr, 0.2f);
+    data.accleration += newAcclr;
+    data.accleration = ClampToMaxSpeed(data.accleration);
     data.velocity += data.accleration * _TimeStep;
     data.velocity = ClampToMaxSpeed(data.velocity);
     
@@ -141,6 +147,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     
     //wrap around when we go off the screen
+    /*
     if(data.position.x > 4.0f){
         data.position.x = -4.0f;
     }
@@ -158,7 +165,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     if(data.position.z < -4.0f){
         data.position.z = 4.0f;
-    }
+    }*/
 
 
     //data.color = float3(alignmentCount, cohesionCount, separationCount) / 8;//length(data.accleration);//

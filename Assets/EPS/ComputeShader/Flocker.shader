@@ -62,7 +62,7 @@ Shader "Unlit/Flocker"
                     BoidData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
-                    unity_ObjectToWorld._m00_m11_m22 = 0.1f;
+                    unity_ObjectToWorld._m00_m11_m22 = 0.01f;
                     o.color = fixed3(bd.color);
 			    #endif
 

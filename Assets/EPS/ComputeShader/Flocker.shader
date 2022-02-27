@@ -35,6 +35,7 @@ Shader "Unlit/Flocker"
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
+                
             };
 
             struct v2f
@@ -44,6 +45,7 @@ Shader "Unlit/Flocker"
                 float4 vertex : SV_POSITION;
                 float3 color : COLOR;
                 float3 normal : NORMAL;
+                fixed2 lighting : TEXCOORD1;
             };
 
             struct BoidData {
@@ -84,10 +86,14 @@ Shader "Unlit/Flocker"
                     float3 centerOffset = v.vertex.xyz;
                     //save from vertex multiplication
                     float3 rotatedLocal = forward * centerOffset.x + right  * centerOffset.y + up2 * centerOffset.z;
+                    float3 rotatedNormal = forward * v.normal.x + right  * v.normal.y + up2 * v.normal.z;
                     o.vertex = UnityObjectToClipPos(rotatedLocal);
+
+                    o.normal = UnityObjectToWorldNormal(rotatedNormal);
                 #else   
                     // unity_ObjectToWorld._m00_m11_m22 = 0.1f;
                     o.vertex = UnityObjectToClipPos(v.vertex);
+                    o.normal = UnityObjectToWorldNormal(v.normal);
 			    #endif
 
                 
@@ -96,7 +102,10 @@ Shader "Unlit/Flocker"
                
                 //o.vertex = mul(unity_ObjectToWorld, v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                o.normal = UnityObjectToWorldNormal(v.normal);
+                
+                o.lighting = 0.0f;
+                o.lighting.r = dot(normalize(o.normal), _WorldSpaceLightPos0.xyz);
+                o.lighting.g = abs(dot(normalize(-o.normal) * 1.1, _WorldSpaceLightPos0.xyz));
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -104,11 +113,12 @@ Shader "Unlit/Flocker"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed lighting = dot(normalize(i.normal), _WorldSpaceLightPos0.xyz);
-                lighting = saturate(lighting);
+                fixed lighting = i.lighting.r + i.lighting.g;
+                //return float4(lighting, lighting, lighting, 1.0f);
+                //lighting = saturate(lighting);
                 //half-lambert lighting
                 lighting = lighting * 0.5f + 0.5f;
-                lighting = lighting * lighting;
+                //lighting = lighting * lighting;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

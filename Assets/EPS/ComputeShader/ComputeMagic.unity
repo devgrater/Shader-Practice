@@ -202,7 +202,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   numFish: 8192
   computeShader: {fileID: 7200000, guid: 36a5a5b0758fbab4e88caf007ba742ba, type: 3}
-  mesh: {fileID: -1119430988441025290, guid: b680b2b60f37a734cbd827b10bc16dde, type: 3}
+  mesh: {fileID: -1119430988441025290, guid: 2d77ed1f1e959fb46863286d0a9f1c8f, type: 3}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 4
   separationRange: 0.7

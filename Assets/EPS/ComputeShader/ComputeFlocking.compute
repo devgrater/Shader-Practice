@@ -7,7 +7,7 @@
 struct BoidData{
     float3 position;
     float3 velocity;
-    float3 color;
+    float4 individualData;
 };
 
 struct BoidOutputData {

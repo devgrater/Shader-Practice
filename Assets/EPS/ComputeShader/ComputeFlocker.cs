@@ -8,7 +8,7 @@ public class ComputeFlocker : MonoBehaviour
     struct BoidData{
         public Vector3 position;
         public Vector3 velocity;
-        public Vector3 color;
+        public Vector4 individualData;
     };
 
     [SerializeField] int numFish = 8192; //this should be more than enough?
@@ -32,8 +32,8 @@ public class ComputeFlocker : MonoBehaviour
     // Start is called before the first frame update
     void OnEnable()
     {
-        //                                                  float3 position, float3 vector, float3 color
-        boidBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 3);
+        //                                                  float3 position, float3 vector, float4 individualData
+        boidBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 2 + sizeof(float) * 4);
         //                                                            float3 position
         outputDataBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 2);
         InitializeBoids();
@@ -81,7 +81,7 @@ public class ComputeFlocker : MonoBehaviour
     void InitializeBoids(){
         BoidData[] initValue = new BoidData[numFish];
         for(int i = 0; i < numFish; i++){
-            initValue[i].color = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+            initValue[i].individualData = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             initValue[i].position = Random.insideUnitSphere * 3f;
             initValue[i].velocity = Random.onUnitSphere * maxSpeed;
         }

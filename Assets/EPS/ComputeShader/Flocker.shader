@@ -45,7 +45,8 @@ Shader "Unlit/Flocker"
                 float4 vertex : SV_POSITION;
                 float3 color : COLOR;
                 float3 normal : NORMAL;
-                fixed2 lighting : TEXCOORD1;
+                fixed2 lighting : TEXCOORD2;
+                float3 worldViewDir : TEXCOORD3;
             };
 
             struct BoidData {
@@ -85,8 +86,8 @@ Shader "Unlit/Flocker"
 
                     float3 centerOffset = v.vertex.xyz;
                     //save from vertex multiplication
-                    float3 rotatedLocal = forward * centerOffset.x + right  * centerOffset.y + up2 * centerOffset.z;
-                    float3 rotatedNormal = forward * v.normal.x + right  * v.normal.y + up2 * v.normal.z;
+                    float3 rotatedLocal = forward * centerOffset.x + up2 * centerOffset.y + right * centerOffset.z;
+                    float3 rotatedNormal = forward * v.normal.x + up2  * v.normal.y + right * v.normal.z;
                     o.vertex = UnityObjectToClipPos(rotatedLocal);
 
                     o.normal = UnityObjectToWorldNormal(rotatedNormal);
@@ -106,6 +107,7 @@ Shader "Unlit/Flocker"
                 o.lighting = 0.0f;
                 o.lighting.r = dot(normalize(o.normal), _WorldSpaceLightPos0.xyz);
                 o.lighting.g = abs(dot(normalize(-o.normal) * 1.1, _WorldSpaceLightPos0.xyz));
+                o.worldViewDir = WorldSpaceViewDir(v.vertex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -113,11 +115,15 @@ Shader "Unlit/Flocker"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
+                fixed rim = dot(i.normal, i.worldViewDir);
+                rim = 1 - saturate(rim);
+                rim = pow(rim, 2);
                 fixed lighting = i.lighting.r + i.lighting.g;
                 //return float4(lighting, lighting, lighting, 1.0f);
                 //lighting = saturate(lighting);
                 //half-lambert lighting
                 lighting = lighting * 0.5f + 0.5f;
+                lighting += rim * 0.1;
                 //lighting = lighting * lighting;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
@@ -187,7 +193,7 @@ Shader "Unlit/Flocker"
 
                     float3 centerOffset = v.vertex.xyz;
                     //save from vertex multiplication
-                    float3 rotatedLocal = forward * centerOffset.x + right  * centerOffset.y + up2 * centerOffset.z;
+                    float3 rotatedLocal = forward * centerOffset.x + up2 * centerOffset.y + right * centerOffset.z;
                     v.vertex.xyz = rotatedLocal;
                     o.pos = UnityObjectToClipPos(v.vertex);
                 #else   

@@ -16,6 +16,13 @@ struct BoidOutputData {
     float3 param3;
 };
 
+///#1 - normal fish
+///#2 - not so normal fish
+
+static const float preyTable[] = {
+    0, 1, 0, 1
+};
+
 RWStructuredBuffer<BoidData> _Boids;
 RWStructuredBuffer<BoidOutputData> _Output;
 //RWTexture2D<float4> Result;

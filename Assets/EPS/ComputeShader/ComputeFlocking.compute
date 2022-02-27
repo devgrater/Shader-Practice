@@ -71,15 +71,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //alignment: try to have the average velocity of the neighbours
 
     //alignment
-    float nearbyBoidVelocity = 0.0f;
+    float3 nearbyBoidVelocity = 0.0f;
     float alignmentCount = 0.0f;
 
     //cohesion
-    float nearbyBoidPosition = 0.0f;
+    float3 nearbyBoidPosition = 0.0f;
     float cohesionCount = 0.0f;
 
     //separation
-    float nearbyBoidRepulsion = 0.0f;
+    float3 nearbyBoidRepulsion = 0.0f;
     float separationCount = 0.0f;
     
 
@@ -100,15 +100,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             
 
             //data.color = data.color + (distance < _SACRange.x);
-            if(distance < _SACRange.x){
+            if(distance > 0 && distance < _SACRange.x){
                 nearbyBoidRepulsion += boidDistanceVector * _SACRange.x / (distance * distance);
                 separationCount += 1.0f;
             }
-            if(distance < _SACRange.y){
+            if(distance > 0 && distance < _SACRange.y){
                 nearbyBoidVelocity += queryBoid.velocity;
                 alignmentCount += 1.0f;
             }
-            if(distance < _SACRange.z){
+            if(distance > 0 && distance < _SACRange.z){
                 nearbyBoidPosition += queryBoid.position;
                 cohesionCount += 1.0f;
             }
@@ -147,7 +147,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     data.velocity += newAcclr * _TimeStep;
     data.velocity = ClampToMaxSpeed(data.velocity);
-    data.color = (safeNormalize(data.velocity) + 1) * 0.5;
+    //data.color = (safeNormalize(data.velocity) + 1) * 0.5;
 
     //update the velocity based off the accleration
     //update the position first:

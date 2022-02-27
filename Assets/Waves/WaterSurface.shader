@@ -20,6 +20,7 @@
         [HDR]_CausticBlendColor ("Caustic Blend Color", Color) = (1.0, 1.0, 1.0, 1.0)
 
         _OffsetBase ("OffsetBase", Float) = 0.0
+        _BlurAmount ("Blur Amount", Range(0, 1)) = 1.0
         //_OffsetCeil ("OffsetCeil", Float) = 1.0
     }
     SubShader
@@ -100,6 +101,7 @@
             float _CausticPower;
             float4 _CausticBlendColor;
             float _OffsetBase;
+            fixed _BlurAmount;
 
 
             float3 gerstner(float4 data, float4 vertex, out float3 tangent, out float3 binormal){
@@ -236,7 +238,7 @@
                 //return blurAmount;
 
                 //return tex2D(_GrabTexture, i.screenPosition.xy / i.screenPosition.w + uvDistortion);
-                fixed4 screenCol = blur3x3(blurAmount * 12, i.screenPosition.xy / i.screenPosition.w + uvDistortion);//
+                fixed4 screenCol = blur3x3(blurAmount * 12 * _BlurAmount, i.screenPosition.xy / i.screenPosition.w + uvDistortion);//
                 //return screenCol;
 
                 float cutoff = _NoiseCutoff * (depthDifference);

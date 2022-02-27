@@ -12,7 +12,7 @@ struct BoidData{
 
 struct BoidOutputData {
     float3 position;
-    float3 color;
+    float3 velocity;
 };
 
 RWStructuredBuffer<BoidData> _Boids;
@@ -156,30 +156,31 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     //wrap around when we go off the screen
     
-    if(data.position.x > 16.0f){
-        data.position.x = -16.0f;
+    if(data.position.x > 64.0f){
+        data.position.x = -64.0f;
     }
-    if(data.position.x < -16.0f){
-        data.position.x = 16.0f;
+    if(data.position.x < -64.0f){
+        data.position.x = 64.0f;
     }
-    if(data.position.y > 16.0f){
-        data.position.y = -16.0f;
+    if(data.position.y > 12.0f){
+        data.position.y = -12.0f;
     }
-    if(data.position.y < -16.0f){
-        data.position.y = 16.0f;
+    if(data.position.y < -12.0f){
+        data.position.y = 12.0f;
     }
-    if(data.position.z > 16.0f){
-        data.position.z = -16.0f;
+
+    if(data.position.z > 64.0f){
+        data.position.z = -64.0f;
     }
-    if(data.position.z < -16.0f){
-        data.position.z = 16.0f;
+    if(data.position.z < -64.0f){
+        data.position.z = 64.0f;
     }
 
     _Boids[id.x] = data;
 
     //_Boids[id.x] = data;
     _Output[id.x].position = data.position;
-    _Output[id.x].color = data.color;
+    _Output[id.x].velocity = safeNormalize(data.velocity);
     //_Boids[id.xy] 
     //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
 }

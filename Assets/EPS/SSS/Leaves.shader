@@ -117,7 +117,7 @@ Shader "Unlit/Leaves"
         
         Pass {
             Cull Off
-            Name "Caster"
+            Name "TwoSidedCaster"
             Tags { "LightMode" = "ShadowCaster" }
 
             CGPROGRAM

@@ -200,15 +200,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2904d284bcd66a940a34ac0ab5b2657b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 32
-  numFish: 1024
+  numFish: 8192
   computeShader: {fileID: 7200000, guid: 36a5a5b0758fbab4e88caf007ba742ba, type: 3}
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 4
-  separationRange: 0.2
+  separationRange: 0.5
   separationWeight: 6
-  cohesionRange: 1
+  cohesionRange: 2
   cohesionWeight: 0.2
   alignmentRange: 2
   alignmentWeight: 2

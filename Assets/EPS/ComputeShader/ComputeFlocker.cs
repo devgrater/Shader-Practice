@@ -11,8 +11,7 @@ public class ComputeFlocker : MonoBehaviour
         public Vector3 color;
     };
 
-    [SerializeField, Range(10, 200)] int resolution = 32;
-    [SerializeField] int numFish = 1024; //this should be more than enough?
+    [SerializeField] int numFish = 8192; //this should be more than enough?
     [SerializeField] ComputeShader computeShader;
     [SerializeField] Mesh mesh;
     [SerializeField] Material material;
@@ -34,9 +33,9 @@ public class ComputeFlocker : MonoBehaviour
     void OnEnable()
     {
         //                                                  float3 position, float3 vector, float3 color
-        boidBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 3);
+        boidBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 3);
         //                                                            float3 position
-        outputDataBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 2);
+        outputDataBuffer = new ComputeBuffer(numFish, sizeof(float) * 3 * 2);
         InitializeBoids();
     }
 
@@ -60,8 +59,8 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetVector("_SACWeight", new Vector4(separationWeight, alignmentWeight, cohesionWeight));
         computeShader.SetVector("_SACRange", new Vector4(separationRange, alignmentRange, cohesionRange));
 
-        int groups = Mathf.CeilToInt(resolution / 8f);
-        computeShader.Dispatch(0, groups * groups, 1, 1);
+        int groups = Mathf.CeilToInt(numFish / 64f);
+        computeShader.Dispatch(0, groups, 1, 1);
 
         material.SetBuffer("_Boids", outputDataBuffer);
         var bounds = new Bounds(Vector3.zero, Vector3.one * 256);

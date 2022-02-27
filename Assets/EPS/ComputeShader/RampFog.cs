@@ -15,7 +15,7 @@ public class RampFog : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        RecomputeGradientMap();
     }
 
     void RecomputeGradientMap(){
@@ -38,11 +38,12 @@ public class RampFog : MonoBehaviour
     }
 
     void UpdateMaterialParams(){
-            if(targetCamera == null){
-                targetCamera = GetComponent<Camera>();
-            }
+        if(targetCamera == null){
+            targetCamera = GetComponent<Camera>();
+        }
+        postProcessMat.SetTexture("_GradientMap", gradientMap);
     }
-
+    [ImageEffectOpaque]
     void OnRenderImage(RenderTexture src, RenderTexture dest){
         //regardless, you need to pass in some data...
         if(!Application.isPlaying){

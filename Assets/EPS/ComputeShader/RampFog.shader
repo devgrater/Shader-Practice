@@ -16,6 +16,8 @@ Shader "Hidden/RampFog"
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+            sampler2D _CameraDepthTexture;
+            sampler2D _GradientMap;
 
             struct appdata
             {
@@ -42,6 +44,19 @@ Shader "Hidden/RampFog"
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
+                float depth = tex2D(_CameraDepthTexture, i.uv);
+                float linearDepth = LinearEyeDepth(depth);
+                fixed oneOverDepth = 1 / linearDepth;
+                fixed depthAmount = 1 - oneOverDepth;
+                depthAmount = pow(depthAmount, 48.0f);
+
+
+                //sample the gradient map:
+                float4 outColor = tex2D(_GradientMap, fixed2(depthAmount, 0.1));
+
+                //lerp over the ramp
+                return outColor;
+                return 1 / linearDepth;
                 // just invert the colors
                 col.rgb = 1 - col.rgb;
                 return col;

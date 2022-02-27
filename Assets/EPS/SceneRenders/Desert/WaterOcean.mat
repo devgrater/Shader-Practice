@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WaterOcean
-  m_Shader: {fileID: 4800000, guid: 7cab946f55e107448895e2629d61c56f, type: 3}
+  m_Shader: {fileID: 4800000, guid: 5eccac11383950745be8ed969b9b6611, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0

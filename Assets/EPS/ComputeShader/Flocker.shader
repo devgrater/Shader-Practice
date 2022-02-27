@@ -131,12 +131,13 @@ Shader "Unlit/Flocker"
                 //half-lambert lighting
                 lighting = lighting * 0.5f + 0.5f;
                 lighting = lighting * lighting;
-                lighting += rim * 0.3 + specular;
-                //lighting = lighting * lighting;
+                lighting = max(lighting, rim * 0.3);
+                lighting += specular;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
                 col.rgb *= lighting;
+                UNITY_APPLY_FOG(i.fogCoord, col);
+                
                 clip(col.a - 0.5);
                 return col;
             }

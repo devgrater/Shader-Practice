@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
-  m_FogColor: {r: 0.87843144, g: 0.854902, b: 0.83921576, a: 1}
+  m_Fog: 1
+  m_FogColor: {r: 0.47659308, g: 0.73281217, b: 0.8490566, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.002
+  m_FogDensity: 0.05
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -207,9 +207,9 @@ MonoBehaviour:
   maxSpeed: 4
   separationRange: 1
   separationWeight: 6
-  cohesionRange: 2.5
+  cohesionRange: 40
   cohesionWeight: 0.2
-  alignmentRange: 10
+  alignmentRange: 3
   alignmentWeight: 2
 --- !u!4 &1417813894
 Transform:

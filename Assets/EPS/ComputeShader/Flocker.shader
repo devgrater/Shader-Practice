@@ -75,7 +75,7 @@ Shader "Unlit/Flocker"
                     BoidOutputData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
-                    unity_ObjectToWorld._m00_m11_m22 = 0.3f;
+                    unity_ObjectToWorld._m00_m11_m22 = bd.param3.y;
                     //o.color = fixed3(bd.color);
                     //find rotation from bd.velocity
                     //oh wow copilot....
@@ -85,7 +85,9 @@ Shader "Unlit/Flocker"
                     float3 up2 = cross(forward, right);
                     float3x3 rot = float3x3(right, up2, forward);
 
+                    v.vertex.z += sin(v.vertex.x * 1.1 + _Time.b * length(bd.velocity) * 5 + instanceID / 1024) * 0.3;
                     float3 centerOffset = v.vertex.xyz;
+                    
                     //save from vertex multiplication
                     float3 rotatedLocal = forward * centerOffset.x + up2 * centerOffset.y + right * centerOffset.z;
                     float3 rotatedNormal = forward * v.normal.x + up2  * v.normal.y + right * v.normal.z;
@@ -115,16 +117,21 @@ Shader "Unlit/Flocker"
 
             fixed4 frag (v2f i) : SV_Target
             {
+
+                fixed3 halfDir = normalize(i.worldViewDir + _WorldSpaceLightPos0.xyz);
+                fixed specular = dot(halfDir, normalize(i.normal));
+                specular = saturate(specular);
+                specular = pow(specular, 256);
                 // sample the texture
-                fixed rim = dot(i.normal, i.worldViewDir);
+                fixed rim = dot(i.normal * 1.3, i.worldViewDir);
                 rim = 1 - saturate(rim);
-                rim = pow(rim, 2);
                 fixed lighting = i.lighting.r + i.lighting.g;
                 //return float4(lighting, lighting, lighting, 1.0f);
                 //lighting = saturate(lighting);
                 //half-lambert lighting
                 lighting = lighting * 0.5f + 0.5f;
-                lighting += rim * 0.1;
+                lighting = lighting * lighting;
+                lighting += rim * 0.3 + specular;
                 //lighting = lighting * lighting;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
@@ -182,7 +189,7 @@ Shader "Unlit/Flocker"
                     BoidOutputData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
                     unity_ObjectToWorld._m03_m13_m23_m33 = float4(bd.position, 1.0f);
-                    unity_ObjectToWorld._m00_m11_m22 = 0.3f;
+                    unity_ObjectToWorld._m00_m11_m22 = bd.param3.y;
                     //o.color = fixed3(bd.color);
                     //find rotation from bd.velocity
                     //oh wow copilot....
@@ -192,6 +199,7 @@ Shader "Unlit/Flocker"
                     float3 up2 = cross(forward, right);
                     float3x3 rot = float3x3(right, up2, forward);
 
+                    v.vertex.z += sin(v.vertex.x * 1.1 + _Time.b * length(bd.velocity) * 5 + instanceID / 1024) * 0.3;
                     float3 centerOffset = v.vertex.xyz;
                     //save from vertex multiplication
                     float3 rotatedLocal = forward * centerOffset.x + up2 * centerOffset.y + right * centerOffset.z;

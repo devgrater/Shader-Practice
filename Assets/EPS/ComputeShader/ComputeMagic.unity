@@ -206,11 +206,11 @@ MonoBehaviour:
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 0.6
-  separationRange: 0.1
+  separationRange: 0.2
   separationWeight: 6
-  cohesionRange: 0.5
+  cohesionRange: 1.5
   cohesionWeight: 0.2
-  alignmentRange: 1.5
+  alignmentRange: 2
   alignmentWeight: 2
 --- !u!4 &1417813894
 Transform:

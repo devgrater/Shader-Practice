@@ -6,7 +6,6 @@ public class ComputeFlocker : MonoBehaviour
 {
 
     struct BoidData{
-        public Vector3 accleration;
         public Vector3 position;
         public Vector3 velocity;
         public Vector3 color;
@@ -34,8 +33,8 @@ public class ComputeFlocker : MonoBehaviour
     // Start is called before the first frame update
     void OnEnable()
     {
-        //                                                  float3 position, float3 vector, float3 accleration
-        boidBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 4);
+        //                                                  float3 position, float3 vector, float3 color
+        boidBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 3);
         //                                                            float3 position
         outputDataBuffer = new ComputeBuffer(resolution * resolution, sizeof(float) * 3 * 2);
         InitializeBoids();
@@ -84,9 +83,8 @@ public class ComputeFlocker : MonoBehaviour
         BoidData[] initValue = new BoidData[numFish];
         for(int i = 0; i < numFish; i++){
             initValue[i].color = new Vector3(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            initValue[i].position = Random.insideUnitSphere * 4f;
-            initValue[i].velocity = Vector3.zero;//Random.insideUnitSphere * maxSpeed;
-            initValue[i].accleration = Random.insideUnitSphere * maxSpeed;
+            initValue[i].position = Random.onUnitSphere * 0.1f;
+            initValue[i].velocity = Random.insideUnitSphere * maxSpeed;
         }
         boidBuffer.SetData(initValue);
         //boidBuffer.SetCounterValue()

@@ -5,7 +5,6 @@
 // with cs.SetTexture
 
 struct BoidData{
-    float3 accleration;
     float3 position;
     float3 velocity;
     float3 color;
@@ -45,8 +44,9 @@ float3 safeNormalize(float3 val){
 }
 
 //make sure the speed doesn't go off the max speed
+//this is broken as fuck
 float3 ClampToMaxSpeed(float3 currentSpeed){
-   
+    //return currentSpeed;
     float speedMagnitude = length(currentSpeed);
     if(speedMagnitude == 0){
         return currentSpeed;
@@ -95,8 +95,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             //nearbyBoidRepulsion += boidDistanceVector;
 
             //check if the vector is within range
-            float distance = length(boidDistanceVector);
+            float distance = abs(length(boidDistanceVector));
+
             
+
+            //data.color = data.color + (distance < _SACRange.x);
             if(distance < _SACRange.x){
                 nearbyBoidRepulsion += boidDistanceVector * _SACRange.x / (distance * distance);
                 separationCount += 1.0f;
@@ -115,34 +118,36 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //compute based on the weights the next velocity
     float3 newAcclr = 0.0f;
+    float3 sepSum = 0, alignSum = 0, cohSum = 0;
     //avoid division by zero
     if(separationCount > 0.0f){
         //data.color = float3(1.0f, 0.0f, 0.0f);
         float3 steer = safeNormalize(nearbyBoidRepulsion) * _MaxSpeed - data.velocity;
-        newAcclr += _SACWeight.x * ClampToMaxSpeed(steer);
+        sepSum = ClampToMaxSpeed(steer);
+        //newAcclr = _SACWeight.x * ClampToMaxSpeed(steer);
     }
     if(alignmentCount > 0.0f){
         //this one uses the sum of all velocities, and just normalize it and be done.
         float3 sumVec = safeNormalize(nearbyBoidVelocity) * _MaxSpeed;
         float3 steer = sumVec - data.velocity;
-        newAcclr += _SACWeight.y * ClampToMaxSpeed(steer);
+        alignSum = ClampToMaxSpeed(steer);
+        //newAcclr += _SACWeight.y * ClampToMaxSpeed(steer);
     }
     if(cohesionCount > 0.0f){
         //only this one need to use the average position
         float3 sumVec = nearbyBoidPosition / cohesionCount - data.position;
         float3 steer = safeNormalize(sumVec) * _MaxSpeed - data.velocity;
-        newAcclr += _SACWeight.z * ClampToMaxSpeed(steer);
+        cohSum = ClampToMaxSpeed(steer);
+        //newAcclr += _SACWeight.z * ClampToMaxSpeed(steer);
         //data.color = newAcclr;
     }
-    //data.accleration += newAcclr;
-    //data.accleration = normalize(data.accleration);
-    //data.accleration *= _MaxSpeed;
-    //data.accleration = lerp(data.accleration, newAcclr, 0.2f);
-    //data.accleration += newAcclr;
-    data.accleration = ClampToMaxSpeed(newAcclr);
-    data.velocity += data.accleration * _TimeStep;
-    data.velocity = ClampToMaxSpeed(data.velocity);
+
+    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z;
+    newAcclr = ClampToMaxSpeed(newAcclr) * 1000.0f;
     
+    data.velocity += newAcclr * _TimeStep;
+    data.velocity = ClampToMaxSpeed(data.velocity);
+    data.color = (safeNormalize(data.velocity) + 1) * 0.5;
 
     //update the velocity based off the accleration
     //update the position first:
@@ -169,9 +174,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     if(data.position.z < -16.0f){
         data.position.z = 16.0f;
     }
-
-
-    //data.color = float3(alignmentCount, cohesionCount, separationCount) / 8;//length(data.accleration);//
 
     _Boids[id.x] = data;
 

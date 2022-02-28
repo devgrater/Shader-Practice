@@ -277,7 +277,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 324097947}
   m_LocalRotation: {x: -0, y: -0.14590101, z: -0, w: 0.9892992}
-  m_LocalPosition: {x: 18.410004, y: -3.9496303, z: -18.389997}
+  m_LocalPosition: {x: -5.7, y: -3.9496303, z: -16.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1451114121}
@@ -1260,6 +1260,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: seaweed (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 992903196907358943, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.27
+      objectReference: {fileID: 0}
+    - target: {fileID: 992903196907358943, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 992903196907358943, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.03
+      objectReference: {fileID: 0}
     - target: {fileID: 5666976605925935417, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -1323,7 +1335,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 918397618}
   m_LocalRotation: {x: -0, y: 0.77387744, z: -0, w: 0.6333355}
-  m_LocalPosition: {x: 18.476944, y: -3.9496303, z: -28.489847}
+  m_LocalPosition: {x: -5.6330605, y: -3.9496303, z: -26.19985}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 464784769}
@@ -1361,7 +1373,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1030937962}
   m_LocalRotation: {x: -0, y: -0.14590101, z: -0, w: 0.9892992}
-  m_LocalPosition: {x: 4.8, y: -2.2999997, z: -18.1}
+  m_LocalPosition: {x: -19.310005, y: -2.2999997, z: -15.810003}
   m_LocalScale: {x: 1.3978, y: 1.3978, z: 1.3978}
   m_Children:
   - {fileID: 1846783214}
@@ -1836,7 +1848,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1392997396}
   m_LocalRotation: {x: -0, y: 0.6089695, z: -0, w: 0.79319364}
-  m_LocalPosition: {x: 4.340003, y: 1.35, z: -5.369997}
+  m_LocalPosition: {x: -19.77, y: 1.35, z: -3.08}
   m_LocalScale: {x: 1.9904672, y: 1.9904672, z: 1.9904672}
   m_Children:
   - {fileID: 380849472}
@@ -1874,16 +1886,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2904d284bcd66a940a34ac0ab5b2657b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numFish: 2048
+  numFish: 8192
   computeShader: {fileID: 7200000, guid: 36a5a5b0758fbab4e88caf007ba742ba, type: 3}
   mesh: {fileID: -1119430988441025290, guid: b680b2b60f37a734cbd827b10bc16dde, type: 3}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 8
-  separationRange: 1.3
+  separationRange: 1.5
   separationWeight: 6
-  cohesionRange: 40
+  cohesionRange: 12
   cohesionWeight: 0.2
-  alignmentRange: 3
+  alignmentRange: 5
   alignmentWeight: 2
 --- !u!4 &1417813894
 Transform:
@@ -2559,7 +2571,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -8.58037
+      value: -11.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2750,7 +2762,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -11.16037
+      value: -14.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a9ade80f0029f64a9b821e400d7525d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -3153,15 +3165,15 @@ MonoBehaviour:
     key3: {r: 0.18823531, g: 0.46274513, b: 0.49411768, a: 0}
     key4: {r: 0.34117648, g: 0.6039216, b: 0.63529414, a: 0}
     key5: {r: 0.4156863, g: 0.7058824, b: 0.70980394, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0.4156863, g: 0.7058824, b: 0.70980394, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
     ctime1: 16191
     ctime2: 31804
     ctime3: 44911
     ctime4: 56283
-    ctime5: 65535
-    ctime6: 0
+    ctime5: 62644
+    ctime6: 65535
     ctime7: 0
     atime0: 0
     atime1: 22745
@@ -3172,7 +3184,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 6
+    m_NumColorKeys: 7
     m_NumAlphaKeys: 3
   postProcessMat: {fileID: 2100000, guid: 33f6fa7b484d72040b251893a62ba09d, type: 2}
 --- !u!4 &1949730326 stripped

@@ -49,9 +49,10 @@ Shader "Hidden/RampFog"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 float depth = tex2D(_CameraDepthTexture, i.uv);
                 float linearDepth = LinearEyeDepth(depth);
-                fixed oneOverDepth = 1 / linearDepth;
-                fixed depthAmount = 1 - oneOverDepth;
-                depthAmount = pow(depthAmount, 12.0f);
+                float depthAmount = 1 - exp(-linearDepth * 0.02);
+                //fixed oneOverDepth = 1 / linearDepth;
+                //fixed depthAmount = 1 - oneOverDepth;
+                //depthAmount = pow(depthAmount, 12.0f);
 
                 float brightness = dot(col, fixed3(0.299, 0.587, 0.114));
                 //sample the gradient map:

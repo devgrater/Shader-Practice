@@ -1,5 +1,33 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5472272311363208501
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30cbeb61b50d5fc4b9d8d41dca45e7f7, type: 3}
+  m_Name: VHS
+  m_EditorClassIdentifier: 
+  active: 0
+  enabled:
+    overrideState: 1
+    value: 1
+  useScreenResolution:
+    overrideState: 1
+    value: 1
+  scanlineCount:
+    overrideState: 1
+    value: 720
+  screenWidth:
+    overrideState: 1
+    value: 480
+  chromaAberrationDistance:
+    overrideState: 1
+    value: 5
 --- !u!114 &-4912531073117539447
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -49,6 +77,32 @@ MonoBehaviour:
   quality:
     overrideState: 0
     value: 2
+--- !u!114 &-464535000156453526
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6050e2d5de785ce4d931e4dbdbf2d755, type: 3}
+  m_Name: ChromaticAberration
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  spectralLut:
+    overrideState: 0
+    value: {fileID: 0}
+    defaultState: 1
+  intensity:
+    overrideState: 1
+    value: 0.62
+  fastMode:
+    overrideState: 1
+    value: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +121,8 @@ MonoBehaviour:
   - {fileID: 5869131987186892033}
   - {fileID: 6244181614057828909}
   - {fileID: 5150049689976643439}
+  - {fileID: -5472272311363208501}
+  - {fileID: -464535000156453526}
 --- !u!114 &4815154337277966212
 MonoBehaviour:
   m_ObjectHideFlags: 3

@@ -65,8 +65,8 @@ Shader "Unlit/Kelp"
                 v2f o;
                 //the higher osHeight it is, the more likely it is affected by water
                 o.osHeight = v.vertex.y / 3;
-                v.vertex.x += sin(_Time.b + v.vertex.x) * 0.1 * o.osHeight;
-                v.vertex.z += cos(_Time.b + v.vertex.z) * 0.01 * o.osHeight;
+                v.vertex.x += sin(_Time.b + v.vertex.x * v.vertex.y) * 0.1 * o.osHeight;
+                v.vertex.z += cos(_Time.b + v.vertex.z * v.vertex.y) * 0.01 * o.osHeight;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.pos);
@@ -146,8 +146,8 @@ Shader "Unlit/Kelp"
             {
                 v2f o;
                 o.osHeight = v.vertex.y / 3;
-                v.vertex.x += sin(_Time.b + v.vertex.x) * 0.1 * o.osHeight;
-                v.vertex.z += cos(_Time.b + v.vertex.z) * 0.01 * o.osHeight;
+                v.vertex.x += sin(_Time.b + v.vertex.x * v.vertex.y) * 0.1 * o.osHeight;
+                v.vertex.z += cos(_Time.b + v.vertex.z * v.vertex.y) * 0.01 * o.osHeight;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)

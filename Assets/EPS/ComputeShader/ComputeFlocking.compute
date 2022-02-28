@@ -164,24 +164,24 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     //wrap around when we go off the screen
     
-    if(data.position.x > 64.0f){
-        data.position.x = -64.0f;
+    if(data.position.x > 72.0f){
+        data.position.x = -72.0f;
     }
-    if(data.position.x < -64.0f){
-        data.position.x = 64.0f;
+    if(data.position.x < -72.0f){
+        data.position.x = 72.0f;
     }
-    if(data.position.y > 64.0f){
-        data.position.y = -64.0f;
+    if(data.position.y > 72.0f){
+        data.position.y = -72.0f;
     }
-    if(data.position.y < -64.0f){
-        data.position.y = 64.0f;
+    if(data.position.y < -72.0f){
+        data.position.y = 72.0f;
     }
 
-    if(data.position.z > 64.0f){
-        data.position.z = -64.0f;
+    if(data.position.z > 72.0f){
+        data.position.z = -72.0f;
     }
-    if(data.position.z < -64.0f){
-        data.position.z = 64.0f;
+    if(data.position.z < -72.0f){
+        data.position.z = 72.0f;
     }
 
     _Boids[id.x] = data;

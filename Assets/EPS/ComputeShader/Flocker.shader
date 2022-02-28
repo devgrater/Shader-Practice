@@ -132,7 +132,7 @@ Shader "Unlit/Flocker"
                 lighting = lighting * 0.5f + 0.5f;
                 lighting = lighting * lighting;
                 lighting = max(lighting, rim * 0.3);
-                lighting += specular;
+                lighting += specular * 2;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 col.rgb *= lighting;

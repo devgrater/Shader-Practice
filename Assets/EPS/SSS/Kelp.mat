@@ -31,7 +31,7 @@ Material:
     - _Cutoff: 0.5
     - _Shininess: 0.7
     m_Colors:
-    - _Color: {r: 1, g: 0.9677871, b: 0.28773582, a: 1}
+    - _Color: {r: 0, g: 0.6698113, b: 0.6372475, a: 1}
     - _Emission: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []

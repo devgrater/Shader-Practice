@@ -41,23 +41,8 @@ Shader "Hidden/RampFog"
 
             sampler2D _MainTex;
             float4 _MainTex_TexelSize;
+            float4 _NearbyTint;
 
-            fixed4 blur3x3(float blurDistance, fixed2 uv){
-                fixed2 xOffset = fixed2(_MainTex_TexelSize.x * blurDistance, 0.0f);
-                fixed2 yOffset = fixed2(0.0f, _MainTex_TexelSize.y * blurDistance);
-                //fixed2 uvOffset = _GrabTexture_TexelSize.xy * blurDistance;
-                float4 colorSum = 0.0f;
-                
-                
-                for(int x = -2; x <= 2; x++){
-                    for(int y = -2; y <= 2; y++){
-                        fixed2 newUV = xOffset * x + yOffset * y + uv;
-                        colorSum += tex2D(_MainTex, newUV);
-                        //return colorSum;
-                    }
-                }
-                return colorSum / 25;
-            }
 
             fixed4 frag (v2f i) : SV_Target
             {
@@ -71,7 +56,7 @@ Shader "Hidden/RampFog"
                 float brightness = dot(col, fixed3(0.299, 0.587, 0.114));
                 //sample the gradient map:
                 float4 rampColor = tex2D(_GradientMap, fixed2(depthAmount, 0.1));
-                float4 nearColor = tex2D(_GradientMap, fixed2(saturate(brightness), 0.1));
+                float4 nearColor = col * _NearbyTint;//lerp(col, brightness * _NearbyTint, rampColor.r);
                 col = lerp(nearColor, rampColor, rampColor.a);
                 float3 outColor = lerp(col, rampColor.rgb, rampColor.a);
 

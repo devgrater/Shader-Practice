@@ -136,6 +136,8 @@ Shader "Unlit/Flocker"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 col.rgb *= lighting;
+                col.rgb *= col.rgb;
+                col.rgb *= 1.5;
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 
                 clip(col.a - 0.5);

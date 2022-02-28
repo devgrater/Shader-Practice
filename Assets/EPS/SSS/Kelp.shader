@@ -79,7 +79,7 @@ Shader "Unlit/Kelp"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                return i.osHeight;
+                //return i.osHeight;
                 fixed3 normal = normalize(i.normal);
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed lighting = dot(normalize(normal), _WorldSpaceLightPos0.xyz);

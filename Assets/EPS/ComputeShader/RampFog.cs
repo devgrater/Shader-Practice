@@ -11,7 +11,9 @@ public class RampFog : MonoBehaviour
     [Header("Colors")]
     public Gradient gradient = new Gradient();
     private Texture2D gradientMap;
+    [SerializeField] private Color nearbyTint;
     [SerializeField] private Material postProcessMat;
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -42,6 +44,7 @@ public class RampFog : MonoBehaviour
             targetCamera = GetComponent<Camera>();
         }
         postProcessMat.SetTexture("_GradientMap", gradientMap);
+        postProcessMat.SetColor("_NearbyTint", nearbyTint);
     }
     [ImageEffectOpaque]
     void OnRenderImage(RenderTexture src, RenderTexture dest){

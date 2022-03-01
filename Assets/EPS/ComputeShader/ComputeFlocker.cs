@@ -25,6 +25,7 @@ public class ComputeFlocker : MonoBehaviour
     [SerializeField] float alignmentRange = 1.0f;
     [SerializeField] float alignmentWeight = 1.0f;
 
+
     ComputeBuffer boidBuffer;
     ComputeBuffer outputDataBuffer;
 

@@ -9,22 +9,38 @@ public class TraversePainter : MonoBehaviour
     [SerializeField] private Collider targetCollider;
     [SerializeField] private GameObject targetQuad;
     [SerializeField] private GameObject paintBrushHead;
+    [SerializeField] private GameObject paintBrushTex;
+    [SerializeField] private RenderTexture rt;
+    [SerializeField] private Material flowCameraMaterial;
     // Start is called before the first frame update
+    private Texture2D activeTex;
+
+    private int instantiatedCount = 0;
+    bool wasMouseDown = false;
+    private List<GameObject> instantiated;
+
     void Start()
     {
-        
+        instantiated = new List<GameObject>();
+        activeTex = SaveRT();
     }
 
     // Update is called once per frame
     void Update()
     {
         //raycast...
-        //if(Input.GetButtonDown("Fire1")){
-        PaintAtPosition();
-        //}
+        //if(Input.GetMouseButton(0)){
+        bool isMouseDown = Input.GetMouseButton(0)  || Input.GetMouseButton(1);
+        PaintAtPosition(isMouseDown);
+        if((wasMouseDown == true && isMouseDown == false) || instantiatedCount >= 1000){
+            //collapse the painting.
+            paintBrushHead.SetActive(false);
+            Invoke("CollapsePainting", 0.1f);
+        }
+        wasMouseDown = isMouseDown;
     }
 
-    void PaintAtPosition(){
+    void PaintAtPosition(bool isMouseDown){
         //cast a ray:
         Vector3 mousePos = Input.mousePosition;
         //Debug.Log(mousePos);
@@ -35,12 +51,15 @@ public class TraversePainter : MonoBehaviour
             if(hitResult.collider == GetComponent<Collider>()){
                 //execute next step:
                 Vector2 hitUV = hitResult.textureCoord;
-                SetBrushHeadPos(hitUV);
+                Vector3 paintPos;
+                if(SetBrushHeadPos(hitUV, out paintPos) && isMouseDown){
+                    PaintOnCanvas(paintPos);
+                }
             }
         }
     }
 
-    void SetBrushHeadPos(Vector2 uv){
+    bool SetBrushHeadPos(Vector2 uv, out Vector3 worldPos){
         if(paintBrushHead){
             uv.x = (uv.x - 0.5f);
             uv.y = (uv.y - 0.5f);
@@ -54,18 +73,68 @@ public class TraversePainter : MonoBehaviour
                 brushPos.x += uv.x * size;
                 brushPos.y += uv.y * size;
                 paintBrushHead.transform.position = brushPos;
+                brushPos.z += 0.5f;
+                worldPos = brushPos;
+                return true;
             }
         }
+        worldPos = new Vector3(0, 0, 0);
+        return false;
+    }
+
+    void PaintOnCanvas(Vector3 pos){
+        //instantiate the prefab at the specific position....
+        
+        GameObject instantiatedPaint = Instantiate(paintBrushTex);
+        instantiatedPaint.transform.position = pos;
+        ///add to the list
+        instantiated.Add(instantiatedPaint);
+        instantiatedCount += 1;
+        if(Input.GetMouseButton(1)){
+            instantiatedPaint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 1);
+        }
+        
+    }
+
+    void EnableBrushHead(){
+        paintBrushHead.SetActive(true);
+    }
+
+    void CollapsePainting(){
+        
+        //save to rt
+        activeTex = SaveRT();
+
+        instantiatedCount = 0;
+        foreach(GameObject go in instantiated){
+            Destroy(go);
+        }
+        instantiated.Clear();
+        Invoke("EnableBrushHead", 0.1f);
     }
 
 
-    void SaveRT(){
-
+    Texture2D SaveRT(){  
+        //rt.
+        Texture2D tex2d = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+        //blit to rendertex:
+        RenderTexture.active = rt;
+        tex2d.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        tex2d.Apply();
+        //set material
+        flowCameraMaterial.SetTexture("_MainTex", tex2d);
+        return tex2d;
     }
-    /*
-    [MenuItem("GameObject/Setup Paint Canvas")]
-    static void BeginPaint(){
-
-    }*/
+    
+    [ContextMenu("SaveRT")]
+    void BeginPaint(){
+        byte[] bytes;
+        bytes = activeTex.EncodeToPNG();
+        
+        string path = "./Assets/EPS/ComputeShader/FishTraversal.png";
+        System.IO.File.WriteAllBytes(path, bytes);
+        AssetDatabase.ImportAsset(path);
+        Debug.Log("Saved to " + path);
+    }
 
 }

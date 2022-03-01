@@ -224,7 +224,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 209576642}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -187.59604, y: 591.8765, z: 109.91922}
+  m_LocalPosition: {x: -200, y: 600, z: 100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1968793812}
@@ -771,7 +771,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: dce27555d538549489526bd82eaa79b7, type: 2}
+  - {fileID: 2100000, guid: 8b559c219e601cd4ca4ea4d8c0618eed, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -831,6 +831,9 @@ MonoBehaviour:
   targetCollider: {fileID: 0}
   targetQuad: {fileID: 1261468805}
   paintBrushHead: {fileID: 785617604}
+  paintBrushTex: {fileID: 3561891884502720771, guid: 8a033f3006083b64a9b9028d652585bf, type: 3}
+  rt: {fileID: 8400000, guid: b53a2c6e8ea376443a606c9001aebaa4, type: 2}
+  flowCameraMaterial: {fileID: 2100000, guid: dce27555d538549489526bd82eaa79b7, type: 2}
 --- !u!1001 &464784768
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1406,7 +1409,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 785617604}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.073959, y: 8.393494, z: -6.249222}
+  m_LocalPosition: {x: 0.33000183, y: 0.27001953, z: 0.8492203}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 209576643}
@@ -2178,7 +2181,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1261468805}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.403961, y: 8.123474, z: -1.12}
+  m_LocalPosition: {x: 0, y: 0, z: 9.159218}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_Children: []
   m_Father: {fileID: 209576643}
@@ -4021,7 +4024,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 128
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: b53a2c6e8ea376443a606c9001aebaa4, type: 2}
   m_TargetDisplay: 1
   m_TargetEye: 3
   m_HDR: 1
@@ -4039,7 +4042,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1968793809}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.403961, y: 8.123474, z: -9.91922}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 209576643}

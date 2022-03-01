@@ -67,10 +67,18 @@ Shader "Unlit/Flocker"
 
             }
 
+            static const float3 colors[] = {
+                float3(0, 0, 0),
+                float3(0, 1, 1),
+                float3(1, 1, 0),
+                float3(1, 0, 1),
+                float3(1, 1, 1)
+            };
+
             v2f vert (appdata v, uint instanceID : SV_InstanceID)
             {
                 v2f o;
-                o.color = fixed3(0, 0, 0);
+                
                 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
                     BoidOutputData bd = _Boids[instanceID];
                     unity_ObjectToWorld = 0.0;
@@ -84,6 +92,7 @@ Shader "Unlit/Flocker"
                     float3 right = normalize(cross(up, forward));
                     float3 up2 = cross(forward, right);
                     float3x3 rot = float3x3(right, up2, forward);
+                    o.color = colors[bd.param3.x];
 
                     v.vertex.z += sin(v.vertex.x * 1.1 + _Time.b * length(bd.velocity) * 5 + instanceID / 1024) * 0.3;
                     float3 centerOffset = v.vertex.xyz;
@@ -138,6 +147,7 @@ Shader "Unlit/Flocker"
                 col.rgb *= lighting;
                 col.rgb *= col.rgb;
                 col.rgb *= 1.5;
+                col.rgb = i.color;
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 
                 clip(col.a - 0.5);

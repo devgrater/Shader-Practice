@@ -14,6 +14,8 @@ public class TraversePainter : MonoBehaviour
     [SerializeField] private Material flowCameraMaterial;
     // Start is called before the first frame update
     private Texture2D activeTex;
+    private float brushSize = 1.0f;
+    private float brushIncrement = 0.1f;
 
     private int instantiatedCount = 0;
     bool wasMouseDown = false;
@@ -37,6 +39,9 @@ public class TraversePainter : MonoBehaviour
             paintBrushHead.SetActive(false);
             Invoke("CollapsePainting", 0.1f);
         }
+        brushSize = brushSize + Input.mouseScrollDelta.y * brushIncrement;
+        brushSize = Mathf.Clamp(brushSize, 0.1f, 4.0f);
+
         wasMouseDown = isMouseDown;
     }
 
@@ -64,6 +69,7 @@ public class TraversePainter : MonoBehaviour
             uv.x = (uv.x - 0.5f);
             uv.y = (uv.y - 0.5f);
             //set the position relative... to the camera.
+            paintBrushHead.transform.localScale = new Vector3(brushSize, brushSize, brushSize);
             Vector3 headPos = paintBrushHead.transform.position;
             if(targetQuad != null){
                 float size = targetQuad.transform.localScale.x;
@@ -87,6 +93,7 @@ public class TraversePainter : MonoBehaviour
         
         GameObject instantiatedPaint = Instantiate(paintBrushTex);
         instantiatedPaint.transform.position = pos;
+        instantiatedPaint.transform.localScale = new Vector3(brushSize, brushSize, brushSize);
         ///add to the list
         instantiated.Add(instantiatedPaint);
         instantiatedCount += 1;

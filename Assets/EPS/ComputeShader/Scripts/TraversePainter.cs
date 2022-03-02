@@ -148,7 +148,7 @@ public class TraversePainter : MonoBehaviour
     [ContextMenu("Compute SDF")]
     void ComputeSDF(){
         //pass the active texture 2d to another script
-        GetComponent<SDFMaker>();
+        GetComponent<SDFMaker>().ComputeSDF(activeTex);
     }
 
 }

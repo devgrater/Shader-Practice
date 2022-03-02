@@ -731,6 +731,7 @@ GameObject:
   - component: {fileID: 437076916}
   - component: {fileID: 437076915}
   - component: {fileID: 437076919}
+  - component: {fileID: 437076920}
   m_Layer: 0
   m_Name: FlowPlane
   m_TagString: Untagged
@@ -834,6 +835,20 @@ MonoBehaviour:
   paintBrushTex: {fileID: 3561891884502720771, guid: 8a033f3006083b64a9b9028d652585bf, type: 3}
   rt: {fileID: 8400000, guid: b53a2c6e8ea376443a606c9001aebaa4, type: 2}
   flowCameraMaterial: {fileID: 2100000, guid: dce27555d538549489526bd82eaa79b7, type: 2}
+--- !u!114 &437076920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437076914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9e5745f1a668174f9e30f19d391e27f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rt: {fileID: 0}
+  compute: {fileID: 7200000, guid: 4d2c22b563974fc4e8fe8042b24eab00, type: 3}
 --- !u!1001 &464784768
 PrefabInstance:
   m_ObjectHideFlags: 0

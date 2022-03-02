@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
+[RequireComponent(typeof(SDFMaker))]
 public class TraversePainter : MonoBehaviour
 {
     [SerializeField] private Camera targetCamera;
@@ -142,6 +143,12 @@ public class TraversePainter : MonoBehaviour
         System.IO.File.WriteAllBytes(path, bytes);
         AssetDatabase.ImportAsset(path);
         Debug.Log("Saved to " + path);
+    }
+
+    [ContextMenu("Compute SDF")]
+    void ComputeSDF(){
+        //pass the active texture 2d to another script
+        GetComponent<SDFMaker>();
     }
 
 }

@@ -2663,7 +2663,7 @@ MonoBehaviour:
   mesh: {fileID: -1119430988441025290, guid: b680b2b60f37a734cbd827b10bc16dde, type: 3}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 8
-  separationRange: 1.5
+  separationRange: 3
   separationWeight: 6
   cohesionRange: 12
   cohesionWeight: 0.2

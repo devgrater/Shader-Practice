@@ -5,23 +5,69 @@
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 float2 _Dimensions;
+int2 _StepSize;
 Texture2D<float4> _Previous;
+SamplerState sampler_Previous;
 RWTexture2D<float4> _MainTex;
 
 
 [numthreads(8,8,1)]
 void Init (uint3 id : SV_DispatchThreadID)
 {
-    // TODO: insert actual code here!
 
-    _MainTex[id.xy] = float4(id.x / _Dimensions.x, id.y / _Dimensions.y, 0.0, 0.0);
+    float2 uv = float2(id.x / _Dimensions.x, id.y / _Dimensions.y);
+    // TODO: insert actual code here!
+    float hasInfo = _Previous.SampleLevel(sampler_Previous, uv, 0).r;//step(0.5f, _Previous[id.xy].r);
+    hasInfo = step(0.5, hasInfo);
+    _MainTex[id.xy] = float4(id.x / _Dimensions.x, id.y / _Dimensions.y, 0.0, 0.0) * hasInfo;
 }
 
+float2 SampleTexAt(int x, int y){
+    float2 uv = float2(x / _Dimensions.x, y / _Dimensions.y);
+    float2 res = _Previous.SampleLevel(sampler_Previous, uv, 0).rg;
+    return res;
+}
+
+float3 SampleTexWithOffset(int x, int y, int offsetX, int offsetY){
+    x = x + offsetX;
+    y = y + offsetY;
+    if(x < 0 || y < 0 || x > _Dimensions.x || y > _Dimensions.y){
+        //nope, theres no data here.
+        return float3(0, 0, 0); //third float - whether data is present
+    }
+    else{
+        float2 res = SampleTexAt(x, y);
+        if((res.x == 0.0f) && (res.y == 0.0f)){
+            //do nothing...
+            return float3(0, 0, 0); 
+        }
+        else{
+            return float3(res, 1);
+        }
+    }
+}
 
 [numthreads(8,8,1)]
 void SDFStep (uint3 id : SV_DispatchThreadID)
 {
+    float2 uv = float2(id.x / _Dimensions.x, id.y / _Dimensions.y);
+    //do it 9 times:
+    float minDist = 3.402823466e+38F;
+    float2 minUV = uv;
+    for(int i = -1; i <= 1; i++){
+        for(int j = -1; j <= 1; j++){
+            float3 result = SampleTexWithOffset(id.x, id.y, _StepSize.x * i, _StepSize.y * i);
+            if(result.z){
+                //compute distance:
+                float distanceFromCenter = distance(result.xy, uv);
+                if(distanceFromCenter < minDist){
+                    minDist = distanceFromCenter;
+                    minUV= result.xy;
+                } 
+            }
+        }
+    }
     // TODO: insert actual code here!
-
-    _MainTex[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+    //sample from multiple directions
+    _MainTex[id.xy] = float4(minUV, 0.0, 0.0);
 }

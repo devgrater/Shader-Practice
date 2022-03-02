@@ -62,6 +62,6 @@ public class SDFMaker : MonoBehaviour
         compute.SetVector("_StepSize", new Vector4(w, h, 0.0f, 1.0f));
         int xRound = Mathf.CeilToInt(src.width / 8);
         int yRound = Mathf.CeilToInt(src.height / 8);
-        compute.Dispatch(0, xRound, yRound, 1);
+        compute.Dispatch(1, xRound, yRound, 1);
     }
 }

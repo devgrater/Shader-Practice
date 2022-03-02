@@ -53,7 +53,8 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     float2 uv = float2(id.x / _Dimensions.x, id.y / _Dimensions.y);
     //do it 9 times:
     float minDist = 3.402823466e+38F;
-    float2 minUV = uv;
+    float2 minUV = float2(0, 0);
+    float foundMin = 0.0f;
     for(int i = -1; i <= 1; i++){
         for(int j = -1; j <= 1; j++){
             float3 result = SampleTexWithOffset(id.x, id.y, _StepSize.x * i, _StepSize.y * i);
@@ -62,12 +63,13 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
                 float distanceFromCenter = distance(result.xy, uv);
                 if(distanceFromCenter < minDist){
                     minDist = distanceFromCenter;
-                    minUV= result.xy;
+                    minUV = result.xy;
+                    foundMin = 1.0f;
                 } 
             }
         }
     }
     // TODO: insert actual code here!
     //sample from multiple directions
-    _MainTex[id.xy] = float4(minUV, 0.0, 0.0);
+    _MainTex[id.xy] = float4(minUV * foundMin, 0.0, 0.0);
 }

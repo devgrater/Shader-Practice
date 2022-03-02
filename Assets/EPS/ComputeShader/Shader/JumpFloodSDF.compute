@@ -53,10 +53,11 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     float2 uv = float2(id.x / _Dimensions.x, id.y / _Dimensions.y);
     //sample the texture:
     float2 existingData = SampleTexAt(id.x, id.y);
-
-
+    float hasData = (length(existingData) != 0);
     //do it 9 times:
-    float minDist = distance(uv, existingData);
+    //you cant go beyond a distance of 3
+    float minDist = lerp(3.0f, distance(uv, existingData), hasData);
+
     float2 minUV = float2(0, 0);
     float foundMin = 0.0f;
     for(int i = -1; i <= 1; i++){
@@ -77,4 +78,9 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     //sample from multiple directions
     float2 outputUV = lerp(existingData, minUV, foundMin);
     _MainTex[id.xy] = float4(outputUV, 0.0, 0.0);
+}
+
+[numthreads(8,8,1)]
+void GenerateSDFRim(uint3 id : SV_DispatchThreadID){
+
 }

@@ -5,7 +5,7 @@
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 float2 _Dimensions;
-int2 _StepSize;
+float2 _StepSize;
 Texture2D<float4> _Previous;
 SamplerState sampler_Previous;
 RWTexture2D<float4> _MainTex;
@@ -61,8 +61,8 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     float foundMin = 0.0f;
     for(int i = -1; i <= 1; i++){
         for(int j = -1; j <= 1; j++){
-            float3 result = SampleTexWithOffset(id.x, id.y, _StepSize.x * i, _StepSize.y * i);
-            if(result.z > 0){
+            float3 result = SampleTexWithOffset(id.x, id.y, _StepSize.x * i, _StepSize.y * j);
+            if(result.z > 0 && (i != 0 || j != 0)){
                 //compute distance:
                 float distanceFromCenter = distance(result.xy, uv);
                 if(distanceFromCenter < minDist){
@@ -76,5 +76,5 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     // TODO: insert actual code here!
     //sample from multiple directions
     float2 outputUV = lerp(existingData, minUV, foundMin);
-    _MainTex[id.xy] = float4(outputUV, _StepSize.x, 0.0);
+    _MainTex[id.xy] = float4(outputUV, 0.0, 0.0);
 }

@@ -51,14 +51,18 @@ float3 SampleTexWithOffset(int x, int y, int offsetX, int offsetY){
 void SDFStep (uint3 id : SV_DispatchThreadID)
 {
     float2 uv = float2(id.x / _Dimensions.x, id.y / _Dimensions.y);
+    //sample the texture:
+    float2 existingData = SampleTexAt(id.x, id.y);
+
+
     //do it 9 times:
-    float minDist = 3.402823466e+38F;
+    float minDist = distance(uv, existingData);
     float2 minUV = float2(0, 0);
     float foundMin = 0.0f;
     for(int i = -1; i <= 1; i++){
         for(int j = -1; j <= 1; j++){
             float3 result = SampleTexWithOffset(id.x, id.y, _StepSize.x * i, _StepSize.y * i);
-            if(result.z){
+            if(result.z > 0){
                 //compute distance:
                 float distanceFromCenter = distance(result.xy, uv);
                 if(distanceFromCenter < minDist){
@@ -71,5 +75,6 @@ void SDFStep (uint3 id : SV_DispatchThreadID)
     }
     // TODO: insert actual code here!
     //sample from multiple directions
-    _MainTex[id.xy] = float4(minUV * foundMin, 0.0, 0.0);
+    float2 outputUV = lerp(existingData, minUV, foundMin);
+    _MainTex[id.xy] = float4(outputUV, _StepSize.x, 0.0);
 }

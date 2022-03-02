@@ -8,7 +8,12 @@ public class SDFMaker : MonoBehaviour
     [SerializeField] private RenderTexture rt;
     [SerializeField] private RenderTexture rt2;
     [SerializeField] private ComputeShader compute;
+    [SerializeField] private Texture2D testCase;
     //private bool isFirstTextureUsed = false;
+    [ContextMenu("Compute From Test Case")]
+    public void ComputeFromTestCase(){
+        ComputeSDF(testCase);
+    }
     public void ComputeSDF(Texture2D tex){
         rt = new RenderTexture(tex.width, tex.height, 24);
         rt.enableRandomWrite = true;
@@ -60,6 +65,7 @@ public class SDFMaker : MonoBehaviour
         compute.SetTexture(1, "_MainTex", dest);
         compute.SetVector("_Dimensions", new Vector4(src.width, src.height, 0.0f, 1.0f));
         compute.SetVector("_StepSize", new Vector4(w, h, 0.0f, 1.0f));
+        
         int xRound = Mathf.CeilToInt(src.width / 8);
         int yRound = Mathf.CeilToInt(src.height / 8);
         compute.Dispatch(1, xRound, yRound, 1);

@@ -144,10 +144,30 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     sdfSum.x = 1.0f - sdfSum.x;
     sdfSum = sdfSum * 2.0f - 1.0f;
     float sdfMagnitude = length(sdfSum);
-    //normalize and 
-    sdfSum = safeNormalize(sdfSum) * _MaxSpeed - data.velocity;
-    sdfSum = ClampToMaxSpeed(sdfSum) * sdfMagnitude;
 
+    //the traverse direction is then the reflection
+    float3 direction = reflect(data.velocity, safeNormalize(sdfSum)) + sdfSum;
+    //normalize and 
+    sdfSum = safeNormalize(direction) * _MaxSpeed - data.velocity;
+    sdfSum = ClampToMaxSpeed(sdfSum) * sdfMagnitude;
+    
+    float3 horizonSum = data.velocity;
+    horizonSum.y = 0.0f; //prefer horizontal movement over vertical
+    horizonSum = safeNormalize(horizonSum) * _MaxSpeed - data.velocity;
+    horizonSum = ClampToMaxSpeed(horizonSum);
+
+    //try to avoid going to the roof or bottom
+    float dft = _BoxMax.y - data.position.y;
+    float dfb = data.position.y - _BoxMin.y;
+
+    float3 topPushoff = float3(0, -_MaxSpeed, 0) * exp(-dft * 0.5f);
+    float3 bottomPushoff = float3(0, _MaxSpeed, 0) * exp(-dfb * 0.5f);
+    float3 surfaceSum = topPushoff + bottomPushoff;
+    surfaceSum *= _MaxSpeed;
+
+    //compute factors from dft and dfb
+    //using these values, compute a pushoff vector, so fish will try to avoid going to the roof.
+    //float3 surfaceSum = 
     
 
     //compute based on the weights the next velocity
@@ -176,7 +196,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         //data.color = newAcclr;
     }
 
-    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z + sdfSum * _SDFWeight;
+    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z + sdfSum * _SDFWeight + horizonSum * 0.5f + surfaceSum * 1.5f;
     newAcclr = ClampToMaxSpeed(newAcclr);
     
     data.velocity += newAcclr * _TimeStep;

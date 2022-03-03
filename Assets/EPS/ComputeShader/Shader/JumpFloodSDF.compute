@@ -94,11 +94,12 @@ void GenerateFlow(uint3 id : SV_DispatchThreadID){
 
     //also, sample _BaseMap:
     float4 baseMapData = _BaseMap.SampleLevel(sampler_BaseMap, uv, 0);
+    float hasData = step(0.5, baseMapData.r);
     //and then, lerp between direction and gray value, using baseMapData.r
-    float2 influence = lerp(direction, float2(0.0f, 0.0f), baseMapData.r);
+    float2 influence = lerp(direction, float2(0.0f, 0.0f), hasData);
     //remap influence to 0-1
     influence = influence * 0.5f + 0.5f;
     //set data to maintex
-    _MainTex[id.xy] = float4(influence, 0.0, 0.0);
+    _MainTex[id.xy] = float4(influence.x, 0.5f, influence.y, 0.0);
     
 }

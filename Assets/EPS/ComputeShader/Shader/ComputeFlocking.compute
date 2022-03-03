@@ -139,6 +139,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 sdfSum = _SDF.SampleLevel(sampler_SDF, uv.xz, 0).xyz;
 
     //remap from 0-1 to -1-1
+    sdfSum.z = 1.0f - sdfSum.z;
     sdfSum = sdfSum * 2.0f - 1.0f;
     //normalize and 
     sdfSum = safeNormalize(sdfSum) * _MaxSpeed - data.velocity;

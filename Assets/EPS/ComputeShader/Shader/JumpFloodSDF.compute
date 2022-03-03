@@ -97,9 +97,10 @@ void GenerateFlow(uint3 id : SV_DispatchThreadID){
     float hasData = step(0.5, baseMapData.r);
     //and then, lerp between direction and gray value, using baseMapData.r
     float2 influence = lerp(direction, float2(0.0f, 0.0f), hasData);
+    float3 direction = float3(influence.x, 0.0f, influence.y);
     //remap influence to 0-1
-    influence = influence * 0.5f + 0.5f;
+    direction = direction * 0.5f + 0.5f;
     //set data to maintex
-    _MainTex[id.xy] = float4(influence.x, 0.5f, influence.y, 0.0);
+    _MainTex[id.xy] = float4(direction, 0.0);
     
 }

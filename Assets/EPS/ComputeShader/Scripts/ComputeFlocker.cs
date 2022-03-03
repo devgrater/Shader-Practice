@@ -97,9 +97,10 @@ public class ComputeFlocker : MonoBehaviour
 
     void InitializeBoids(){
         BoidData[] initValue = new BoidData[numFish];
+        Vector3 center = transform.position;
         for(int i = 0; i < numFish; i++){
             initValue[i].individualData = new Vector3(Random.Range(1, 5), Random.Range(0.2f, 0.7f), Random.Range(0.0f, 1.0f));
-            initValue[i].position = Random.insideUnitSphere * 3f;
+            initValue[i].position = center + Random.insideUnitSphere * 3f;
             initValue[i].velocity = Random.onUnitSphere * maxSpeed;
         }
         boidBuffer.SetData(initValue);

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.49735796, g: 0.58293223, b: 0.7497629, a: 1}
+  m_IndirectSpecularColor: {r: 0.4973578, g: 0.58293176, b: 0.74976236, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2598,12 +2598,12 @@ MonoBehaviour:
   mesh: {fileID: -1119430988441025290, guid: b680b2b60f37a734cbd827b10bc16dde, type: 3}
   material: {fileID: 2100000, guid: ff794a8ba0e3abc47824ca39f51c5bfd, type: 2}
   maxSpeed: 8
-  separationRange: 3
-  separationWeight: 6
-  cohesionRange: 12
-  cohesionWeight: 0.2
-  alignmentRange: 5
-  alignmentWeight: 2
+  separationRange: 4
+  separationWeight: 0
+  cohesionRange: 4
+  cohesionWeight: 0
+  alignmentRange: 4
+  alignmentWeight: 0
   sdfWeight: 1
   fishSDF: {fileID: 2800000, guid: c58b7fc8400b83c47b6159f8bcaa1251, type: 3}
 --- !u!4 &1417813894
@@ -3975,7 +3975,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &936677159650159507
 Transform:
   m_ObjectHideFlags: 0

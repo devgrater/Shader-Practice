@@ -133,8 +133,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //compute uv from position and box min and max
     float3 uv = (data.position - _BoxMin) / (_BoxMax - _BoxMin);
+    //z is reversed and y should be ignored entirely.
+    uv.z = 1.0f - uv.z;
     //sample SDF using uv
-    float3 sdfSum = _SDF.SampleLevel(sampler_SDF, uv.xy, 0).xyz;
+    float3 sdfSum = _SDF.SampleLevel(sampler_SDF, uv.xz, 0).xyz;
+
     //remap from 0-1 to -1-1
     sdfSum = sdfSum * 2.0f - 1.0f;
     //normalize and 

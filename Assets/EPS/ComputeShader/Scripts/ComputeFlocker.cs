@@ -24,6 +24,9 @@ public class ComputeFlocker : MonoBehaviour
     [SerializeField] float cohesionWeight = 1.0f;
     [SerializeField] float alignmentRange = 1.0f;
     [SerializeField] float alignmentWeight = 1.0f;
+    [SerializeField] float sdfWeight = 1.0f;
+    [SerializeField] Texture2D fishSDF;
+    //[SerializeField] 
 
 
     ComputeBuffer boidBuffer;
@@ -59,6 +62,16 @@ public class ComputeFlocker : MonoBehaviour
         computeShader.SetFloat("_AlignmentWeight", alignmentWeight);*/
         computeShader.SetVector("_SACWeight", new Vector4(separationWeight, alignmentWeight, cohesionWeight));
         computeShader.SetVector("_SACRange", new Vector4(separationRange, alignmentRange, cohesionRange));
+        computeShader.SetTexture(0, "_SDF", fishSDF);
+        computeShader.SetFloat("_SDFWeight", sdfWeight);
+
+        //send the minimum and maximum bounds of the simulation
+        Vector3 boxMin = transform.position - transform.localScale / 2;
+        Vector3 boxMax = transform.position + transform.localScale / 2;
+        computeShader.SetVector("_BoxMin", new Vector4(boxMin.x, boxMin.y, boxMin.z, 0.0f));
+        computeShader.SetVector("_BoxMax", new Vector4(boxMax.x, boxMax.y, boxMax.z, 0.0f));
+
+        
 
         int groups = Mathf.CeilToInt(numFish / 64f);
         computeShader.Dispatch(0, groups, 1, 1);
@@ -91,5 +104,10 @@ public class ComputeFlocker : MonoBehaviour
         }
         boidBuffer.SetData(initValue);
         //boidBuffer.SetCounterValue()
+    }
+
+    void OnDrawGizmosSelected(){
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(transform.position, transform.localScale);
     }
 }

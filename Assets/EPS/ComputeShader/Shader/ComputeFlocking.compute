@@ -25,13 +25,17 @@ static const float preyTable[] = {
 
 RWStructuredBuffer<BoidData> _Boids;
 RWStructuredBuffer<BoidOutputData> _Output;
-//RWTexture2D<float4> Result;
+Texture2D<float4> _SDF;
+SamplerState sampler_SDF;
 float _TimeStep;
 float _MaxSpeed;
 
 //data from computeflocker.cs
 float3 _SACWeight;
 float3 _SACRange;
+float _SDFWeight;
+float3 _BoxMin;
+float3 _BoxMax;
 /*
 float _SeparationWeight;
 float _AlignmentWeight;
@@ -124,6 +128,21 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     }
 
+    //sample the sdf to get a velocity
+    //float3 sdfSum = _SDF.Sample
+
+    //compute uv from position and box min and max
+    float3 uv = (data.position - _BoxMin) / (_BoxMax - _BoxMin);
+    //sample SDF using uv
+    float3 sdfSum = _SDF.SampleLevel(sampler_SDF, uv.xy, 0).xyz;
+    //remap from 0-1 to -1-1
+    sdfSum = sdfSum * 2.0f - 1.0f;
+    //normalize and 
+    sdfSum = safeNormalize(sdfSum) * _MaxSpeed - data.velocity;
+    sdfSum = ClampToMaxSpeed(sdfSum);
+
+    
+
     //compute based on the weights the next velocity
     float3 newAcclr = 0.0f;
     float3 sepSum = 0, alignSum = 0, cohSum = 0;
@@ -150,7 +169,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         //data.color = newAcclr;
     }
 
-    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z;
+    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z + sdfSum * _SDFWeight;
     newAcclr = ClampToMaxSpeed(newAcclr);
     
     data.velocity += newAcclr * _TimeStep;
@@ -164,24 +183,24 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     //wrap around when we go off the screen
     
-    if(data.position.x > 72.0f){
-        data.position.x = -72.0f;
+    //send it in the other direction, if it wants to go off the screen
+    if(data.position.x > _BoxMax.x){
+        data.position.x = _BoxMin.x;
     }
-    if(data.position.x < -72.0f){
-        data.position.x = 72.0f;
+    if(data.position.x < _BoxMin.x){
+        data.position.x = _BoxMax.x;
     }
-    if(data.position.y > 72.0f){
-        data.position.y = -12.0f;
+    if(data.position.y > _BoxMax.y){
+        data.position.y = _BoxMin.y;
     }
-    if(data.position.y < -12.0f){
-        data.position.y = 72.0f;
+    if(data.position.y < _BoxMin.y){
+        data.position.y = _BoxMax.y;
     }
-
-    if(data.position.z > 72.0f){
-        data.position.z = -72.0f;
+    if(data.position.z > _BoxMax.z){
+        data.position.z = _BoxMin.z;
     }
-    if(data.position.z < -72.0f){
-        data.position.z = 72.0f;
+    if(data.position.z < _BoxMin.z){
+        data.position.z = _BoxMax.z;
     }
 
     _Boids[id.x] = data;

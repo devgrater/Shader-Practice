@@ -134,8 +134,8 @@ public class TraversePainter : MonoBehaviour
         return tex2d;
     }
     
-    [ContextMenu("SaveRT")]
-    void BeginPaint(){
+    //[ContextMenu("SaveRT")]
+    void ExportRT(){
         byte[] bytes;
         bytes = activeTex.EncodeToPNG();
         
@@ -148,7 +148,26 @@ public class TraversePainter : MonoBehaviour
     [ContextMenu("Compute SDF")]
     void ComputeSDF(){
         //pass the active texture 2d to another script
-        GetComponent<SDFMaker>().ComputeSDF(activeTex);
+
+        SaveRT();
+
+        Invoke("GenerateAndSaveSDF", 0.1f);
+    }
+
+    void GenerateAndSaveSDF(){
+        RenderTexture result = GetComponent<SDFMaker>().ComputeSDF(activeTex);
+        Texture2D tex2d = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+        //blit to rendertex:
+        RenderTexture.active = result;
+        tex2d.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        tex2d.Apply();
+
+        byte[] bytes;
+        bytes = tex2d.EncodeToPNG();
+        string path = "./Assets/EPS/ComputeShader/FishSDF.png";
+        System.IO.File.WriteAllBytes(path, bytes);
+        AssetDatabase.ImportAsset(path);
+        Debug.Log("Saved SDF to " + path);
     }
 
 }

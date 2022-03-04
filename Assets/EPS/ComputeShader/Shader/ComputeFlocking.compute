@@ -146,7 +146,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float sdfMagnitude = length(sdfSum);
 
     //the traverse direction is then the reflection
-    float3 direction = reflect(data.velocity, safeNormalize(sdfSum)) + sdfSum;
+    float3 direction = reflect(data.velocity, safeNormalize(sdfSum)) + sdfSum * 4;
     //normalize and 
     sdfSum = safeNormalize(direction) * _MaxSpeed - data.velocity;
     sdfSum = ClampToMaxSpeed(sdfSum) * sdfMagnitude;
@@ -196,7 +196,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         //data.color = newAcclr;
     }
 
-    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z + sdfSum * _SDFWeight + horizonSum * 0.5f + surfaceSum * 1.5f;
+    newAcclr = sepSum * _SACWeight.x + alignSum * _SACWeight.y + cohSum * _SACWeight.z + sdfSum * _SDFWeight + horizonSum * 16.0f + surfaceSum * 1.5f;
     newAcclr = ClampToMaxSpeed(newAcclr);
     
     data.velocity += newAcclr * _TimeStep;

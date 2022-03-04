@@ -42,6 +42,7 @@ Shader "Hidden/RampFog"
             sampler2D _MainTex;
             float4 _MainTex_TexelSize;
             float4 _NearbyTint;
+            float _Density;
 
 
             fixed4 frag (v2f i) : SV_Target
@@ -49,10 +50,7 @@ Shader "Hidden/RampFog"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 float depth = tex2D(_CameraDepthTexture, i.uv);
                 float linearDepth = LinearEyeDepth(depth);
-                float depthAmount = 1 - exp(-linearDepth * 0.02);
-                //fixed oneOverDepth = 1 / linearDepth;
-                //fixed depthAmount = 1 - oneOverDepth;
-                //depthAmount = pow(depthAmount, 12.0f);
+                float depthAmount = 1 - exp(-linearDepth * _Density);
 
                 float brightness = dot(col, fixed3(0.299, 0.587, 0.114));
                 //sample the gradient map:

@@ -1970,6 +1970,7 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
+  fogDensity: 0
   nearbyTint: {r: 0.5518868, g: 0.8716031, b: 1, a: 1}
   postProcessMat: {fileID: 2100000, guid: 33f6fa7b484d72040b251893a62ba09d, type: 2}
 --- !u!114 &1216570869
@@ -2085,7 +2086,7 @@ Camera:
     m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 2
+  m_TargetDisplay: 1
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
@@ -2604,8 +2605,8 @@ MonoBehaviour:
   cohesionWeight: 0.2
   alignmentRange: 5
   alignmentWeight: 2
-  sdfWeight: 3
-  fishSDF: {fileID: 2800000, guid: 74445938172bb904eb5e86c6fbcc554f, type: 3}
+  sdfWeight: 8
+  fishSDF: {fileID: 2800000, guid: a0b0e06591c9424499ab08e2e1ca28f0, type: 3}
 --- !u!4 &1417813894
 Transform:
   m_ObjectHideFlags: 0
@@ -3535,7 +3536,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1924945843}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 493c99b2fd6745344a4c35de9823f181, type: 3}
   m_Name: 
@@ -3570,6 +3571,7 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
+  fogDensity: 0.01
   nearbyTint: {r: 0.5518868, g: 0.8716031, b: 1, a: 1}
   postProcessMat: {fileID: 2100000, guid: 33f6fa7b484d72040b251893a62ba09d, type: 2}
 --- !u!1 &1968793809

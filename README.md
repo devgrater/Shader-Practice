@@ -7,3 +7,5 @@ Unity的Shader练习。
  - [STYLIZED-RENDERER](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/SceneRenders)
  - [CUSTOM-LIGHTMAPPING](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/Shadowmapping)
  - [VOLUMETRIC LIGHTS/体积光](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/VolumetricLights)
+ - [COMPUTE FLOCKING](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/ComputeShader)
+ - [SPHERE MARCHING](https://github.com/Alligrater/Shader-Practice/tree/main/Assets/EPS/SceneRenders/BottleOfStars)

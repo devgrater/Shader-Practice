@@ -56,8 +56,8 @@ public class SHCompute : MonoBehaviour
         for(int x = 0; x < tex.width; x++){
             for(int y = 0; y < tex.height; y++){
                 //compute theta and phi from texture's uv coordinate:
-                float theta = Mathf.PI * 2 * (x / (float)tex.width);
-                float phi = Mathf.PI * 2 * ((y / (float)tex.height) - 0.5f);
+                float theta = Mathf.PI * 2 * (x / (float)tex.width - 0.5f);
+                float phi = Mathf.PI * ((y / (float)tex.height) - 0.5f);
                 //convert this to a vector:
                 float cosTheta = Mathf.Cos(theta);
                 float sinTheta = Mathf.Sin(theta);
@@ -66,9 +66,9 @@ public class SHCompute : MonoBehaviour
                 float sinPhi = Mathf.Sin(phi);
 
                 Vector3 direction = new Vector3(
-                    cosTheta * sinPhi,//for x, its cos theta
-                    cosPhi,
-                    sinTheta * sinPhi
+                    cosTheta * cosPhi,//for x, its cos theta
+                    sinPhi,
+                    sinTheta * cosPhi
                 );
 
                 Color c = SampleColorsOnCubemap(direction);
@@ -76,16 +76,19 @@ public class SHCompute : MonoBehaviour
                 tex.SetPixel(x, y, c);
             }
         }
+        tex.Apply();
 
     }
 
     public Vector2 DirToUV(Vector3 dir){
         float u = Mathf.Atan2(dir.z, dir.x); // this has a range of -pi to pi
+        
         u = u / Mathf.PI; //this remaps to -1 to 1
         u = u * 0.5f + 0.5f; //and that maps back to 0 to 1.
 
-        float v = dir.y;//this has a range of -1 to 1
+        float v = dir.y;//this has a range of -1 to 1 
         v = v * 0.5f + 0.5f; //remaps to 0 to 1
+        //distortions happen near polar points
         //Debug.Log(u);
         Debug.Log(v);
         return new Vector2(u, v);
@@ -98,10 +101,12 @@ public class SHCompute : MonoBehaviour
             //Vector3 dir = SampleHemisphere(invec);
             Vector2 uv = DirToUV(invec);
             int x = Mathf.FloorToInt(uv.x * cubeMap.width);
-            int y = Mathf.FloorToInt(uv.y * cubeMap.width);
+            int y = Mathf.FloorToInt(uv.y * cubeMap.height);
+            //Debug.Log(x);
             //sample the texture
             averageColor += cubeMap.GetPixel(x, y);// * 0.001f;
         //}
+        //Debug.Log(averageColor);
         return averageColor;
     }
 

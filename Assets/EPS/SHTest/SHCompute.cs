@@ -70,12 +70,13 @@ public class SHCompute : MonoBehaviour
 
     [ContextMenu("SH9 Cubemap")]
 
-    public void SH9CubeMap(){
+    public async void SH9CubeMap(){
         //first, we need to find a way to bake all the results.
         //for each of the pixels..
         //generate N samples:
         int sampleCount = 100;
         float oneOverN = (1 / (float)sampleCount);
+        Color[] coefficients = new Color[9]; //create a buffer for all the colors;
         for(int i = 0; i < sampleCount; i++){
             for(int j = 0; j < sampleCount; j++){
                 //compute out the uv:
@@ -102,15 +103,22 @@ public class SHCompute : MonoBehaviour
                 //oh wow, we got all the information we need!
                 //sample the cube map:
                 Color c = SampleCubeMapAtUV(u, v);
-                tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
+                //dot this with the 9 basis to get a result...
+                //first basis:
+                coefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
+                coefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
+                coefficients[2] += 0.48860251f * direction.z * c;
+                coefficients[3] += 0.48860251f * direction.x * c;
+
+                //the basis are baked in here.
+                //tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
             }
         }
-        tex.Apply();
-        if(meshRenderer){
-            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
-            meshRenderer.GetPropertyBlock(mpb);
-            mpb.SetTexture("_MainTex", tex);
-            meshRenderer.SetPropertyBlock(mpb);
+        float sampleRatio = 4.0f * Mathf.PI;
+        sampleRatio /= (sampleCount * sampleCount);
+        for(int i = 0; i < coefficients.Length; i++){
+            coefficients[i] *= sampleRatio;
+            Debug.Log(coefficients[i] * 255);
         }
     }
 
@@ -153,6 +161,36 @@ public class SHCompute : MonoBehaviour
             meshRenderer.GetPropertyBlock(mpb);
             mpb.SetTexture("_MainTex", tex);
             meshRenderer.SetPropertyBlock(mpb);
+        }
+    }
+
+    public void OnDrawGizmosSelected(){
+        Random.InitState(0);
+        for(int i = 0; i < 25; i++){
+            for(int j = 0; j < 25; j++){
+                //compute out the uv:
+                float u = (i + Random.value) * 0.04f;
+                float v = (j + Random.value) * 0.04f;
+
+                //convert this to a direction, just like what we did before.
+                float theta = Mathf.PI * 2 * (u - 0.5f);
+                float phi = Mathf.Acos(Mathf.Sqrt(1 - v));
+
+                //using these...
+                float cosTheta = Mathf.Cos(theta);
+                float sinTheta = Mathf.Sin(theta);
+
+                float cosPhi = Mathf.Cos(phi);
+                float sinPhi = Mathf.Sin(phi);
+
+                Vector3 direction = new Vector3(
+                    cosTheta * cosPhi,//for x, its cos theta
+                    sinPhi,
+                    sinTheta * cosPhi
+                );
+
+                Debug.DrawLine(transform.position + direction * 0.99f, transform.position + direction);
+            }
         }
     }
 

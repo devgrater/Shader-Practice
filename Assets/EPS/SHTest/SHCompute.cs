@@ -29,9 +29,94 @@ public class SHCompute : MonoBehaviour
         return direction;
     }
 
+    public int Factorial(int f){
+        //hopefully you never enter a negative number...
+        if(f <= 0) return 1;
+        return f * Factorial(f - 1);
+    }
+
+    
+    public float GetK(int l, int m){
+        int lmTop = Factorial(l - Mathf.Abs(m));
+        float lmBottom = Factorial(l + Mathf.Abs(m));
+        lmTop *= (2 * l + 1);
+        lmBottom *= 4 * Mathf.PI;
+        return Mathf.Sqrt(lmTop / lmBottom);
+    }
+
+    public void GetP(int l, int m){
+        //if l == m, then we can just use the formula.
+        //otherwise....
+    }
+
+    public void GetSHFunc(int l, int m){
+        //|m| < l
+        float sqrt2 = 1.4142135624f;
+        if(m > 0){
+            
+        }
+        else if(m < 0){
+            //
+        }
+        else{
+            //m == 0
+            //K(l, 0) P(l, 0) cosTheta
+        }
+    }
+
+
+    //eitherway, a lot of them are baked into the code
+    //because no matter what happens, a good portion of the function doesn't change.
+
+    [ContextMenu("SH9 Cubemap")]
+
     public void SH9CubeMap(){
-        //do something...
-        //lets read the book.
+        //first, we need to find a way to bake all the results.
+        //for each of the pixels..
+        //generate N samples:
+        int sampleCount = 100;
+        float oneOverN = (1 / (float)sampleCount);
+        for(int i = 0; i < sampleCount; i++){
+            for(int j = 0; j < sampleCount; j++){
+                //compute out the uv:
+                float u = (i + Random.value) * oneOverN;
+                float v = (j + Random.value) * oneOverN;
+
+                //convert this to a direction, just like what we did before.
+                float theta = Mathf.PI * 2 * (u - 0.5f);
+                float phi = Mathf.PI * (v - 0.5f);
+
+                //using these...
+                float cosTheta = Mathf.Cos(theta);
+                float sinTheta = Mathf.Sin(theta);
+
+                float cosPhi = Mathf.Cos(phi);
+                float sinPhi = Mathf.Sin(phi);
+
+                Vector3 direction = new Vector3(
+                    cosTheta * cosPhi,//for x, its cos theta
+                    sinPhi,
+                    sinTheta * cosPhi
+                );
+
+                //oh wow, we got all the information we need!
+                //sample the cube map:
+                Color c = SampleCubeMapAtUV(u, v);
+                tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
+            }
+        }
+        tex.Apply();
+        if(meshRenderer){
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(mpb);
+            mpb.SetTexture("_MainTex", tex);
+            meshRenderer.SetPropertyBlock(mpb);
+        }
+    }
+
+    //no idea what we are returning, don't worry yet.
+    public void SH9Result(){
+        //the result should be a color of some sort.
     }
 
     //This is 
@@ -71,6 +156,24 @@ public class SHCompute : MonoBehaviour
         }
     }
 
+    public Vector2 DirToThetaPhi(Vector3 dir){
+        float theta = Mathf.Atan2(dir.z, dir.x);
+        float phi = Mathf.Asin(dir.y);
+        return new Vector2(theta, phi);
+    }
+
+    public Vector2 ThetaPhiToUV(Vector2 tp){
+        float u = tp.x; // this has a range of -pi to pi
+        u = u / Mathf.PI; //this remaps to -1 to 1
+        u = u * 0.5f + 0.5f; //and that maps back to 0 to 1.
+
+        float v = tp.y;//this has a range of -pi/2 to pi/2 
+        v = v / Mathf.PI;
+        v += 0.5f; //remaps to 0 to 1
+
+        return new Vector2(u, v);
+    }
+
     public Vector2 DirToUV(Vector3 dir){
         float u = Mathf.Atan2(dir.z, dir.x); // this has a range of -pi to pi
         
@@ -80,8 +183,14 @@ public class SHCompute : MonoBehaviour
         float v = Mathf.Asin(dir.y);//this has a range of -pi/2 to pi/2 
         v = v / Mathf.PI;
         v += 0.5f; //remaps to 0 to 1
-        //distortions happen near polar points
         return new Vector2(u, v);
+    }
+
+    public Color SampleCubeMapAtUV(float u, float v){
+        Color averageColor = new Color(0, 0, 0);
+        //sample the texture
+        averageColor = cubeMap.GetPixelBilinear(u, v);
+        return averageColor;
     }
 
     //Just start with the dumbest of the dumbest method, and then we can be smart later on.

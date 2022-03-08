@@ -174,7 +174,7 @@ public class SHCompute : MonoBehaviour
 
                 //convert this to a direction, just like what we did before.
                 float theta = Mathf.PI * 2 * (u - 0.5f);
-                float phi = Mathf.Acos(Mathf.Sqrt(1 - v));
+                float phi = (Mathf.Acos(Mathf.Sqrt(1 - v)) * 2 - 0.5f * Mathf.PI);
 
                 //using these...
                 float cosTheta = Mathf.Cos(theta);

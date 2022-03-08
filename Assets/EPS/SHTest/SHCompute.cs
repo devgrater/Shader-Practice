@@ -85,7 +85,7 @@ public class SHCompute : MonoBehaviour
 
                 //convert this to a direction, just like what we did before.
                 float theta = Mathf.PI * 2 * (u - 0.5f);
-                float phi = Mathf.PI * (v - 0.5f);
+                float phi = (Mathf.Acos(Mathf.Sqrt(1 - v)) * 2 - 0.5f * Mathf.PI); //new way to uniformly spread across the sphere.
 
                 //using these...
                 float cosTheta = Mathf.Cos(theta);
@@ -163,7 +163,7 @@ public class SHCompute : MonoBehaviour
             meshRenderer.SetPropertyBlock(mpb);
         }
     }
-
+    /*
     public void OnDrawGizmosSelected(){
         Random.InitState(0);
         for(int i = 0; i < 25; i++){
@@ -192,7 +192,7 @@ public class SHCompute : MonoBehaviour
                 Debug.DrawLine(transform.position + direction * 0.99f, transform.position + direction);
             }
         }
-    }
+    }*/
 
     public Vector2 DirToThetaPhi(Vector3 dir){
         float theta = Mathf.Atan2(dir.z, dir.x);

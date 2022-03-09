@@ -110,6 +110,13 @@ public class SHCompute : MonoBehaviour
 
                 //dot this with the 9 basis to get a result...
                 //first basis:
+                /*
+                shCoefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
+                shCoefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
+                shCoefficients[2] += 0.48860251f * direction.z * c;
+                shCoefficients[3] += 0.48860251f * direction.x * c;*/
+
+
                 shCoefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
                 shCoefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
                 shCoefficients[2] += 0.48860251f * direction.z * c;
@@ -190,8 +197,8 @@ public class SHCompute : MonoBehaviour
         }
     }
 
-    /*
-    public void OnDrawGizmosSelected(){
+    [ContextMenu("Test Gizmo Result")]
+    public void TestGizmoResult(){
         Random.InitState(0);
         for(int i = 0; i < 25; i++){
             for(int j = 0; j < 25; j++){
@@ -201,8 +208,8 @@ public class SHCompute : MonoBehaviour
 
                 //convert this to a direction, just like what we did before.
                 float theta = Mathf.PI * 2 * (u - 0.5f);
-                float phi = (Mathf.Acos(Mathf.Sqrt(1 - v)) * 2 - 0.5f * Mathf.PI);
-
+                float phi = 2 * Mathf.Acos(Mathf.Sqrt(1 - v));
+                Debug.Log(phi);
                 //using these...
                 float cosTheta = Mathf.Cos(theta);
                 float sinTheta = Mathf.Sin(theta);
@@ -211,15 +218,15 @@ public class SHCompute : MonoBehaviour
                 float sinPhi = Mathf.Sin(phi);
 
                 Vector3 direction = new Vector3(
-                    cosTheta * cosPhi,//for x, its cos theta
-                    sinPhi,
-                    sinTheta * cosPhi
+                    cosTheta * sinPhi,//cosTheta * cosPhi,//for x, its cos theta
+                    sinTheta * sinPhi,
+                    cosPhi
                 );
 
                 Debug.DrawLine(transform.position + direction * 0.99f, transform.position + direction);
             }
         }
-    }*/
+    }
 
     public Vector2 DirToThetaPhi(Vector3 dir){
         float theta = Mathf.Atan2(dir.z, dir.x);

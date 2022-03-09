@@ -128,7 +128,7 @@ public class SHCompute : MonoBehaviour
                 shCoefficients[5] += 2.18509686f * 0.5f * y * z * c;
                 shCoefficients[6] += 1.26156626f * 0.25f * (3 * zSqr - 1) * c;
                 shCoefficients[7] += 2.18509686f * 0.5f * z * x * c;
-                shCoefficients[8] += 2.18509686f * 0.5f * (xSqr - ySqr) * c;
+                shCoefficients[8] += 2.18509686f * 0.25f * (xSqr - ySqr) * c;
 
 
                 //the basis are baked in here.

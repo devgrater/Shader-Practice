@@ -64,7 +64,7 @@ Shader "Unlit/SH9Test"
                 outColor += 0.48860251f * x * _SH9Vals[3];
                 outColor += 2.18509686f * 0.5f * x * y * _SH9Vals[4];
                 outColor += 2.18509686f * 0.5f * y * z * _SH9Vals[5];
-                outColor += 1.26156626f * 0.25f * (3 * zSqr - 1) * _SH9Vals[6];
+                outColor += 1.26156626f * 0.25f * (3 * zSqr) * _SH9Vals[6];
                 outColor += 2.18509686f * 0.5f * z * x * _SH9Vals[7];
                 outColor += 2.18509686f * 0.5f * (xSqr - ySqr) * _SH9Vals[8];
 

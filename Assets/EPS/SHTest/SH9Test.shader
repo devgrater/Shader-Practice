@@ -51,9 +51,9 @@ Shader "Unlit/SH9Test"
             fixed4 frag (v2f i) : SV_Target
             {
                 float4 outColor = float4(0,0,0,1);
-                float x = i.worldNormal.z;
-                float y = i.worldNormal.x;
-                float z = -i.worldNormal.y;
+                float x = i.worldNormal.x;
+                float y = i.worldNormal.y;
+                float z = i.worldNormal.z;
                 float zSqr = z * z;
                 float xSqr = x * x;
                 float ySqr = y * y;

@@ -13,6 +13,8 @@ public class SHCompute : MonoBehaviour
     [SerializeField] private Texture2D tex;
     [SerializeField] private MeshRenderer meshRenderer;
 
+    private Color[] shCoefficients = new Color[9];
+
     //and I have the tool
     private Vector3 SampleSphere(){
         //this one is not uniform
@@ -70,13 +72,12 @@ public class SHCompute : MonoBehaviour
 
     [ContextMenu("SH9 Cubemap")]
 
-    public async void SH9CubeMap(){
+    public void SH9CubeMap(){
         //first, we need to find a way to bake all the results.
         //for each of the pixels..
         //generate N samples:
         int sampleCount = 100;
         float oneOverN = (1 / (float)sampleCount);
-        Color[] coefficients = new Color[9]; //create a buffer for all the colors;
         for(int i = 0; i < sampleCount; i++){
             for(int j = 0; j < sampleCount; j++){
                 //compute out the uv:
@@ -103,12 +104,22 @@ public class SHCompute : MonoBehaviour
                 //oh wow, we got all the information we need!
                 //sample the cube map:
                 Color c = SampleCubeMapAtUV(u, v);
+                float xSqr = direction.x * direction.x;
+                float ySqr = direction.y * direction.y;
+                float zSqr = direction.z * direction.z;
+
                 //dot this with the 9 basis to get a result...
                 //first basis:
-                coefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
-                coefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
-                coefficients[2] += 0.48860251f * direction.z * c;
-                coefficients[3] += 0.48860251f * direction.x * c;
+                shCoefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
+                shCoefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
+                shCoefficients[2] += 0.48860251f * direction.z * c;
+                shCoefficients[3] += 0.48860251f * direction.x * c;
+                shCoefficients[4] += 2.18509686f * 0.5f * direction.x * direction.y * c;
+                shCoefficients[5] += 2.18509686f * 0.5f * direction.y * direction.z * c;
+                shCoefficients[6] += 1.26156626f * 0.25f * (3 * zSqr - 1) * c;
+                shCoefficients[7] += 2.18509686f * 0.5f * direction.z * direction.x * c;
+                shCoefficients[8] += 2.18509686f * 0.5f * (xSqr - ySqr) * c;
+
 
                 //the basis are baked in here.
                 //tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
@@ -116,15 +127,29 @@ public class SHCompute : MonoBehaviour
         }
         float sampleRatio = 4.0f * Mathf.PI;
         sampleRatio /= (sampleCount * sampleCount);
-        for(int i = 0; i < coefficients.Length; i++){
-            coefficients[i] *= sampleRatio;
-            Debug.Log(coefficients[i] * 255);
+        for(int i = 0; i < shCoefficients.Length; i++){
+            shCoefficients[i] *= sampleRatio;
+            Debug.Log(shCoefficients[i] * 255);
         }
+        SH9Result();
     }
 
     //no idea what we are returning, don't worry yet.
     public void SH9Result(){
+        List<Vector4> sh9Output = new List<Vector4>();
+        for(int i = 0; i < shCoefficients.Length; i++){
+            Color c = shCoefficients[i];
+            if(i < sh9Output.Count){
+                //if it's within range...
+                sh9Output[i] = new Vector4(c.r, c.g, c.b, 0.0f);
+            }
+            else{
+                sh9Output.Add(new Vector4(c.r, c.g, c.b, 0.0f));
+            }
+            
+        }
         //the result should be a color of some sort.
+        Shader.SetGlobalVectorArray("_SH9Vals", sh9Output);
     }
 
     //This is 
@@ -163,6 +188,7 @@ public class SHCompute : MonoBehaviour
             meshRenderer.SetPropertyBlock(mpb);
         }
     }
+
     /*
     public void OnDrawGizmosSelected(){
         Random.InitState(0);

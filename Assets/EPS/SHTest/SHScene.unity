@@ -214,7 +214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6272596a65f8cdb4ba7a09263d95189a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeMap: {fileID: 2800000, guid: bb4a50198175c2e4fa5a61efd291f145, type: 3}
+  cubeMap: {fileID: 2800000, guid: 9974b912a8e876448828a74d3e4c9f64, type: 3}
   tex: {fileID: 1545096435}
   meshRenderer: {fileID: 2035891243}
 --- !u!1 &1042294813
@@ -456,7 +456,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1122026687}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 73.39, y: 13.091679, z: -25.07}
+  m_LocalPosition: {x: 62.29, y: 13.091679, z: -30.76}
   m_LocalScale: {x: 6.7946916, y: 6.7946916, z: 6.7946916}
   m_Children: []
   m_Father: {fileID: 0}

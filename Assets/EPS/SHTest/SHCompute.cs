@@ -66,17 +66,23 @@ public class SHCompute : MonoBehaviour
         }
     }
 
+    private void ClearData(){
+        for(int i = 0; i < shCoefficients.Length; i++){
+            shCoefficients[i] = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+
 
     //eitherway, a lot of them are baked into the code
     //because no matter what happens, a good portion of the function doesn't change.
 
     [ContextMenu("SH9 Cubemap")]
-
     public void SH9CubeMap(){
         //first, we need to find a way to bake all the results.
         //for each of the pixels..
+        ClearData();
         //generate N samples:
-        int sampleCount = 100;
+        int sampleCount = 250;
         float oneOverN = (1 / (float)sampleCount);
         for(int i = 0; i < sampleCount; i++){
             for(int j = 0; j < sampleCount; j++){
@@ -126,16 +132,10 @@ public class SHCompute : MonoBehaviour
 
 
                 //the basis are baked in here.
-                tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
+                //tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
             }
         }
-        tex.Apply();
-        if(meshRenderer){
-            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
-            meshRenderer.GetPropertyBlock(mpb);
-            mpb.SetTexture("_MainTex", tex);
-            meshRenderer.SetPropertyBlock(mpb);
-        }
+
 
         float sampleRatio = 4.0f * Mathf.PI;
         sampleRatio /= (sampleCount * sampleCount);

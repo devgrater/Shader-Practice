@@ -215,7 +215,7 @@ Shader "Grater/CustomPBR"
 
                 float4 composite = float4(direct * lightAmount + indirect + saturate(pow(1.0 - nDotV, 6) * (1 - vDotH)), 1.0);
                 UNITY_APPLY_FOG(i.fogCoord, composite);
-                //return float4(ShadeSH9(float4(worldNormal, 1)), 1);
+                return float4(ShadeSH9(float4(worldNormal, 1)), 1);
                 return composite;
             }
             ENDCG

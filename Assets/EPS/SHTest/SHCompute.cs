@@ -81,12 +81,12 @@ public class SHCompute : MonoBehaviour
         for(int i = 0; i < sampleCount; i++){
             for(int j = 0; j < sampleCount; j++){
                 //compute out the uv:
-                float u = (i + Random.value) * oneOverN;
-                float v = (j + Random.value) * oneOverN;
+                float u = ((float)i + Random.value) * oneOverN;
+                float v = ((float)j + Random.value) * oneOverN;
 
                 //convert this to a direction, just like what we did before.
-                float theta = Mathf.PI * 2 * (u - 0.5f);
-                float phi = (Mathf.Acos(Mathf.Sqrt(1 - v)) * 2 - 0.5f * Mathf.PI); //new way to uniformly spread across the sphere.
+                float theta = 2 * Mathf.Acos(Mathf.Sqrt(1 - u));
+                float phi = Mathf.PI * 2 * (v - 0.5f);
 
                 //using these...
                 float cosTheta = Mathf.Cos(theta);
@@ -96,43 +96,47 @@ public class SHCompute : MonoBehaviour
                 float sinPhi = Mathf.Sin(phi);
 
                 Vector3 direction = new Vector3(
-                    cosTheta * cosPhi,//for x, its cos theta
-                    sinPhi,
-                    sinTheta * cosPhi
+                    sinTheta * cosPhi,//cosTheta * cosPhi,//for x, its cos theta
+                    sinTheta * sinPhi,
+                    cosTheta
                 );
 
                 //oh wow, we got all the information we need!
                 //sample the cube map:
                 Color c = SampleCubeMapAtUV(u, v);
-                float xSqr = direction.x * direction.x;
-                float ySqr = direction.y * direction.y;
-                float zSqr = direction.z * direction.z;
+                float x = direction.x;
+                float y = direction.y;
+                float z = direction.z;
+                float xSqr = x * x;
+                float ySqr = y * y;
+                float zSqr = z * z;
 
                 //dot this with the 9 basis to get a result...
                 //first basis:
-                /*
+                
                 shCoefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
-                shCoefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
-                shCoefficients[2] += 0.48860251f * direction.z * c;
-                shCoefficients[3] += 0.48860251f * direction.x * c;*/
-
-
-                shCoefficients[0] += 0.28209479f * c; //yup, because the first basis is constant.
-                shCoefficients[1] += 0.48860251f * direction.y * c; //r is constant (1)
-                shCoefficients[2] += 0.48860251f * direction.z * c;
-                shCoefficients[3] += 0.48860251f * direction.x * c;
-                /*
-                shCoefficients[4] += 2.18509686f * 0.5f * direction.x * direction.y * c;
-                shCoefficients[5] += 2.18509686f * 0.5f * direction.y * direction.z * c;
+                shCoefficients[1] += 0.48860251f * y * c; //r is constant (1)
+                shCoefficients[2] += 0.48860251f * z * c;
+                shCoefficients[3] += 0.48860251f * x * c;
+                shCoefficients[4] += 2.18509686f * 0.5f * x * y * c;
+                shCoefficients[5] += 2.18509686f * 0.5f * y * z * c;
                 shCoefficients[6] += 1.26156626f * 0.25f * (3 * zSqr - 1) * c;
-                shCoefficients[7] += 2.18509686f * 0.5f * direction.z * direction.x * c;
-                shCoefficients[8] += 2.18509686f * 0.5f * (xSqr - ySqr) * c;*/
+                shCoefficients[7] += 2.18509686f * 0.5f * z * x * c;
+                shCoefficients[8] += 2.18509686f * 0.5f * (xSqr - ySqr) * c;
 
 
                 //the basis are baked in here.
-                //tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
+                tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
             }
         }
+        tex.Apply();
+        if(meshRenderer){
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(mpb);
+            mpb.SetTexture("_MainTex", tex);
+            meshRenderer.SetPropertyBlock(mpb);
+        }
+
         float sampleRatio = 4.0f * Mathf.PI;
         sampleRatio /= (sampleCount * sampleCount);
         for(int i = 0; i < shCoefficients.Length; i++){
@@ -196,9 +200,9 @@ public class SHCompute : MonoBehaviour
             meshRenderer.SetPropertyBlock(mpb);
         }
     }
-
+    /*
     [ContextMenu("Test Gizmo Result")]
-    public void TestGizmoResult(){
+    public void OnDrawGizmosSelected(){
         Random.InitState(0);
         for(int i = 0; i < 25; i++){
             for(int j = 0; j < 25; j++){
@@ -207,9 +211,8 @@ public class SHCompute : MonoBehaviour
                 float v = (j + Random.value) * 0.04f;
 
                 //convert this to a direction, just like what we did before.
-                float theta = Mathf.PI * 2 * (u - 0.5f);
-                float phi = 2 * Mathf.Acos(Mathf.Sqrt(1 - v));
-                Debug.Log(phi);
+                float theta = 2 * Mathf.Acos(Mathf.Sqrt(1 - u));
+                float phi = Mathf.PI * 2 * (v - 0.5f);
                 //using these...
                 float cosTheta = Mathf.Cos(theta);
                 float sinTheta = Mathf.Sin(theta);
@@ -218,15 +221,15 @@ public class SHCompute : MonoBehaviour
                 float sinPhi = Mathf.Sin(phi);
 
                 Vector3 direction = new Vector3(
-                    cosTheta * sinPhi,//cosTheta * cosPhi,//for x, its cos theta
+                    sinTheta * cosPhi,//cosTheta * cosPhi,//for x, its cos theta
                     sinTheta * sinPhi,
-                    cosPhi
+                    cosTheta
                 );
 
                 Debug.DrawLine(transform.position + direction * 0.99f, transform.position + direction);
             }
         }
-    }
+    }*/
 
     public Vector2 DirToThetaPhi(Vector3 dir){
         float theta = Mathf.Atan2(dir.z, dir.x);

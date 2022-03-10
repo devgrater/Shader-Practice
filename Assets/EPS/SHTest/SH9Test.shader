@@ -58,20 +58,24 @@ Shader "Unlit/SH9Test"
                 float xSqr = x * x;
                 float ySqr = y * y;
                 
-                outColor += 0.28209479f * _SH9Vals[0]; //yup, because the first basis is constant.
-                outColor += 0.48860251f * y * _SH9Vals[1]; //r is constant (1)
-                outColor += 0.48860251f * z * _SH9Vals[2];
-                outColor += 0.48860251f * x * _SH9Vals[3];
-                outColor += 2.18509686f * 0.5f * x * y * _SH9Vals[4];
-                outColor += 2.18509686f * 0.5f * y * z * _SH9Vals[5];
-                outColor += 1.26156626f * 0.25f * (3 * zSqr) * _SH9Vals[6];
-                outColor += 2.18509686f * 0.5f * z * x * _SH9Vals[7];
-                outColor += 2.18509686f * 0.5f * (xSqr - ySqr) * _SH9Vals[8];
+                outColor.rgb += 0.28209479f * _SH9Vals[0].rgb; //yup, because the first basis is constant.
+                outColor.rgb += 0.48860251f * y * _SH9Vals[1].rgb; //r is constant (1)
+                outColor.rgb += 0.48860251f * z * _SH9Vals[2].rgb;
+                outColor.rgb += 0.48860251f * x * _SH9Vals[3].rgb;
+                outColor.rgb += 2.18509686f * 0.5f * x * y * _SH9Vals[4].rgb;
+                outColor.rgb += 2.18509686f * 0.5f * y * z * _SH9Vals[5].rgb;
+                outColor.rgb += 1.26156626f * 0.25f * (3 * zSqr) * _SH9Vals[6].rgb;
+                outColor.rgb += 2.18509686f * 0.5f * z * x * _SH9Vals[7].rgb;
+                outColor.rgb += 2.18509686f * 0.25f * (xSqr - ySqr) * _SH9Vals[8].rgb;
 
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
+
+                /*#   ifdef UNITY_COLORSPACE_GAMMA
+                        outColor.rgb = LinearToGammaSpace(outColor.rgb);
+                #   endif*/
                 return outColor;
             }
             ENDCG

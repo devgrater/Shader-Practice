@@ -109,7 +109,7 @@ public class SHCompute : MonoBehaviour
 
                 //oh wow, we got all the information we need!
                 //sample the cube map:
-                Color c = SampleCubeMapAtUV(u, v);
+                Color c = SampleCubeMapAtUV(u - 0.5f, v);
                 float x = direction.x;
                 float y = direction.y;
                 float z = direction.z;
@@ -132,10 +132,16 @@ public class SHCompute : MonoBehaviour
 
 
                 //the basis are baked in here.
-                //tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
+                tex.SetPixel(Mathf.FloorToInt(u * tex.width), Mathf.FloorToInt(v * tex.height), c);
             }
         }
-
+        tex.Apply();
+        if(meshRenderer){
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(mpb);
+            mpb.SetTexture("_MainTex", tex);
+            meshRenderer.SetPropertyBlock(mpb);
+        }
 
         float sampleRatio = 4.0f * Mathf.PI;
         sampleRatio /= (sampleCount * sampleCount);
@@ -153,10 +159,10 @@ public class SHCompute : MonoBehaviour
             Color c = shCoefficients[i];
             if(i < sh9Output.Count){
                 //if it's within range...
-                sh9Output[i] = new Vector4(c.r, c.g, c.b, 0.0f);
+                sh9Output[i] = new Vector4(c.r, c.g, c.b, 1.0f);
             }
             else{
-                sh9Output.Add(new Vector4(c.r, c.g, c.b, 0.0f));
+                sh9Output.Add(new Vector4(c.r, c.g, c.b, 1.0f));
             }
             
         }
@@ -165,7 +171,7 @@ public class SHCompute : MonoBehaviour
     }
 
     //This is 
-    [ContextMenu("Brute Force CubeMap")]
+    //[ContextMenu("Brute Force CubeMap")]
     public void BruteForceCubeMap(){
         tex = new Texture2D(cubeMap.width, cubeMap.height, TextureFormat.ARGB32, false);
         //for each pixel up there, 

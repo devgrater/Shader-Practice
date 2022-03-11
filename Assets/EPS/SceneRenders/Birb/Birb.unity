@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 42aa30f71223b3044a669cf6af797296, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: b7944b9b25a0bac4fb68025b8ea5aea1, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.53269285, g: 0.65228933, b: 0.5863369, a: 1}
+  m_IndirectSpecularColor: {r: 0.89275944, g: 0.8750207, b: 0.83695227, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -388,6 +388,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: e7512e719ba242e4b99eecddc8b91c84, type: 2}
+    - target: {fileID: -2565368445598719224, guid: 9980c372da3c1c74f898ed0ae5a03c65, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 56fa6033b9ee2e84cb0439cae1e1c3e9, type: 2}
     - target: {fileID: 919132149155446097, guid: 9980c372da3c1c74f898ed0ae5a03c65, type: 3}
       propertyPath: m_Name
       value: crow_merged_2
@@ -480,10 +484,10 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1755418076}
-  m_LocalRotation: {x: -0.8308344, y: -0.035608448, z: -0.51301455, w: -0.2127494}
+  m_LocalRotation: {x: -0.3605961, y: 0.81166464, z: -0.4410181, w: 0.12912755}
   m_LocalPosition: {x: -0.288, y: 3.079, z: -1.934}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 161.519, y: -1866.175, z: -17.01001}
+  m_LocalEulerAnglesHint: {x: 141.48, y: -1842.411, z: 116.651}

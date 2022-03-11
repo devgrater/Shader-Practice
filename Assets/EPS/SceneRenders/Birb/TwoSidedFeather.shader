@@ -2,7 +2,9 @@ Shader "Unlit/TwoSidedFeather"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Light Tex", 2D) = "white" {}
+        _ShadowTex ("Shadow Tex", 2D) = "white" {}
+        _ControlTex ("Control Tex", 2D) = "white" {}
         _Interior ("Interior Thickness", 2D) = "white" {}
         _Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
         _SpecColor ("Spec Color", Color) = (1,1,1,0)
@@ -40,6 +42,7 @@ Shader "Unlit/TwoSidedFeather"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 tangent : TANGENT;
                 float3 normal : NORMAL;
             };
 
@@ -49,12 +52,15 @@ Shader "Unlit/TwoSidedFeather"
                 UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
                 float3 normal : NORMAL;
+                float4 tangent : TANGENT;
                 float3 viewDir : TEXCOORD2;
                 LIGHTING_COORDS(3, 4)
             };
 
             sampler2D _MainTex;
+            sampler2D _ShadowTex;
             sampler2D _Interior;
+            sampler2D _ControlTex;
             float4 _MainTex_ST;
             float3 _Color;
             fixed _Cutoff;
@@ -66,6 +72,7 @@ Shader "Unlit/TwoSidedFeather"
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.pos);
                 o.normal = UnityObjectToWorldNormal(v.normal);
+                o.tangent = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
                 o.viewDir = WorldSpaceViewDir(v.vertex);
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
@@ -74,40 +81,38 @@ Shader "Unlit/TwoSidedFeather"
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed3 normal = normalize(i.normal);
+                fixed3 tangent = normalize(i.tangent.xyz);
                 fixed3 viewDir = normalize(i.viewDir);
+                fixed3 halfDir = normalize(viewDir + _WorldSpaceLightPos0.xyz);
                 fixed lighting = dot(normalize(normal), _WorldSpaceLightPos0.xyz);
                 fixed fresnel = saturate(dot(normal, viewDir));
+
+                
 
                 fixed3 backlitDir = normal + _WorldSpaceLightPos0.xyz;
                 fresnel = saturate(dot(viewDir, -backlitDir));
 
-                //
-                
-                //fresnel = 1 - fresnel;
                 fresnel = pow(fresnel, 3) * 0.5;
-                //fresnel = 
-                //return fresnel;
-
                 lighting = min(lighting, LIGHT_ATTENUATION(i));
+
+                //kajiya-kay highlight
+                float kajiyaHighlight = dot(tangent, halfDir);
+                float sinKajiya = sqrt(1.0f - kajiyaHighlight * kajiyaHighlight);
+                float dirAtten = smoothstep(-1.0f, 0.0f, kajiyaHighlight);
+
+                float highlight = pow(sinKajiya, 1200);
                 
-                lighting = (lighting + 1) * 0.5f;
 
-                
-
-
-                //return lighting;
-               
-                //return fresnel;
-                // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
+                fixed4 shadowCol = tex2D(_ShadowTex, i.uv);
                 clip(col.a - _Cutoff);
-                //return lighting;
-                //return col * lighting;
 
-                fixed thickness = tex2D(_Interior, i.uv).r;
-                //col.rgb *= saturate(lighting + fresnel) * _Color.rgb;
-                col.rgb += ShadeSH9(float4(i.normal, 1.0f));
-                //col.rgb = lerp(fixed3(0, 0.2, 0.3), col.rgb, saturate(lighting + fresnel) * thickness) * _Color.rgb * _LightColor0.xyz;
+                fixed4 controlVal = tex2D(_ControlTex, i.uv);
+                fixed ao = controlVal.r;
+                fixed thickness = controlVal.g;
+                col.rgb = lerp(shadowCol.rgb, col.rgb, lighting);
+                col.rgb += ShadeSH9(float4(i.normal, 1.0f)) * 0.2f;
+                col.rgb = lerp(fixed3(0, 0.2, 0.3), col.rgb, saturate(lighting + fresnel) * thickness * ao + 0.5) * _Color.rgb * _LightColor0.xyz + highlight * _SpecColor;
                 
                 // apply fog
                 

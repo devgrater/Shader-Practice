@@ -80,13 +80,16 @@ Shader "Unlit/TwoSidedFeather"
 
             fixed4 frag (v2f i) : SV_Target
             {
+                fixed4 controlVal = tex2D(_ControlTex, i.uv);
                 fixed3 normal = normalize(i.normal);
                 fixed3 tangent = normalize(i.tangent.xyz);
+                fixed3 binormal = cross(normal, tangent);
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfDir = normalize(viewDir + _WorldSpaceLightPos0.xyz);
                 fixed lighting = dot(normalize(normal), _WorldSpaceLightPos0.xyz);
+                lighting = saturate(lighting);
                 fixed fresnel = saturate(dot(normal, viewDir));
-
+                
                 
 
                 fixed3 backlitDir = normal + _WorldSpaceLightPos0.xyz;
@@ -95,19 +98,21 @@ Shader "Unlit/TwoSidedFeather"
                 fresnel = pow(fresnel, 3) * 0.5;
                 lighting = min(lighting, LIGHT_ATTENUATION(i));
 
+
+                float3 kajiyaDirection = lerp(binormal, tangent, step(0.5, controlVal.b));
                 //kajiya-kay highlight
-                float kajiyaHighlight = dot(tangent, halfDir);
+                float kajiyaHighlight = dot(kajiyaDirection, halfDir);
                 float sinKajiya = sqrt(1.0f - kajiyaHighlight * kajiyaHighlight);
                 float dirAtten = smoothstep(-1.0f, 0.0f, kajiyaHighlight);
 
-                float highlight = pow(sinKajiya, 1200);
+                float highlight = pow(sinKajiya, 1200) * lighting;
                 
 
                 fixed4 col = tex2D(_MainTex, i.uv);
                 fixed4 shadowCol = tex2D(_ShadowTex, i.uv);
                 clip(col.a - _Cutoff);
 
-                fixed4 controlVal = tex2D(_ControlTex, i.uv);
+                
                 fixed ao = controlVal.r;
                 fixed thickness = controlVal.g;
                 col.rgb = lerp(shadowCol.rgb, col.rgb, lighting);

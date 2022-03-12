@@ -5,7 +5,7 @@ Shader "Unlit/TwoSidedFeather"
         _MainTex ("Light Tex", 2D) = "white" {}
         _ShadowTex ("Shadow Tex", 2D) = "white" {}
         _ControlTex ("Control Tex", 2D) = "white" {}
-        _Interior ("Interior Thickness", 2D) = "white" {}
+        _HLControl ("Highlight Control", 2D) = "white" {}
         _Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
         _SpecColor ("Spec Color", Color) = (1,1,1,0)
         _Emission ("Emissive Color", Color) = (0,0,0,0)
@@ -59,7 +59,7 @@ Shader "Unlit/TwoSidedFeather"
 
             sampler2D _MainTex;
             sampler2D _ShadowTex;
-            sampler2D _Interior;
+            sampler2D _HLControl;
             sampler2D _ControlTex;
             float4 _MainTex_ST;
             float3 _Color;
@@ -80,7 +80,13 @@ Shader "Unlit/TwoSidedFeather"
 
             fixed4 frag (v2f i) : SV_Target
             {
+                ///////////////// CONTROL TEX ///////////////////
                 fixed4 controlVal = tex2D(_ControlTex, i.uv);
+                fixed4 highlightControl = tex2D(_HLControl, i.uv);
+                fixed ao = controlVal.r;
+                fixed thickness = controlVal.g;
+
+                /////////////// BASIC PARAMS ////////////////////
                 fixed3 normal = normalize(i.normal);
                 fixed3 tangent = normalize(i.tangent.xyz);
                 fixed3 binormal = cross(normal, tangent);
@@ -105,19 +111,21 @@ Shader "Unlit/TwoSidedFeather"
                 float sinKajiya = sqrt(1.0f - kajiyaHighlight * kajiyaHighlight);
                 float dirAtten = smoothstep(-1.0f, 0.0f, kajiyaHighlight);
 
-                float highlight = pow(sinKajiya, 1200) * lighting;
+                float highlight = pow(sinKajiya, 600) * lighting * highlightControl * 2.0 * pow(ao, 4);
                 
 
                 fixed4 col = tex2D(_MainTex, i.uv);
                 fixed4 shadowCol = tex2D(_ShadowTex, i.uv);
                 clip(col.a - _Cutoff);
 
+                float3 highlightColor = highlight * _SpecColor * _Color.rgb;
+                float lightness = saturate(lighting + fresnel) * thickness * ao + 0.5;
+
                 
-                fixed ao = controlVal.r;
-                fixed thickness = controlVal.g;
+                
                 col.rgb = lerp(shadowCol.rgb, col.rgb, lighting);
-                col.rgb += ShadeSH9(float4(i.normal, 1.0f)) * 0.2f;
-                col.rgb = lerp(fixed3(0, 0.2, 0.3), col.rgb, saturate(lighting + fresnel) * thickness * ao + 0.5) * _Color.rgb * _LightColor0.xyz + highlight * _SpecColor;
+                col.rgb += ShadeSH9(float4(i.normal, 1.0f)) * 0.35f;
+                col.rgb = lerp(fixed3(0, 0.2, 0.3) * col.rgb, col.rgb, lightness) * _Color.rgb * _LightColor0.xyz + highlightColor.rgb;
                 
                 // apply fog
                 

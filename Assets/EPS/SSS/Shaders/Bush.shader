@@ -101,12 +101,13 @@ Shader "Unlit/Bush"
                 fixed lighting = dot(normalize(i.normal), lightDir);
                 //reduce lighting contribution here:
                 fixed edgeHighlight = 1 - saturate(dot(normalize(i.normal), normalize(i.viewDir)));
-                edgeHighlight = pow(edgeHighlight, 8) * 2;
+                edgeHighlight = pow(edgeHighlight, 8) * 1.5;
                 fixed shadowContrib = dot(lightDir, normalize(i.viewDir));
                 shadowContrib = saturate(shadowContrib);
-                shadowContrib = pow(shadowContrib, 4);
-                //edgeHighlight *= 1 - shadowContrib;
-                shadowContrib = 1 - shadowContrib * 0.8;
+                shadowContrib = pow(shadowContrib, 16);
+                edgeHighlight *= 1 - shadowContrib;
+                shadowContrib = 1 - shadowContrib * 0.5f;
+                //shadowContrib = pow(shadowContrib, 4);
                 //return shadowContrib;
 
                 lighting = min(saturate(lighting), shadow);

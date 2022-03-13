@@ -211,7 +211,7 @@
                 fixed3 halfDir = normalize(normalize(i.viewDir) + _WorldSpaceLightPos0.xyz);
 
                 fixed highlight = pow(saturate(dot(halfDir, normalize(i.normal))), 8);
-                highlight = smoothstep(0.99, 0.991, highlight) * 0.2;
+                highlight = smoothstep(0.99, 0.991, highlight) * 2;
                 //return float4(i.normal, 1.0f);
 
                 //fixed atten = LIGHT_ATTENUATION(i);

@@ -59,6 +59,7 @@ Shader "Unlit/Billboard"
                 float3 centerOffset = v.vertex.xyz; 
                 float3 rotatedLocal = rightDir * centerOffset.x + upDir * centerOffset.y + normalVector * centerOffset.z;
                 o.vertex = UnityObjectToClipPos(rotatedLocal);
+
                 return o;
             }
 

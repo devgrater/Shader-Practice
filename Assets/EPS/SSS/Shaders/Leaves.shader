@@ -104,7 +104,7 @@ Shader "Unlit/Leaves"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 fixed thickness = tex2D(_Interior, i.uv).r;
                 //col.rgb *= saturate(lighting + fresnel) * _Color.rgb;
-                col.rgb += ShadeSH9(float4(i.normal, 0.0f));
+                col.rgb += ShadeSH9(float4(i.normal, 1.0f)) * 0.3f;
                 col.rgb = lerp(fixed3(0, 0.2, 0.3), col.rgb, saturate(lighting + fresnel) * thickness) * _Color.rgb * _LightColor0.xyz;
                 
                 // apply fog

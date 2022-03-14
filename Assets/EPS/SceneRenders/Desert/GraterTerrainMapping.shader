@@ -252,7 +252,7 @@ Shader "Grater/GraterDesertPlains"
                 baseNormal = pow(baseNormal, 32);
                 //return baseNormal;
                 float highlight = saturate(dot(halfDir, wsRandomNormal));
-                highlight = pow(highlight, 16) * 3 * baseNormal;
+                highlight = pow(highlight, 16) * r3 * 3 * baseNormal;
             
 
                 worldNormal = normal;
@@ -282,7 +282,7 @@ Shader "Grater/GraterDesertPlains"
                 //welp!
                 lighting = smoothstep(0.5, 0.52, lighting);
                 
-                highlight *= lighting;
+                //highlight *= lighting;
 
                 //return dfg_d(nDotH, roughness);
                 //return float4(dfg_f(nDotV, f0, roughness), 1.0);

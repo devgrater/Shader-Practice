@@ -249,7 +249,7 @@ Shader "Grater/GraterDesertPlains"
                 fixed3 worldNormal = map_normal(i.uv, normal, tangent, bitangent);//normalize(i.normal);
 
                 fixed baseNormal = saturate(dot(worldNormal, halfDir));
-                baseNormal = pow(baseNormal, 32);
+                baseNormal = pow(baseNormal, 64);
                 //return baseNormal;
                 float highlight = saturate(dot(halfDir, wsRandomNormal));
                 highlight = pow(highlight, 16) * r3 * 3 * baseNormal;

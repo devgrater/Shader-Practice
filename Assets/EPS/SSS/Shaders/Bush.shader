@@ -9,6 +9,8 @@ Shader "Unlit/Bush"
         _Emission ("Emissive Color", Color) = (0,0,0,0)
         [PowerSlider(5.0)] _Shininess ("Shininess", Range (0.1, 1)) = 0.7
         _Color ("Main Color", Color) = (1,1,1,1)
+        _BillboardSize ("Billboard Size", Range(1, 4)) = 2.0
+        _Inflate ("Inflate", Range(0, 4)) = 0.0
     }
     SubShader
     {
@@ -53,6 +55,9 @@ Shader "Unlit/Bush"
             float4 _MainTex_ST;
             float4 _Color;
             fixed _Cutoff;
+            fixed _Amount;
+            float _BillboardSize;
+            float _Inflate;
 
             v2f vert (appdata v)
             {
@@ -63,14 +68,17 @@ Shader "Unlit/Bush"
                 
 
                 float3 centerOffset = v.vertex.xyz; 
-                float2 tweakedUV = (v.uv.xy - 0.5f);
+                float2 tweakedUV = (v.uv.xy - 0.5f) * 2.0f;
                 float3 viewSpaceUV = mul(float4(tweakedUV, 0.0f, 0.0f), UNITY_MATRIX_MV);
+                float3 scale = unity_ObjectToWorld._m00_m11_m22;
+                viewSpaceUV = normalize(viewSpaceUV * scale) * _BillboardSize;
                 //o.pos = UnityObjectToClipPos(v.vertex);
 
                
                 
 
                 v.vertex.xyz += viewSpaceUV.xyz;
+                v.vertex.xyz += v.normal * _Inflate;
                 o.pos = UnityObjectToClipPos(v.vertex.xyz);
                 
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
@@ -96,6 +104,8 @@ Shader "Unlit/Bush"
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 //return float4(i.uv, 0.0f, 1.0f);
+                //extract scale from the object to world matrix:
+                
 
                 fixed shadow = LIGHT_ATTENUATION(i);
                 fixed lighting = dot(normalize(i.normal), lightDir);
@@ -141,15 +151,20 @@ Shader "Unlit/Bush"
             };
 
             uniform float4 _MainTex_ST;
+            fixed _Amount;
+            float _BillboardSize;
+            float _Inflate;
 
             v2f vert( appdata_base v )
             {
                 v2f o;
                 //float3 centerOffset = v.vertex.xyz; 
-                float2 tweakedUV = (v.texcoord.xy - 0.5f);
+                float2 tweakedUV = (v.texcoord.xy - 0.5f) * 2.0f;
                 float3 viewSpaceUV = mul(float4(tweakedUV, 0.0f, 0.0f), UNITY_MATRIX_MV);
-                v.vertex.xyz += viewSpaceUV;
-
+                float3 scale = unity_ObjectToWorld._m00_m11_m22;
+                viewSpaceUV = normalize(viewSpaceUV * scale);
+                v.vertex.xyz += viewSpaceUV * _BillboardSize;
+                v.vertex.xyz += v.normal * _Inflate;
                 
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
@@ -161,6 +176,7 @@ Shader "Unlit/Bush"
             uniform sampler2D _MainTex;
             uniform fixed _Cutoff;
             uniform fixed4 _Color;
+            
 
             float4 frag( v2f i ) : SV_Target
             {

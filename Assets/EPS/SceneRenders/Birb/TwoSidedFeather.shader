@@ -124,8 +124,8 @@ Shader "Unlit/TwoSidedFeather"
                 
                 
                 col.rgb = lerp(shadowCol.rgb, col.rgb, lighting);
-                col.rgb += ShadeSH9(float4(i.normal, 1.0f)) * 0.35f;
-                col.rgb = lerp(fixed3(0, 0.2, 0.3) * col.rgb, col.rgb, lightness) * _Color.rgb * _LightColor0.xyz + highlightColor.rgb;
+                //col.rgb +=  * 0.35f;
+                col.rgb = lerp(fixed3(0, 0.2, 0.3) * col.rgb, col.rgb, lightness) * _Color.rgb * (_LightColor0.xyz + ShadeSH9(float4(i.normal, 1.0f))) + highlightColor.rgb;
                 
                 // apply fog
                 

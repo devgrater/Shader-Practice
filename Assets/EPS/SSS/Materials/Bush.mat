@@ -63,7 +63,7 @@ Material:
     - _Amount: 1
     - _BillboardSize: 4
     - _BumpScale: 1
-    - _Cutoff: 0.416
+    - _Cutoff: 0.425
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1

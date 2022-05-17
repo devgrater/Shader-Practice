@@ -3,9 +3,8 @@ float sdfUnion(float d1, float d2){
 }
 
 float sdfSmoothUnion(float d1, float d2, float factor){
-    float h = max(factor - abs(d1 - d2), 0.0f);//clamp(0.5f + 0.5f * (d2 - d1) / factor, 0.0f, 1.0f);
+    float h = max(factor - abs(d1 - d2), 0.0f);
     return min(d1, d2) - h * h * 0.25 / factor;
-    //return lerp(d2, d1, h) - factor * h * (1.0f - h);
 }
 
 

@@ -41,7 +41,7 @@ Shader "Hidden/BottleOfStars"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
-                float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
+                float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2.0f - 1.0f, 0.0f, -1.0f));
                 o.viewDir = mul(unity_CameraToWorld, float4(viewVector,0));
                 return o;
             }
@@ -120,9 +120,11 @@ Shader "Hidden/BottleOfStars"
                 fresnel = pow(fresnel, 3);
 
                 //simulate glass thickness
-                fixed internalThickness = sin(fresnel * 4.5);
+                //1.0 -> glass highlight
+                //0.0 -> dimming due to thickness
+                fixed internalThickness = sin(fresnel * 4.5f);
                 internalThickness = saturate(internalThickness);
-                internalThickness = pow(internalThickness, 4);
+                internalThickness = pow(internalThickness, 4.0f);
 
                 //environmental lighting
                 half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflDir, 0);
@@ -145,12 +147,12 @@ Shader "Hidden/BottleOfStars"
             float evalFluid(float3 checkPoint){
                 float3 planeVector = checkPoint - float3(0.0f, 1.0f, 0.0f);
                 //rotate the plane so that the result looks rotated
-                float3 cosx = cos(-UNITY_PI / 6);
-                float3 sinx = sin(-UNITY_PI / 6);
+                float3 cosx = cos(-UNITY_PI / 6.0f);
+                float3 sinx = sin(-UNITY_PI / 6.0f);
                 planeVector.x = cosx * planeVector.x - sinx * planeVector.y;
                 planeVector.y = sinx * planeVector.x + cosx * planeVector.y;
 
-                //union of a sphere and a tilted wave plane
+                //the fluid is just a sphere, minus a displaced plane.
                 float sphereDst = sphereSDF(checkPoint, float3(0.0f, 0.0f, 0.0f), 2.8f);
                 float planeDst = planeSDFDft(planeVector, -1.0f) + waveDisplace(checkPoint);
 
@@ -163,7 +165,7 @@ Shader "Hidden/BottleOfStars"
                 float3 headPos = startPos;
                 hit = 0.0f;
                 for(uint i = 0; i < 70; i++){
-                    //raymarch!
+                    //raymarch until it hits...
                     minDist = evalFluid(headPos);
                     headPos += minDist * viewDir;
                     dstTravelled += minDist;
@@ -194,10 +196,7 @@ Shader "Hidden/BottleOfStars"
                 fixed3 normal = findInnerNormal(worldPos);
                 //normal computed using surface point coordinates
                 //because the center sits in (0,0,0)
-                fixed3 fakeNormal = normalize(worldPos * 0.2 + normal * 0.8);
-                
-                fixed3 tangent = normalize(cross(fixed3(0, 1, 0), fakeNormal));
-                fixed3 bitangent = normalize(cross(fakeNormal, tangent));
+                fixed3 fakeNormal = normalize(worldPos * 0.2f + normal * 0.8f);
                 float3 texSum = 0.0f;
 
                 float stepDistance = 0.0f;
@@ -215,7 +214,7 @@ Shader "Hidden/BottleOfStars"
                     head += viewDir;
                     fixed3 newNormal = normalize(head);
                     float theta = (atan2(head.x, head.z) + UNITY_PI) / UNITY_TWO_PI;
-                    float phi = (newNormal.y + 1.0f) * 0.5;
+                    float phi = (newNormal.y + 1.0f) * 0.5f;
                     //map from 3d to 2d
                     //and distort using phi
                     baseUV = float2(
@@ -231,14 +230,14 @@ Shader "Hidden/BottleOfStars"
                 fixed highlight = saturate(dot(normal, halfDir));
                 highlight = pow(highlight, 32);
 
-                float3 compositeCol = texSum + highlight * texSum * 0.9f;
-
                 fixed fresnel = saturate(dot(normal, -viewDir));
                 fresnel = 1.0f - fresnel;
-                fresnel = pow(fresnel, 2.0f) * hit;
+                fresnel = pow(fresnel, 4.0f) * hit;
+
+                float3 compositeCol = texSum * (highlight * 0.9f + 1.0f);
 
                 //brighten up the edge of the fluid
-                compositeCol += lerp(0.0f, fixed3(0.0f, 0.9f, 1.0f), fresnel * fresnel);
+                compositeCol += lerp(0.0f, fixed3(0.0f, 0.9f, 1.0f), fresnel);
 
                 float3 outCol = max(compositeCol, 0.0f) * hit + (1.0f - hit) * screenCol.rgb;
                 return float4(outCol, 1.0f);

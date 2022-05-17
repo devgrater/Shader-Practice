@@ -101,7 +101,7 @@ Shader "Hidden/BottleOfStars"
                 float3 worldCamPos = _WorldSpaceCameraPos;
                 float dst, hit;
                 float3 col;
-                rayMarchGlassSDF(worldCamPos, viewDir, hit, col, dst);
+                rayMarchGlassSDF(worldCamPos, viewDir, hit, dst);
                 //reconstruct world position of the bottle
                 float3 worldPos = worldCamPos + viewDir * dst;
                 fixed3 normal = findGlassNormal(worldPos);

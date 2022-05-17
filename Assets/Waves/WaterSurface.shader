@@ -210,8 +210,13 @@
 
                 fixed3 halfDir = normalize(normalize(i.viewDir) + _WorldSpaceLightPos0.xyz);
 
-                fixed highlight = pow(saturate(dot(halfDir, normalize(i.normal))), 8);
-                highlight = smoothstep(0.99, 0.991, highlight) * 2;
+                fixed highlight = pow(saturate(dot(halfDir, normalize(i.normal))), 128);
+                highlight = smoothstep(0.89, 0.991, highlight) * 2;
+
+
+                fixed fresnel = saturate(dot(normalize(i.normal), normalize(i.viewDir)));
+                fresnel = 1 - fresnel;
+                fresnel = pow(fresnel, 4) * 0.2;
                 //return float4(i.normal, 1.0f);
 
                 //fixed atten = LIGHT_ATTENUATION(i);
@@ -258,7 +263,7 @@
                 finalColor += finalColor * foam * 0.5;
                 UNITY_APPLY_FOG(i.fogCoord, finalColor);
                 
-                return finalColor + highlight;//saturate(depthDifference / 10);//finalColor;
+                return finalColor + highlight + fresnel;//saturate(depthDifference / 10);//finalColor;
             }
             ENDCG
         }

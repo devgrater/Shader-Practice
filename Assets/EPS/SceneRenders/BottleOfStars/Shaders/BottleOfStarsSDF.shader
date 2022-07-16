@@ -75,6 +75,7 @@ Shader "Hidden/BottleOfStars"
                 for(uint i = 0; i < 70; i++){
                     //raymarch until hits...
                     minDist = evalGlassBottle(headPos);
+                    //move forward by the minimal distance we found
                     headPos += minDist * viewDir;
                     dstTravelled += minDist;
                     if(abs(minDist) <= 0.005f){
@@ -167,6 +168,7 @@ Shader "Hidden/BottleOfStars"
                 for(uint i = 0; i < 70; i++){
                     //raymarch until it hits...
                     minDist = evalFluid(headPos);
+                    //move forward by the minimal distance we found
                     headPos += minDist * viewDir;
                     dstTravelled += minDist;
                     if(abs(minDist) <= 0.005f){
@@ -177,7 +179,7 @@ Shader "Hidden/BottleOfStars"
                 dst = dstTravelled;
             }
 
-            fixed3 findInnerNormal(float3 pos){
+            fixed3 findFluidNormal(float3 pos){
                 fixed2 eps = fixed2(1.0f, -1.0f) * 0.5773f * 0.0005f;
                 return normalize(
                     eps.xyy * evalFluid(pos + eps.xyy) + 
@@ -187,13 +189,13 @@ Shader "Hidden/BottleOfStars"
                 );
             }
 
-            fixed4 fragInner(float2 screenUV, fixed4 screenCol, fixed3 lightDir, fixed3 viewDir, fixed3 halfDir){
+            fixed4 fragFluid(float2 screenUV, fixed4 screenCol, fixed3 lightDir, fixed3 viewDir, fixed3 halfDir){
 
                 float3 worldCamPos = _WorldSpaceCameraPos;
                 float dst, hit;
                 rayMarchFluidSDF(worldCamPos, viewDir, hit, dst);
                 float3 worldPos = worldCamPos + viewDir * dst;
-                fixed3 normal = findInnerNormal(worldPos);
+                fixed3 normal = findFluidNormal(worldPos);
                 //normal computed using surface point coordinates
                 //because the center sits in (0,0,0)
                 fixed3 fakeNormal = normalize(worldPos * 0.2f + normal * 0.8f);
@@ -251,7 +253,7 @@ Shader "Hidden/BottleOfStars"
                 fixed3 viewDir = normalize(i.viewDir);
                 fixed3 halfDir = normalize(lightDir - viewDir);
 
-                fixed4 innerColor = fragInner(i.uv, screenCol, lightDir, viewDir, halfDir);
+                fixed4 innerColor = fragFluid(i.uv, screenCol, lightDir, viewDir, halfDir);
                 fixed4 glassColor = fragGlass(innerColor, lightDir, viewDir, halfDir);
                 return glassColor;
             }

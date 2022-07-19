@@ -67,7 +67,11 @@ Shader "Unlit/GrassInstanced"
 
 
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                worldPos.x += sin(worldPos.z / 4 + _Time.b) * v.uv.y; 
+                worldPos.z += sin(worldPos.x / 3 + _Time.b) * v.uv.y; 
+                o.vertex = mul(UNITY_MATRIX_VP, worldPos);//UnityObjectToClipPos(v.vertex);
+
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;

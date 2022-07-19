@@ -11,6 +11,7 @@ public class GrassPointScatter : MonoBehaviour
 
     List<Vector3> cachedGrassPos;
     private ComputeBuffer argsBuffer;
+    private ComputeBuffer meshPropertiesBuffer;
 
     [SerializeField] private Mesh grassMesh;
     [SerializeField] private Material instancedMaterial;
@@ -32,7 +33,7 @@ public class GrassPointScatter : MonoBehaviour
 
     void RecalculateGrassCount()
     {
-        calculatedCount = Mathf.CeilToInt(planeSize * planeSize * density);
+        calculatedCount = Mathf.CeilToInt(planeSize * planeSize * Mathf.Max(density, 1.0f));
     }
 
     bool ScatterGrass()
@@ -79,7 +80,7 @@ public class GrassPointScatter : MonoBehaviour
     void RecreateDataBuffer()
     {
         //                                                                            Vector3 3x float
-        ComputeBuffer meshPropertiesBuffer = new ComputeBuffer(cachedGrassPos.Count, sizeof(float) * 3);
+        meshPropertiesBuffer = new ComputeBuffer(cachedGrassPos.Count, sizeof(float) * 3);
         meshPropertiesBuffer.SetData(cachedGrassPos);
         instancedMaterial.SetBuffer("positionBuffer", meshPropertiesBuffer);
     }
@@ -143,5 +144,9 @@ public class GrassPointScatter : MonoBehaviour
         if (argsBuffer != null)
             argsBuffer.Release();
         argsBuffer = null;
+
+        if (meshPropertiesBuffer != null)
+            meshPropertiesBuffer.Release();
+        meshPropertiesBuffer = null;
     }
 }

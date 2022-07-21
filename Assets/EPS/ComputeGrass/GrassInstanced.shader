@@ -43,6 +43,7 @@ Shader "Unlit/GrassInstanced"
 
             #if SHADER_TARGET >= 45
                 StructuredBuffer<float3> _PositionBuffer;
+                StructuredBuffer<uint> _VisibleInstanceOnlyTransformIDBuffer;
             #endif
 
            
@@ -59,7 +60,7 @@ Shader "Unlit/GrassInstanced"
             v2f vert (appdata v, uint instanceID : SV_InstanceID)
             {
                 #if SHADER_TARGET >= 45
-                float3 data = _PositionBuffer[instanceID];
+                float3 data = _PositionBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
 
                     //float rotation = data.w * data.w * _Time.y * 0.5f;
                    // rotate2D(data.xz, rotation);

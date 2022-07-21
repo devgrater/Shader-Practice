@@ -10,19 +10,23 @@ public class GrassPointScatter : MonoBehaviour
     private int cacheCount = -1;
     [SerializeField] private int density = 5; //5 grass per unit
 
-    List<Vector3> cachedGrassPos;
+    List<Vector3> allGrassPos;
     List<Vector3>[] cellPosWSsList;
     private ComputeBuffer argsBuffer;
-    private ComputeBuffer meshPropertiesBuffer;
+    private ComputeBuffer allInstancesPosWSBuffer;
+    private ComputeBuffer visibleInstancesOnlyPosWSIDBuffer;
 
     [SerializeField] private Mesh grassMesh;
+    private Mesh cachedGrassMesh;
     [SerializeField] private Material instancedMaterial;
     [SerializeField] private Texture grassInfluenceRT;
     [SerializeField] private Camera grassRTCamera;
     //block size: 1m per block.
-    [SerializeField] private float blockSize = 2;
-
+    [SerializeField] private float blockSize = 4;
     [SerializeField] private ComputeShader compute;
+
+    [SerializeField] private Camera playerCamera;
+
 
 
     private int cellCountX;
@@ -31,7 +35,9 @@ public class GrassPointScatter : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        RecalculateGrassCount();
+        //RecalculateGrassCount();
+        //if (ScatterGrass())
+        //    UpdateAllBuffers();
     }
 
     // Update is called once per frame
@@ -39,9 +45,25 @@ public class GrassPointScatter : MonoBehaviour
     {
         RecalculateGrassCount();
         if (ScatterGrass())
-            UpdateComputeBuffer();
-        SendToComputeShader();
+            UpdateAllBuffers();
+        CullWithCompute();
+        BatchRenderGrass();
     }
+
+    void OnDisable()
+    {
+        if (argsBuffer != null)
+            argsBuffer.Release();
+        argsBuffer = null;
+
+        if (allInstancesPosWSBuffer != null)
+            allInstancesPosWSBuffer.Release();
+        allInstancesPosWSBuffer = null;
+
+        if (visibleInstancesOnlyPosWSIDBuffer != null)
+            visibleInstancesOnlyPosWSIDBuffer.Release();
+        visibleInstancesOnlyPosWSIDBuffer = null;
+     }
 
     void RecalculateGrassCount()
     {
@@ -58,8 +80,8 @@ public class GrassPointScatter : MonoBehaviour
         //but we know the min and max bounds already, so we can calculate directly.
         float minX, maxX, minZ, maxZ;
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
-        cellCountX = Mathf.CeilToInt((maxX - minX) / 4);
-        cellCountZ = Mathf.CeilToInt((maxZ - minZ) / 4);
+        cellCountX = Mathf.CeilToInt((maxX - minX) / blockSize);
+        cellCountZ = Mathf.CeilToInt((maxZ - minZ) / blockSize);
 
         cellPosWSsList = new List<Vector3>[cellCountX * cellCountZ]; //flatten 2D array
         for (int i = 0; i < cellPosWSsList.Length; i++)
@@ -68,7 +90,7 @@ public class GrassPointScatter : MonoBehaviour
         }
 
         //create scatter:
-        cachedGrassPos = new List<Vector3>();
+        allGrassPos = new List<Vector3>();
         for (int i = 0; i < calculatedCount; i++)
         {
             Vector3 pos = Vector3.zero;
@@ -80,13 +102,13 @@ public class GrassPointScatter : MonoBehaviour
             int zID = Mathf.Min(cellCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(minZ, maxZ, pos.z) * cellCountZ)); //use min to force within 0~[cellCountZ-1]
 
             pos += transform.position;
-            cachedGrassPos.Add(new Vector3(pos.x, pos.y, pos.z));
+            allGrassPos.Add(new Vector3(pos.x, pos.y, pos.z));
             cellPosWSsList[xID + zID * cellCountX].Add(pos);
         }
 
         //for the compute buffer...
         int offset = 0;
-        Vector3[] allGrassPosWSSortedByCell = new Vector3[cachedGrassPos.Count];
+        Vector3[] allGrassPosWSSortedByCell = new Vector3[allGrassPos.Count];
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
             for (int j = 0; j < cellPosWSsList[i].Count; j++)
@@ -97,77 +119,54 @@ public class GrassPointScatter : MonoBehaviour
         }
 
         cacheCount = calculatedCount;
+        UpdateComputeBuffer(allGrassPosWSSortedByCell);
         return true;
     }
 
-    void RecreateArgsBuffer()
+    void BatchRenderGrass()
     {
-        uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
-        if (argsBuffer != null)
-        {
-            argsBuffer.Release();
-        }
-        Mesh mesh = GetGrassMeshCache();
-        args[0] = (uint)mesh.GetIndexCount(0);
-        args[1] = (uint)calculatedCount;
-        args[2] = (uint)mesh.GetIndexStart(0);
-        args[3] = (uint)mesh.GetBaseVertex(0);
-
-        //copy to argsbuffer:
-        //                                                                     ///KEEP THIS!///
-        argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
-        argsBuffer.SetData(args);
-    }
-
-    void RecreateDataBuffer()
-    {
-        if (meshPropertiesBuffer != null)
-        {
-            meshPropertiesBuffer.Release();
-        }
-        //                                                              Vector4 4x float - xyz - positions, w - height
-        meshPropertiesBuffer = new ComputeBuffer(cachedGrassPos.Count, sizeof(float) * 3);
-        meshPropertiesBuffer.SetData(cachedGrassPos);
-        instancedMaterial.SetBuffer("_PositionBuffer", meshPropertiesBuffer);
-        //instancedMaterial.SetBuffer("VisibleIDBuffer", ...);
-    }
-
-    void UpdateComputeBuffer()
-    {
-        RecreateArgsBuffer();
-        RecreateDataBuffer();
-
-    }
-    void SendToComputeShader()
-    {
-        /*
-         * Do something in compute
-         */
-
-
-
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
         renderBound.SetMinMax(transform.position - new Vector3(planeSize, 0, planeSize), transform.position + new Vector3(planeSize, 0, planeSize));
         instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
-        Vector3 cameraBounds = grassRTCamera.transform.position;
+
         float minX, maxX, minZ, maxZ;
         GetCameraBounds(out minX, out maxX, out minZ, out maxZ);
-        float camSize = grassRTCamera.orthographicSize;
         instancedMaterial.SetVector("_InfluenceBounds", 
             new Vector4(minX, maxX, minZ, maxZ)
         );
-
-        
-
+        instancedMaterial.SetBuffer("_VisibleInstanceOnlyTransformIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
         Graphics.DrawMeshInstancedIndirect(GetGrassMeshCache(), 0, instancedMaterial, renderBound, argsBuffer);
-        
-        //Graphics.DrawMeshInstancedProcedural(GetGrassMeshCache(), 0, instancedMaterial, renderBound, calculatedCount);
     }
 
-    private Mesh cachedGrassMesh;
 
-    //GENERATES GRASS MESH//
+    ////////////////////////////////////////////////////////////////
+    //                  HELPER FUNCTION                           //
+    ////////////////////////////////////////////////////////////////
+
+    void CullWithCompute()
+    {
+        Matrix4x4 v = playerCamera.worldToCameraMatrix;
+        Matrix4x4 p = playerCamera.projectionMatrix;
+        Matrix4x4 vp = p * v;
+
+        visibleInstancesOnlyPosWSIDBuffer.SetCounterValue(0);
+
+        //set once only
+        compute.SetMatrix("_VPMatrix", vp);
+        compute.SetFloat("_MaxDrawDistance", 100);
+        //first split into batches:
+        int batchCount = Mathf.CeilToInt(calculatedCount / 64.0f);
+        //for(int i = 0; i < batchCount; i++)
+        //{
+            //batch? batch?
+            //compute.SetFloat("_StartOffset", i * 64);
+            //compute.Dispatch(0, )
+        //}
+        compute.Dispatch(0, batchCount, 1, 1);
+        ComputeBuffer.CopyCount(visibleInstancesOnlyPosWSIDBuffer, argsBuffer, 4);
+    }
+
     Mesh GetGrassMeshCache()
     {
         if (!cachedGrassMesh && !grassMesh)
@@ -199,18 +198,7 @@ public class GrassPointScatter : MonoBehaviour
         return grassMesh ? grassMesh : cachedGrassMesh;
     }
 
-    void OnDisable()
-    {
-        if (argsBuffer != null)
-            argsBuffer.Release();
-        argsBuffer = null;
-
-        if (meshPropertiesBuffer != null)
-            meshPropertiesBuffer.Release();
-        meshPropertiesBuffer = null;
-    }
-
-    private void GetCameraBounds(out float minX, out float maxX, out float minZ, out float maxZ)
+    void GetCameraBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
         float camSize = grassRTCamera.orthographicSize;
         Vector3 cameraBounds = grassRTCamera.transform.position;
@@ -220,7 +208,7 @@ public class GrassPointScatter : MonoBehaviour
         maxZ = cameraBounds.z + camSize;
     }
 
-    private void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
+    void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
         float boundSize = planeSize;
         Vector3 origin = grassRTCamera.transform.position;
@@ -229,5 +217,57 @@ public class GrassPointScatter : MonoBehaviour
         minZ = origin.z - boundSize;
         maxZ = origin.z + boundSize;
     }
+
+    ////////////////////////////////////////////////////////////////
+    //                  BUFFER CREATION                           //
+    ////////////////////////////////////////////////////////////////
+    void UpdateAllBuffers()
+    {
+        RecreateArgsBuffer();
+        RecreateDataBuffer();
+    }
+
+    void UpdateComputeBuffer(Vector3[] sortedGrassPos)
+    {
+
+        if (allInstancesPosWSBuffer != null)
+            allInstancesPosWSBuffer.Release();
+        allInstancesPosWSBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(float) * 3); //float3 posWS only, per grass
+        allInstancesPosWSBuffer.SetData(sortedGrassPos);
+
+        if (visibleInstancesOnlyPosWSIDBuffer != null)
+            visibleInstancesOnlyPosWSIDBuffer.Release();
+        visibleInstancesOnlyPosWSIDBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(uint), ComputeBufferType.Append); //uint only, per visible grass
+
+        compute.SetBuffer(0, "_AllInstancesPosWSBuffer", allInstancesPosWSBuffer);
+        compute.SetBuffer(0, "_VisibleInstancesOnlyPosWSIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
+    }
+
+    void RecreateArgsBuffer()
+    {
+        uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
+        if (argsBuffer != null)
+            argsBuffer.Release();
+        Mesh mesh = GetGrassMeshCache();
+        args[0] = (uint)mesh.GetIndexCount(0);
+        args[1] = (uint)calculatedCount;
+        args[2] = (uint)mesh.GetIndexStart(0);
+        args[3] = (uint)mesh.GetBaseVertex(0);
+
+        //copy to argsbuffer:
+        //                                                                     ///KEEP THIS!///
+        argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+        argsBuffer.SetData(args);
+    }
+
+    void RecreateDataBuffer()
+    {
+        instancedMaterial.SetBuffer("_PositionBuffer", allInstancesPosWSBuffer);
+
+        //instancedMaterial.SetBuffer("VisibleIDBuffer", ...);
+        //lookup the visible positions using the given ids.
+    }
+
+
 
 }

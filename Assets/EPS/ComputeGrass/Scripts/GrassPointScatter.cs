@@ -5,7 +5,8 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class GrassPointScatter : MonoBehaviour
 {
-    [SerializeField] private float planeSize = 10;
+    [SerializeField] private float planeSizeX = 10;
+    [SerializeField] private float planeSizeZ = 10;
     private int calculatedCount = 100;
     private int cacheCount = -1;
     [SerializeField] private int density = 5; //5 grass per unit
@@ -29,17 +30,34 @@ public class GrassPointScatter : MonoBehaviour
     private Plane[] cameraFrustumPlanes = new Plane[6];
     private List<int> visibleCellIDList = new List<int>();
 
+    [SerializeField] private GameObject meshToMatch;
+
 
 
     private int cellCountX;
     private int cellCountZ;
+    private Vector3 origin;
 
     // Start is called before the first frame update
-    void Start()
+    void OnEnable()
     {
         //RecalculateGrassCount();
         //if (ScatterGrass())
         //    UpdateAllBuffers();
+        if (meshToMatch)
+        {
+            //do something with the mesh...
+            Renderer meshRenderer = meshToMatch.GetComponent<Renderer>();
+            Bounds b = meshRenderer.bounds;
+            origin = b.center;
+            origin.y = b.max.y;
+            planeSizeX = b.extents.x;
+            planeSizeZ = b.extents.z;
+        }
+        else
+        {
+            origin = transform.position;
+        }
     }
 
     // Update is called once per frame
@@ -69,7 +87,7 @@ public class GrassPointScatter : MonoBehaviour
 
     void RecalculateGrassCount()
     {
-        calculatedCount = Mathf.CeilToInt(planeSize * planeSize * Mathf.Max(density, 1.0f));
+        calculatedCount = Mathf.CeilToInt(planeSizeX * planeSizeZ * Mathf.Max(density, 1.0f));
     }
 
     bool ScatterGrass()
@@ -97,13 +115,14 @@ public class GrassPointScatter : MonoBehaviour
         {
             Vector3 pos = Vector3.zero;
 
-            pos.x = UnityEngine.Random.Range(-1f, 1f) * planeSize;
-            pos.z = UnityEngine.Random.Range(-1f, 1f) * planeSize;
+            pos.x = UnityEngine.Random.Range(-1f, 1f) * planeSizeX;
+            pos.z = UnityEngine.Random.Range(-1f, 1f) * planeSizeZ;
+            pos += origin;
 
             int xID = Mathf.Min(cellCountX - 1, Mathf.FloorToInt(Mathf.InverseLerp(minX, maxX, pos.x) * cellCountX)); //use min to force within 0~[cellCountX-1]  
             int zID = Mathf.Min(cellCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(minZ, maxZ, pos.z) * cellCountZ)); //use min to force within 0~[cellCountZ-1]
 
-            pos += transform.position;
+            
             allGrassPos.Add(new Vector3(pos.x, pos.y, pos.z));
             cellPosWSsList[xID + zID * cellCountX].Add(pos);
         }
@@ -129,7 +148,7 @@ public class GrassPointScatter : MonoBehaviour
     {
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
-        renderBound.SetMinMax(transform.position - new Vector3(planeSize, 0, planeSize), transform.position + new Vector3(planeSize, 0, planeSize));
+        renderBound.SetMinMax(origin - new Vector3(planeSizeX, 0, planeSizeZ), origin + new Vector3(planeSizeX, 0, planeSizeZ));
         instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
 
         float minX, maxX, minZ, maxZ;
@@ -172,15 +191,19 @@ public class GrassPointScatter : MonoBehaviour
 
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
+           
             //create cell bound
             Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, 0, i / cellCountX + 0.5f);
             centerPosWS.x = Mathf.Lerp(minX, maxX, centerPosWS.x / cellCountX);
             centerPosWS.z = Mathf.Lerp(minZ, maxZ, centerPosWS.z / cellCountZ);
-            Vector3 sizeWS = new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxX - minX) / cellCountX);
+            Vector3 sizeWS = new Vector3(blockSize, 0, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
             Bounds cellBound = new Bounds(centerPosWS, sizeWS);
+            
 
             if (GeometryUtility.TestPlanesAABB(cameraFrustumPlanes, cellBound))
             {
+
+                //Debug.DrawLine(centerPosWS, centerPosWS + new Vector3(0, 4, 0));
                 visibleCellIDList.Add(i);
             }
         }
@@ -264,12 +287,12 @@ public class GrassPointScatter : MonoBehaviour
 
     void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
-        float boundSize = planeSize;
-        Vector3 origin = transform.position;
-        minX = origin.x - boundSize;
-        maxX = origin.x + boundSize;
-        minZ = origin.z - boundSize;
-        maxZ = origin.z + boundSize;
+        float boundSizeX = planeSizeX;
+        //Vector3 origin = origin;
+        minX = origin.x - planeSizeX;
+        maxX = origin.x + planeSizeX;
+        minZ = origin.z - planeSizeZ;
+        maxZ = origin.z + planeSizeZ;
     }
 
     ////////////////////////////////////////////////////////////////

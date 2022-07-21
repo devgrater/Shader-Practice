@@ -21,6 +21,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//if instance is inside camera frustum, and is within draw distance, we append it to _VisibleInstanceOnlyTransformBuffer
 	//y test allow 50% more threshold (hardcode for grass)
 	//x test allow 10% more threshold (hardcode for grass)
-    //if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
+    if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
 		_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

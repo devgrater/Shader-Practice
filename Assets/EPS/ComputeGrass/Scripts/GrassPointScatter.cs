@@ -31,7 +31,9 @@ public class GrassPointScatter : MonoBehaviour
     private List<int> visibleCellIDList = new List<int>();
 
     [SerializeField] private GameObject meshToMatch;
-
+    [SerializeField] private Texture heightMap;
+    [SerializeField] private float heightMapHeight;
+    [SerializeField] private float baseOffset;
 
 
     private int cellCountX;
@@ -58,6 +60,7 @@ public class GrassPointScatter : MonoBehaviour
         {
             origin = transform.position;
         }
+        
     }
 
     // Update is called once per frame
@@ -68,6 +71,7 @@ public class GrassPointScatter : MonoBehaviour
             UpdateAllBuffers();
         CullWithCompute();
         BatchRenderGrass();
+        UpdateParameters();
     }
 
     void OnDisable()
@@ -165,6 +169,18 @@ public class GrassPointScatter : MonoBehaviour
     //                  HELPER FUNCTION                           //
     ////////////////////////////////////////////////////////////////
 
+    void UpdateParameters(){
+        
+        if(heightMap){
+            instancedMaterial.SetTexture("_HeightMap", heightMap);
+            instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
+        }
+
+        float minX, maxX, minZ, maxZ;
+        GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
+        instancedMaterial.SetVector("_GrassBounds", new Vector4(minX, maxX, minZ, maxZ));
+    }
+
     void CullWithCompute()
     {
         
@@ -193,10 +209,10 @@ public class GrassPointScatter : MonoBehaviour
         {
            
             //create cell bound
-            Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, 0, i / cellCountX + 0.5f);
+            Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, origin.y, i / cellCountX + 0.5f);
             centerPosWS.x = Mathf.Lerp(minX, maxX, centerPosWS.x / cellCountX);
             centerPosWS.z = Mathf.Lerp(minZ, maxZ, centerPosWS.z / cellCountZ);
-            Vector3 sizeWS = new Vector3(blockSize, 0, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
+            Vector3 sizeWS = new Vector3(blockSize, -baseOffset, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
             Bounds cellBound = new Bounds(centerPosWS, sizeWS);
             
 

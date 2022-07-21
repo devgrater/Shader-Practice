@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class GrassPointScatter : MonoBehaviour
 {
     [SerializeField] private float planeSize = 10;
@@ -10,11 +11,22 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private int density = 5; //5 grass per unit
 
     List<Vector3> cachedGrassPos;
+    List<Vector3>[] cellPosWSsList;
     private ComputeBuffer argsBuffer;
     private ComputeBuffer meshPropertiesBuffer;
 
     [SerializeField] private Mesh grassMesh;
     [SerializeField] private Material instancedMaterial;
+    [SerializeField] private Texture grassInfluenceRT;
+    [SerializeField] private Camera grassRTCamera;
+    //block size: 1m per block.
+    [SerializeField] private float blockSize = 2;
+
+    [SerializeField] private ComputeShader compute;
+
+
+    private int cellCountX;
+    private int cellCountZ;
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +52,21 @@ public class GrassPointScatter : MonoBehaviour
     {
         if (calculatedCount == cacheCount)
             return false;
+        //how many blocks are there?
+
+        //in the original example, he had to calculate the min and max bound.
+        //but we know the min and max bounds already, so we can calculate directly.
+        float minX, maxX, minZ, maxZ;
+        GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
+        cellCountX = Mathf.CeilToInt((maxX - minX) / 4);
+        cellCountZ = Mathf.CeilToInt((maxZ - minZ) / 4);
+
+        cellPosWSsList = new List<Vector3>[cellCountX * cellCountZ]; //flatten 2D array
+        for (int i = 0; i < cellPosWSsList.Length; i++)
+        {
+            cellPosWSsList[i] = new List<Vector3>();
+        }
+
         //create scatter:
         cachedGrassPos = new List<Vector3>();
         for (int i = 0; i < calculatedCount; i++)
@@ -49,11 +76,26 @@ public class GrassPointScatter : MonoBehaviour
             pos.x = UnityEngine.Random.Range(-1f, 1f) * planeSize;
             pos.z = UnityEngine.Random.Range(-1f, 1f) * planeSize;
 
-            //transform to posWS in C#
+            int xID = Mathf.Min(cellCountX - 1, Mathf.FloorToInt(Mathf.InverseLerp(minX, maxX, pos.x) * cellCountX)); //use min to force within 0~[cellCountX-1]  
+            int zID = Mathf.Min(cellCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(minZ, maxZ, pos.z) * cellCountZ)); //use min to force within 0~[cellCountZ-1]
+
             pos += transform.position;
             cachedGrassPos.Add(new Vector3(pos.x, pos.y, pos.z));
-            //Pass data to compute shader?
+            cellPosWSsList[xID + zID * cellCountX].Add(pos);
         }
+
+        //for the compute buffer...
+        int offset = 0;
+        Vector3[] allGrassPosWSSortedByCell = new Vector3[cachedGrassPos.Count];
+        for (int i = 0; i < cellPosWSsList.Length; i++)
+        {
+            for (int j = 0; j < cellPosWSsList[i].Count; j++)
+            {
+                allGrassPosWSSortedByCell[offset] = cellPosWSsList[i][j];
+                offset++;
+            }
+        }
+
         cacheCount = calculatedCount;
         return true;
     }
@@ -79,10 +121,15 @@ public class GrassPointScatter : MonoBehaviour
 
     void RecreateDataBuffer()
     {
-        //                                                                            Vector3 3x float
+        if (meshPropertiesBuffer != null)
+        {
+            meshPropertiesBuffer.Release();
+        }
+        //                                                              Vector4 4x float - xyz - positions, w - height
         meshPropertiesBuffer = new ComputeBuffer(cachedGrassPos.Count, sizeof(float) * 3);
         meshPropertiesBuffer.SetData(cachedGrassPos);
-        instancedMaterial.SetBuffer("positionBuffer", meshPropertiesBuffer);
+        instancedMaterial.SetBuffer("_PositionBuffer", meshPropertiesBuffer);
+        //instancedMaterial.SetBuffer("VisibleIDBuffer", ...);
     }
 
     void UpdateComputeBuffer()
@@ -97,11 +144,24 @@ public class GrassPointScatter : MonoBehaviour
          * Do something in compute
          */
 
+
+
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
         renderBound.SetMinMax(transform.position - new Vector3(planeSize, 0, planeSize), transform.position + new Vector3(planeSize, 0, planeSize));
+        instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
+        Vector3 cameraBounds = grassRTCamera.transform.position;
+        float minX, maxX, minZ, maxZ;
+        GetCameraBounds(out minX, out maxX, out minZ, out maxZ);
+        float camSize = grassRTCamera.orthographicSize;
+        instancedMaterial.SetVector("_InfluenceBounds", 
+            new Vector4(minX, maxX, minZ, maxZ)
+        );
+
         
+
         Graphics.DrawMeshInstancedIndirect(GetGrassMeshCache(), 0, instancedMaterial, renderBound, argsBuffer);
+        
         //Graphics.DrawMeshInstancedProcedural(GetGrassMeshCache(), 0, instancedMaterial, renderBound, calculatedCount);
     }
 
@@ -110,7 +170,7 @@ public class GrassPointScatter : MonoBehaviour
     //GENERATES GRASS MESH//
     Mesh GetGrassMeshCache()
     {
-        if (!cachedGrassMesh)
+        if (!cachedGrassMesh && !grassMesh)
         {
             //if not exist, create a 3 vertices hardcode triangle grass mesh
             cachedGrassMesh = new Mesh();
@@ -136,7 +196,7 @@ public class GrassPointScatter : MonoBehaviour
             cachedGrassMesh.SetUVs(0, uvs);
         }
 
-        return cachedGrassMesh;
+        return grassMesh ? grassMesh : cachedGrassMesh;
     }
 
     void OnDisable()
@@ -149,4 +209,25 @@ public class GrassPointScatter : MonoBehaviour
             meshPropertiesBuffer.Release();
         meshPropertiesBuffer = null;
     }
+
+    private void GetCameraBounds(out float minX, out float maxX, out float minZ, out float maxZ)
+    {
+        float camSize = grassRTCamera.orthographicSize;
+        Vector3 cameraBounds = grassRTCamera.transform.position;
+        minX = cameraBounds.x - camSize;
+        maxX = cameraBounds.x + camSize;
+        minZ = cameraBounds.z - camSize;
+        maxZ = cameraBounds.z + camSize;
+    }
+
+    private void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
+    {
+        float boundSize = planeSize;
+        Vector3 origin = grassRTCamera.transform.position;
+        minX = origin.x - boundSize;
+        maxX = origin.x + boundSize;
+        minZ = origin.z - boundSize;
+        maxZ = origin.z + boundSize;
+    }
+
 }

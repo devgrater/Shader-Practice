@@ -82,7 +82,7 @@ Shader "Grater/Stylized/StylizedRendererBase"
         ENDCG
 
         
-
+        
         Pass
         {
             Name "Outline"

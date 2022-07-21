@@ -26,6 +26,8 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private ComputeShader compute;
 
     [SerializeField] private Camera playerCamera;
+    private Plane[] cameraFrustumPlanes = new Plane[6];
+    private List<int> visibleCellIDList = new List<int>();
 
 
 
@@ -146,6 +148,7 @@ public class GrassPointScatter : MonoBehaviour
 
     void CullWithCompute()
     {
+        
         Matrix4x4 v = playerCamera.worldToCameraMatrix;
         Matrix4x4 p = playerCamera.projectionMatrix;
         Matrix4x4 vp = p * v;
@@ -156,14 +159,65 @@ public class GrassPointScatter : MonoBehaviour
         compute.SetMatrix("_VPMatrix", vp);
         compute.SetFloat("_MaxDrawDistance", 100);
         //first split into batches:
-        int batchCount = Mathf.CeilToInt(calculatedCount / 64.0f);
-        //for(int i = 0; i < batchCount; i++)
-        //{
-            //batch? batch?
-            //compute.SetFloat("_StartOffset", i * 64);
-            //compute.Dispatch(0, )
-        //}
-        compute.Dispatch(0, batchCount, 1, 1);
+        //int batchCount = Mathf.CeilToInt(calculatedCount / 64.0f);
+        //Copypasta
+        float minX, maxX, minZ, maxZ;
+        GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
+        visibleCellIDList.Clear();
+
+        float cameraOriginalFarPlane = playerCamera.farClipPlane;
+        playerCamera.farClipPlane = 100;//allow drawDistance control    
+        GeometryUtility.CalculateFrustumPlanes(playerCamera, cameraFrustumPlanes);//Ordering: [0] = Left, [1] = Right, [2] = Down, [3] = Up, [4] = Near, [5] = Far
+        playerCamera.farClipPlane = cameraOriginalFarPlane;
+
+        for (int i = 0; i < cellPosWSsList.Length; i++)
+        {
+            //create cell bound
+            Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, 0, i / cellCountX + 0.5f);
+            centerPosWS.x = Mathf.Lerp(minX, maxX, centerPosWS.x / cellCountX);
+            centerPosWS.z = Mathf.Lerp(minZ, maxZ, centerPosWS.z / cellCountZ);
+            Vector3 sizeWS = new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxX - minX) / cellCountX);
+            Bounds cellBound = new Bounds(centerPosWS, sizeWS);
+
+            if (GeometryUtility.TestPlanesAABB(cameraFrustumPlanes, cellBound))
+            {
+                visibleCellIDList.Add(i);
+            }
+        }
+
+
+        bool shouldBatchDispatch = true;
+        for (int i = 0; i < visibleCellIDList.Count; i++)
+        {
+            int targetCellFlattenID = visibleCellIDList[i];
+            int memoryOffset = 0;
+            for (int j = 0; j < targetCellFlattenID; j++)
+            {
+                memoryOffset += cellPosWSsList[j].Count;
+            }
+            compute.SetInt("_StartOffset", memoryOffset); //culling read data started at offseted pos, will start from cell's total offset in memory
+            int jobLength = cellPosWSsList[targetCellFlattenID].Count;
+
+            //============================================================================================
+            //batch n dispatchs into 1 dispatch, if memory is continuous in allInstancesPosWSBuffer
+            if (shouldBatchDispatch)
+            {
+                while ((i < visibleCellIDList.Count - 1) && //test this first to avoid out of bound access to visibleCellIDList
+                        (visibleCellIDList[i + 1] == visibleCellIDList[i] + 1))
+                {
+                    //if memory is continuous, append them together into the same dispatch call
+                    jobLength += cellPosWSsList[visibleCellIDList[i + 1]].Count;
+                    i++;
+                }
+            }
+            //============================================================================================
+
+            compute.Dispatch(0, Mathf.CeilToInt(jobLength / 64f), 1, 1); //disaptch.X division number must match numthreads.x in compute shader (e.g. 64)
+        }
+
+        //batch based on whether a group is visible:
+
+        //compute.Dispatch(0, batchCount, 1, 1);
         ComputeBuffer.CopyCount(visibleInstancesOnlyPosWSIDBuffer, argsBuffer, 4);
     }
 
@@ -211,7 +265,7 @@ public class GrassPointScatter : MonoBehaviour
     void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
         float boundSize = planeSize;
-        Vector3 origin = grassRTCamera.transform.position;
+        Vector3 origin = transform.position;
         minX = origin.x - boundSize;
         maxX = origin.x + boundSize;
         minZ = origin.z - boundSize;

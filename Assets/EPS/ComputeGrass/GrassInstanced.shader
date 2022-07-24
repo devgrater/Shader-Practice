@@ -43,13 +43,14 @@ Shader "Unlit/GrassInstanced"
             };
 
             #if SHADER_TARGET >= 45
-                StructuredBuffer<float3> _PositionBuffer;
+                StructuredBuffer<float4> _PositionBuffer;
                 StructuredBuffer<uint> _VisibleInstanceOnlyTransformIDBuffer;
             #endif
 
            
 
             sampler2D _MainTex;
+            sampler2D _SplatMap;
             float4 _MainTex_ST;
             fixed4 _ShallowColor;
             fixed4 _OutlineColor;
@@ -112,6 +113,7 @@ Shader "Unlit/GrassInstanced"
                 fixed grassRelativeU = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
                 fixed grassRelativeV = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
                 fixed heightMapSample = tex2Dlod (_HeightMap, fixed4(grassRelativeU, grassRelativeV, 0, 0));
+                fixed splatMap = tex2Dlod (_SplatMap, fixed4(grassRelativeU, grassRelativeV, 0, 0)).r;
                 fixed xInfluence = (influenceSample.x - 0.5) * 2;
                 fixed zInfluence = (influenceSample.y - 0.5) * 2;
                 //fixed hasInfluence = sign(length(fixed2(xInfluence, zInfluence))) != 0;
@@ -123,9 +125,10 @@ Shader "Unlit/GrassInstanced"
                 worldPos.z += sin(worldPos.x / 3 + _Time.b) * v.uv.y * 0.1; 
                 worldPos.xz += influenceDir.xz * v.uv.y * influenceSample.z;
                 worldPos.y -= v.uv.y * influenceSample.z * 2.0f;
-                //worldPos.y += v.uv.y * randomHeight * 4;
+                worldPos.y += v.uv.y * randomHeight * 2;
                 //offset y:
-                worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
+               // worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
+               // worldPos.y -= (1 - splatMap.r) * 10 * randomHeight;
                 o.pos = mul(UNITY_MATRIX_VP, worldPos);//UnityObjectToClipPos(v.vertex);
 
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
@@ -138,7 +141,7 @@ Shader "Unlit/GrassInstanced"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                
                 //procedural outline:
                 fixed xDist = step(0.04, min(i.uv.x, 1 - i.uv.x));
                 fixed yDist = step(0.01, 1 - i.uv.y);
@@ -146,6 +149,7 @@ Shader "Unlit/GrassInstanced"
 
                 fixed4 baseColor = lerp(_DeepColor, _ShallowColor, i.uv.y);
                 baseColor = lerp(_OutlineColor * baseColor, baseColor, saturate(xDist * yDist));
+                UNITY_APPLY_FOG(i.fogCoord, baseColor);
                 return baseColor;
                 //return fixed4(i.uv.xy, 1.0, 1.0);
             }

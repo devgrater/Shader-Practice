@@ -262,9 +262,10 @@ MonoBehaviour:
   compute: {fileID: 7200000, guid: 4ec5e6c51d2e6d540a432c4be5595d75, type: 3}
   playerCamera: {fileID: 1924945847}
   meshToMatch: {fileID: 1163825970}
-  heightMap: {fileID: 2800000, guid: e8e1cbabd9bca4742946849473b3eaa1, type: 3}
-  heightMapHeight: 229.2
-  baseOffset: -32.9
+  heightMap: {fileID: 2800000, guid: fd76d69ae7134d6418339c00af2aee9e, type: 3}
+  splatMap: {fileID: 2800000, guid: f92f3f3a22dbbdb4a8dca55f8b5dec99, type: 3}
+  heightMapHeight: 72.8
+  baseOffset: -29.2
 --- !u!1 &259077291
 GameObject:
   m_ObjectHideFlags: 0
@@ -5767,6 +5768,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: New Terrain Mesh
       objectReference: {fileID: 0}
+    - target: {fileID: 983846726524060124, guid: 78ca94fd6c17b114185d9b0db0fbde72, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 666d75649ff355142b183a6cce655a51, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 78ca94fd6c17b114185d9b0db0fbde72, type: 3}
 --- !u!1 &1924945843

@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
-[ExecuteInEditMode]
+[ExecuteAlways]
 public class GrassPointScatter : MonoBehaviour
 {
     [SerializeField] private float planeSizeX = 10;
@@ -11,8 +12,8 @@ public class GrassPointScatter : MonoBehaviour
     private int cacheCount = -1;
     [SerializeField] private int density = 5; //5 grass per unit
 
-    List<Vector3> allGrassPos;
-    List<Vector3>[] cellPosWSsList;
+    List<Vector4> allGrassPos;
+    List<Vector4>[] cellPosWSsList;
     private ComputeBuffer argsBuffer;
     private ComputeBuffer allInstancesPosWSBuffer;
     private ComputeBuffer visibleInstancesOnlyPosWSIDBuffer;
@@ -27,11 +28,13 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private ComputeShader compute;
 
     [SerializeField] private Camera playerCamera;
+    private Camera _targetCamera;
     private Plane[] cameraFrustumPlanes = new Plane[6];
     private List<int> visibleCellIDList = new List<int>();
 
     [SerializeField] private GameObject meshToMatch;
     [SerializeField] private Texture heightMap;
+    [SerializeField] private Texture splatMap;
     [SerializeField] private float heightMapHeight;
     [SerializeField] private float baseOffset;
 
@@ -60,7 +63,17 @@ public class GrassPointScatter : MonoBehaviour
         {
             origin = transform.position;
         }
-        
+
+        _targetCamera = playerCamera;
+        if (!Application.isPlaying)
+        {
+            if(UnityEditor.SceneView.lastActiveSceneView.camera != null)
+            {
+                _targetCamera = UnityEditor.SceneView.lastActiveSceneView.camera;
+            }
+        }
+
+        //
     }
 
     // Update is called once per frame
@@ -107,33 +120,33 @@ public class GrassPointScatter : MonoBehaviour
         cellCountX = Mathf.CeilToInt((maxX - minX) / blockSize);
         cellCountZ = Mathf.CeilToInt((maxZ - minZ) / blockSize);
 
-        cellPosWSsList = new List<Vector3>[cellCountX * cellCountZ]; //flatten 2D array
+        cellPosWSsList = new List<Vector4>[cellCountX * cellCountZ]; //flatten 2D array
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
-            cellPosWSsList[i] = new List<Vector3>();
+            cellPosWSsList[i] = new List<Vector4>();
         }
 
         //create scatter:
-        allGrassPos = new List<Vector3>();
+        allGrassPos = new List<Vector4>();
         for (int i = 0; i < calculatedCount; i++)
         {
-            Vector3 pos = Vector3.zero;
+            Vector4 pos = Vector3.zero;
 
             pos.x = UnityEngine.Random.Range(-1f, 1f) * planeSizeX;
             pos.z = UnityEngine.Random.Range(-1f, 1f) * planeSizeZ;
-            pos += origin;
+            pos += new Vector4(origin.x, origin.y, origin.z, 0.0f);
 
             int xID = Mathf.Min(cellCountX - 1, Mathf.FloorToInt(Mathf.InverseLerp(minX, maxX, pos.x) * cellCountX)); //use min to force within 0~[cellCountX-1]  
             int zID = Mathf.Min(cellCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(minZ, maxZ, pos.z) * cellCountZ)); //use min to force within 0~[cellCountZ-1]
 
             
-            allGrassPos.Add(new Vector3(pos.x, pos.y, pos.z));
+            allGrassPos.Add(new Vector4(pos.x, pos.y, pos.z, Random.Range(0, 1)));
             cellPosWSsList[xID + zID * cellCountX].Add(pos);
         }
 
         //for the compute buffer...
         int offset = 0;
-        Vector3[] allGrassPosWSSortedByCell = new Vector3[allGrassPos.Count];
+        Vector4[] allGrassPosWSSortedByCell = new Vector4[allGrassPos.Count];
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
             for (int j = 0; j < cellPosWSsList[i].Count; j++)
@@ -175,6 +188,9 @@ public class GrassPointScatter : MonoBehaviour
             instancedMaterial.SetTexture("_HeightMap", heightMap);
             instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
         }
+        if(splatMap){
+            instancedMaterial.SetTexture("_SplatMap", splatMap);
+        }
 
         float minX, maxX, minZ, maxZ;
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
@@ -184,8 +200,8 @@ public class GrassPointScatter : MonoBehaviour
     void CullWithCompute()
     {
         
-        Matrix4x4 v = playerCamera.worldToCameraMatrix;
-        Matrix4x4 p = playerCamera.projectionMatrix;
+        Matrix4x4 v = _targetCamera.worldToCameraMatrix;
+        Matrix4x4 p = _targetCamera.projectionMatrix;
         Matrix4x4 vp = p * v;
 
         visibleInstancesOnlyPosWSIDBuffer.SetCounterValue(0);
@@ -200,10 +216,10 @@ public class GrassPointScatter : MonoBehaviour
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
         visibleCellIDList.Clear();
 
-        float cameraOriginalFarPlane = playerCamera.farClipPlane;
-        playerCamera.farClipPlane = 100;//allow drawDistance control    
-        GeometryUtility.CalculateFrustumPlanes(playerCamera, cameraFrustumPlanes);//Ordering: [0] = Left, [1] = Right, [2] = Down, [3] = Up, [4] = Near, [5] = Far
-        playerCamera.farClipPlane = cameraOriginalFarPlane;
+        float cameraOriginalFarPlane = _targetCamera.farClipPlane;
+        _targetCamera.farClipPlane = 100;//allow drawDistance control    
+        GeometryUtility.CalculateFrustumPlanes(_targetCamera, cameraFrustumPlanes);//Ordering: [0] = Left, [1] = Right, [2] = Down, [3] = Up, [4] = Near, [5] = Far
+        _targetCamera.farClipPlane = cameraOriginalFarPlane;
 
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
@@ -320,12 +336,12 @@ public class GrassPointScatter : MonoBehaviour
         RecreateDataBuffer();
     }
 
-    void UpdateComputeBuffer(Vector3[] sortedGrassPos)
+    void UpdateComputeBuffer(Vector4[] sortedGrassPos)
     {
 
         if (allInstancesPosWSBuffer != null)
             allInstancesPosWSBuffer.Release();
-        allInstancesPosWSBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(float) * 3); //float3 posWS only, per grass
+        allInstancesPosWSBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(float) * 4); //xyz - pos, w - height
         allInstancesPosWSBuffer.SetData(sortedGrassPos);
 
         if (visibleInstancesOnlyPosWSIDBuffer != null)

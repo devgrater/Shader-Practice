@@ -7,14 +7,21 @@ float4x4 _VPMatrix;
 float _MaxDrawDistance;
 uint _StartOffset;
 
-StructuredBuffer<float3> _AllInstancesPosWSBuffer; //will not change until instance count change
+Texture2D<float4> _HeightMap;
+SamplerState sampler_HeightMap;
+float2 _HeightControl;
+float4 _GrassBounds;
+
+
+RWStructuredBuffer<float4> _AllInstancesPosWSBuffer; //will not change until instance count change
 AppendStructuredBuffer<uint> _VisibleInstancesOnlyPosWSIDBuffer; //will set counter to 0 per frame, then fill in by this compute shader
 
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+	float3 worldPos = _AllInstancesPosWSBuffer[id.x + _StartOffset].xyz;
 	//posWS -> posCS
-	float4 absPosCS = abs(mul(_VPMatrix,float4(_AllInstancesPosWSBuffer[id.x + _StartOffset],1.0)));
+	float4 absPosCS = abs(mul(_VPMatrix,float4(worldPos,1.0)));
 
 	//do culling test in clip space, result is the same as doing test in NDC space.
 	//prefer clip space here because doing culling test in clip space is faster than doing culling test in NDC, because we can skip 1 division.
@@ -22,6 +29,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//if instance is inside camera frustum, and is within draw distance, we append it to _VisibleInstanceOnlyTransformBuffer
 	//y test allow 50% more threshold (hardcode for grass)
 	//x test allow 10% more threshold (hardcode for grass)
+	float heightOffset = _HeightControl.x;
+
+	//compute height map space uv:
+	//assuming that the heightmap never rotates:
+	float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
+	float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
+	//sample height map:
+
+	//_HeightMap.SampleLevel(sampler_HeightMap, //uv?)
+
+
+	//compute bounds...
+
     if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
 		_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

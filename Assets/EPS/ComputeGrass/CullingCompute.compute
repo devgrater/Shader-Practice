@@ -9,17 +9,27 @@ uint _StartOffset;
 
 Texture2D<float4> _HeightMap;
 SamplerState sampler_HeightMap;
+Texture2D<float4> _SplatMap;
+SamplerState sampler_SplatMap;
 float2 _HeightControl;
 float4 _GrassBounds;
+int _SetInitialPos;
 
 
 RWStructuredBuffer<float4> _AllInstancesPosWSBuffer; //will not change until instance count change
+RWStructuredBuffer<float4> _AllInstancesColorDataBuffer;
 AppendStructuredBuffer<uint> _VisibleInstancesOnlyPosWSIDBuffer; //will set counter to 0 per frame, then fill in by this compute shader
+
+float PseudoRandom(float2 st) {
+                return frac(sin(dot(st.xy,
+                                    float2(12.9898,78.233))) * 43758.5453123);
+            } 
 
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	float3 worldPos = _AllInstancesPosWSBuffer[id.x + _StartOffset].xyz;
+	float randomHeight = _AllInstancesPosWSBuffer[id.x + _StartOffset].w;
 	//posWS -> posCS
 	float4 absPosCS = abs(mul(_VPMatrix,float4(worldPos,1.0)));
 
@@ -29,19 +39,28 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//if instance is inside camera frustum, and is within draw distance, we append it to _VisibleInstanceOnlyTransformBuffer
 	//y test allow 50% more threshold (hardcode for grass)
 	//x test allow 10% more threshold (hardcode for grass)
-	float heightOffset = _HeightControl.x;
 
-	//compute height map space uv:
-	//assuming that the heightmap never rotates:
-	float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
-	float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
-	//sample height map:
+	float rng = PseudoRandom(worldPos.xz);
+	if(randomHeight == 0.0f){
 
-	//_HeightMap.SampleLevel(sampler_HeightMap, //uv?)
+	
+		//compute height map space uv:
+		//assuming that the heightmap never rotates:
+		float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
+		float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
+		//sample height map:
+		float2 uvs = saturate(float2(heightMapSpaceUVX, heightMapSpaceUVZ));
 
-
+		float4 heightInfo = _HeightMap.SampleLevel(sampler_HeightMap, uvs, 0).xyzw;
+		worldPos.y += _HeightControl.x + heightInfo.r * _HeightControl.y;
+		_AllInstancesPosWSBuffer[id.x + _StartOffset].xyz = worldPos;
+		_AllInstancesPosWSBuffer[id.x + _StartOffset].w = 0.4f + 0.6f * rng;
+	}
+	//cull with splatmap:
 	//compute bounds...
 
-    if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
-		_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
+   //if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
+		//decay over time:
+		if(rng < -log(absPosCS.w / _MaxDrawDistance))
+			_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

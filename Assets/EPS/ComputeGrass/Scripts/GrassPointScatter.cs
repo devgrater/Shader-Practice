@@ -38,6 +38,10 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private float heightMapHeight;
     [SerializeField] private float baseOffset;
 
+    private bool setInitialPos = true;
+
+    private float cullRange = 200;
+
 
     private int cellCountX;
     private int cellCountZ;
@@ -67,13 +71,15 @@ public class GrassPointScatter : MonoBehaviour
         _targetCamera = playerCamera;
         if (!Application.isPlaying)
         {
-            if(UnityEditor.SceneView.lastActiveSceneView.camera != null)
+            if (UnityEditor.SceneView.lastActiveSceneView.camera != null)
             {
+                cullRange = 1000;
                 _targetCamera = UnityEditor.SceneView.lastActiveSceneView.camera;
             }
         }
+        setInitialPos = true;
 
-        //
+    //
     }
 
     // Update is called once per frame
@@ -82,9 +88,12 @@ public class GrassPointScatter : MonoBehaviour
         RecalculateGrassCount();
         if (ScatterGrass())
             UpdateAllBuffers();
-        CullWithCompute();
-        BatchRenderGrass();
         UpdateParameters();
+        CullWithCompute();
+        
+        BatchRenderGrass();
+        
+        setInitialPos = false;
     }
 
     void OnDisable()
@@ -165,7 +174,7 @@ public class GrassPointScatter : MonoBehaviour
     {
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
-        renderBound.SetMinMax(origin - new Vector3(planeSizeX, 0, planeSizeZ), origin + new Vector3(planeSizeX, 0, planeSizeZ));
+        renderBound.SetMinMax(origin - new Vector3(planeSizeX, baseOffset, planeSizeZ), origin + new Vector3(planeSizeX, baseOffset, planeSizeZ));
         instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
 
         float minX, maxX, minZ, maxZ;
@@ -185,15 +194,20 @@ public class GrassPointScatter : MonoBehaviour
     void UpdateParameters(){
         
         if(heightMap){
+            compute.SetTexture(0, "_HeightMap", heightMap);
+            compute.SetBool("_SetInitialPos", setInitialPos);
+            compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
             instancedMaterial.SetTexture("_HeightMap", heightMap);
             instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
         }
         if(splatMap){
+            compute.SetTexture(0, "_SplatMap", heightMap);
             instancedMaterial.SetTexture("_SplatMap", splatMap);
         }
 
         float minX, maxX, minZ, maxZ;
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
+        compute.SetVector("_GrassBounds", new Vector4(minX, maxX, minZ, maxZ));
         instancedMaterial.SetVector("_GrassBounds", new Vector4(minX, maxX, minZ, maxZ));
     }
 
@@ -208,7 +222,7 @@ public class GrassPointScatter : MonoBehaviour
 
         //set once only
         compute.SetMatrix("_VPMatrix", vp);
-        compute.SetFloat("_MaxDrawDistance", 100);
+        compute.SetFloat("_MaxDrawDistance", cullRange);
         //first split into batches:
         //int batchCount = Mathf.CeilToInt(calculatedCount / 64.0f);
         //Copypasta
@@ -217,7 +231,7 @@ public class GrassPointScatter : MonoBehaviour
         visibleCellIDList.Clear();
 
         float cameraOriginalFarPlane = _targetCamera.farClipPlane;
-        _targetCamera.farClipPlane = 100;//allow drawDistance control    
+        _targetCamera.farClipPlane = cullRange;//allow drawDistance control    
         GeometryUtility.CalculateFrustumPlanes(_targetCamera, cameraFrustumPlanes);//Ordering: [0] = Left, [1] = Right, [2] = Down, [3] = Up, [4] = Near, [5] = Far
         _targetCamera.farClipPlane = cameraOriginalFarPlane;
 

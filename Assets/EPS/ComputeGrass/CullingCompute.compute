@@ -29,7 +29,8 @@ float PseudoRandom(float2 st) {
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	float3 worldPos = _AllInstancesPosWSBuffer[id.x + _StartOffset].xyz;
-	float randomHeight = _AllInstancesPosWSBuffer[id.x + _StartOffset].w;
+	float hardCull = _AllInstancesPosWSBuffer[id.x + _StartOffset].w;
+	float randomHeight = _AllInstancesColorDataBuffer[id.x + _StartOffset].w;
 	//posWS -> posCS
 	float4 absPosCS = abs(mul(_VPMatrix,float4(worldPos,1.0)));
 
@@ -54,13 +55,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		float4 heightInfo = _HeightMap.SampleLevel(sampler_HeightMap, uvs, 0).xyzw;
 		worldPos.y += _HeightControl.x + heightInfo.r * _HeightControl.y;
 		_AllInstancesPosWSBuffer[id.x + _StartOffset].xyz = worldPos;
-		_AllInstancesPosWSBuffer[id.x + _StartOffset].w = 0.4f + 0.6f * rng;
+		_AllInstancesColorDataBuffer[id.x + _StartOffset].w = 0.4f + 0.6f * rng;
+
+		//sample splatmap:
+		float4 splatmap = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
+		hardCull = rng < smoothstep(0.1, 1.0, splatmap.r);
+		_AllInstancesPosWSBuffer[id.x + _StartOffset].w = hardCull;
 	}
 	//cull with splatmap:
 	//compute bounds...
 
-   //if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance)
+   //if ((rng < -log(absPosCS.w / _MaxDrawDistance)) && (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance))
 		//decay over time:
-		if(rng < -log(absPosCS.w / _MaxDrawDistance))
+		if(hardCull)
 			_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

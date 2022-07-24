@@ -27,6 +27,8 @@ Shader "Unlit/GrassInstanced"
             //#pragma multi_compile_instancing
             #pragma instancing_options procedural:setup
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc"
+            #include "AutoLight.cginc"
 
             struct appdata
             {
@@ -40,10 +42,12 @@ Shader "Unlit/GrassInstanced"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
+
             };
 
             #if SHADER_TARGET >= 45
                 StructuredBuffer<float4> _PositionBuffer;
+                StructuredBuffer<float4> _ColorDataBuffer;
                 StructuredBuffer<uint> _VisibleInstanceOnlyTransformIDBuffer;
             #endif
 
@@ -62,22 +66,17 @@ Shader "Unlit/GrassInstanced"
             fixed2 _HeightControl;
             fixed4 _GrassBounds;
 
-            float random (float2 st) {
-                return frac(sin(dot(st.xy,
-                                    half2(12.9898,78.233)))*
-                    43758.5453123);
-            }
 
             v2f vert (appdata v, uint instanceID : SV_InstanceID)
             {
                 #if SHADER_TARGET >= 45
-                float3 data = _PositionBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
+                float4 data = _PositionBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
 
                     //float rotation = data.w * data.w * _Time.y * 0.5f;
                    // rotate2D(data.xz, rotation);
 
                     unity_ObjectToWorld._11_21_31_41 = float4(_GrassThickness, 0, 0, 0);
-                    unity_ObjectToWorld._12_22_32_42 = float4(0, 1, 0, 0);
+                    unity_ObjectToWorld._12_22_32_42 = float4(0, data.w + 0.5f, 0, 0);
                     unity_ObjectToWorld._13_23_33_43 = float4(0, 0, _GrassThickness, 0);
                     unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
                     unity_WorldToObject = unity_ObjectToWorld;
@@ -102,7 +101,6 @@ Shader "Unlit/GrassInstanced"
 
                 
                 float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                fixed randomHeight = random(data.xz);
                 //compute uv:
                 fixed relativeU = (worldPos.x - _InfluenceBounds.x) / (_InfluenceBounds.y - _InfluenceBounds.x);
                 fixed relativeV = (worldPos.z - _InfluenceBounds.z) / (_InfluenceBounds.w - _InfluenceBounds.z);
@@ -112,20 +110,17 @@ Shader "Unlit/GrassInstanced"
                 fixed4 influenceSample = tex2Dlod (_GrassInfluence, fixed4(relativeUV, 0, 0));
                 fixed grassRelativeU = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
                 fixed grassRelativeV = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
-                fixed heightMapSample = tex2Dlod (_HeightMap, fixed4(grassRelativeU, grassRelativeV, 0, 0));
-                fixed splatMap = tex2Dlod (_SplatMap, fixed4(grassRelativeU, grassRelativeV, 0, 0)).r;
                 fixed xInfluence = (influenceSample.x - 0.5) * 2;
                 fixed zInfluence = (influenceSample.y - 0.5) * 2;
                 //fixed hasInfluence = sign(length(fixed2(xInfluence, zInfluence))) != 0;
                 fixed3 influenceDir = fixed3(xInfluence, 0.01f, zInfluence);
                 influenceDir = normalize(influenceDir) * abs(sign(length(influenceDir)));
                 
-
+                /*
                 worldPos.x += sin(worldPos.z / 4 + _Time.b) * v.uv.y * 0.1; 
                 worldPos.z += sin(worldPos.x / 3 + _Time.b) * v.uv.y * 0.1; 
                 worldPos.xz += influenceDir.xz * v.uv.y * influenceSample.z;
-                worldPos.y -= v.uv.y * influenceSample.z * 2.0f;
-                worldPos.y += v.uv.y * randomHeight * 2;
+                worldPos.y -= v.uv.y * influenceSample.z * 2.0f;*/
                 //offset y:
                // worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
                // worldPos.y -= (1 - splatMap.r) * 10 * randomHeight;

@@ -17,6 +17,7 @@ public class GrassPointScatter : MonoBehaviour
     private ComputeBuffer argsBuffer;
     private ComputeBuffer allInstancesPosWSBuffer;
     private ComputeBuffer visibleInstancesOnlyPosWSIDBuffer;
+    private ComputeBuffer grassAdditionalDataBuffer;
 
     [SerializeField] private Mesh grassMesh;
     private Mesh cachedGrassMesh;
@@ -109,7 +110,11 @@ public class GrassPointScatter : MonoBehaviour
         if (visibleInstancesOnlyPosWSIDBuffer != null)
             visibleInstancesOnlyPosWSIDBuffer.Release();
         visibleInstancesOnlyPosWSIDBuffer = null;
-     }
+
+        if (grassAdditionalDataBuffer != null)
+            grassAdditionalDataBuffer.Release();
+        grassAdditionalDataBuffer = null;
+    }
 
     void RecalculateGrassCount()
     {
@@ -156,17 +161,19 @@ public class GrassPointScatter : MonoBehaviour
         //for the compute buffer...
         int offset = 0;
         Vector4[] allGrassPosWSSortedByCell = new Vector4[allGrassPos.Count];
+        Vector4[] allGrassColorData = new Vector4[allGrassPos.Count];
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
             for (int j = 0; j < cellPosWSsList[i].Count; j++)
             {
                 allGrassPosWSSortedByCell[offset] = cellPosWSsList[i][j];
+                allGrassColorData[offset] = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                 offset++;
             }
         }
 
         cacheCount = calculatedCount;
-        UpdateComputeBuffer(allGrassPosWSSortedByCell);
+        UpdateComputeBuffer(allGrassPosWSSortedByCell, allGrassColorData);
         return true;
     }
 
@@ -201,7 +208,7 @@ public class GrassPointScatter : MonoBehaviour
             instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
         }
         if(splatMap){
-            compute.SetTexture(0, "_SplatMap", heightMap);
+            compute.SetTexture(0, "_SplatMap", splatMap);
             instancedMaterial.SetTexture("_SplatMap", splatMap);
         }
 
@@ -350,7 +357,7 @@ public class GrassPointScatter : MonoBehaviour
         RecreateDataBuffer();
     }
 
-    void UpdateComputeBuffer(Vector4[] sortedGrassPos)
+    void UpdateComputeBuffer(Vector4[] sortedGrassPos, Vector4[] allGrassColorData)
     {
 
         if (allInstancesPosWSBuffer != null)
@@ -362,8 +369,14 @@ public class GrassPointScatter : MonoBehaviour
             visibleInstancesOnlyPosWSIDBuffer.Release();
         visibleInstancesOnlyPosWSIDBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(uint), ComputeBufferType.Append); //uint only, per visible grass
 
+        if (grassAdditionalDataBuffer != null)
+            grassAdditionalDataBuffer.Release();
+        grassAdditionalDataBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(float) * 4); //uint only, per visible grass
+        grassAdditionalDataBuffer.SetData(allGrassColorData);
+
         compute.SetBuffer(0, "_AllInstancesPosWSBuffer", allInstancesPosWSBuffer);
         compute.SetBuffer(0, "_VisibleInstancesOnlyPosWSIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
+        compute.SetBuffer(0, "_AllInstancesColorDataBuffer", grassAdditionalDataBuffer);
     }
 
     void RecreateArgsBuffer()

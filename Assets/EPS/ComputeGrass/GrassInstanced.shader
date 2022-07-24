@@ -71,12 +71,13 @@ Shader "Unlit/GrassInstanced"
             {
                 #if SHADER_TARGET >= 45
                 float4 data = _PositionBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
+                float4 colorData = _ColorDataBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
 
                     //float rotation = data.w * data.w * _Time.y * 0.5f;
                    // rotate2D(data.xz, rotation);
 
                     unity_ObjectToWorld._11_21_31_41 = float4(_GrassThickness, 0, 0, 0);
-                    unity_ObjectToWorld._12_22_32_42 = float4(0, data.w + 0.5f, 0, 0);
+                    unity_ObjectToWorld._12_22_32_42 = float4(0, colorData.w + 0.5f, 0, 0);
                     unity_ObjectToWorld._13_23_33_43 = float4(0, 0, _GrassThickness, 0);
                     unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
                     unity_WorldToObject = unity_ObjectToWorld;

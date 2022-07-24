@@ -399,6 +399,7 @@ public class GrassPointScatter : MonoBehaviour
     void RecreateDataBuffer()
     {
         instancedMaterial.SetBuffer("_PositionBuffer", allInstancesPosWSBuffer);
+        instancedMaterial.SetBuffer("_ColorDataBuffer", grassAdditionalDataBuffer);
 
         //instancedMaterial.SetBuffer("VisibleIDBuffer", ...);
         //lookup the visible positions using the given ids.

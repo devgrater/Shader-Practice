@@ -65,8 +65,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//cull with splatmap:
 	//compute bounds...
 
-   //if ((rng < -log(absPosCS.w / _MaxDrawDistance)) && (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance))
+   if (hardCull && (rng < -log(absPosCS.w / _MaxDrawDistance)) && (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance))
 		//decay over time:
-		if(hardCull)
 			_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

@@ -117,11 +117,11 @@ Shader "Unlit/GrassInstanced"
                 fixed3 influenceDir = fixed3(xInfluence, 0.01f, zInfluence);
                 influenceDir = normalize(influenceDir) * abs(sign(length(influenceDir)));
                 
-                /*
+                
                 worldPos.x += sin(worldPos.z / 4 + _Time.b) * v.uv.y * 0.1; 
                 worldPos.z += sin(worldPos.x / 3 + _Time.b) * v.uv.y * 0.1; 
                 worldPos.xz += influenceDir.xz * v.uv.y * influenceSample.z;
-                worldPos.y -= v.uv.y * influenceSample.z * 2.0f;*/
+                worldPos.y -= v.uv.y * influenceSample.z * 2.0f;
                 //offset y:
                // worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
                // worldPos.y -= (1 - splatMap.r) * 10 * randomHeight;

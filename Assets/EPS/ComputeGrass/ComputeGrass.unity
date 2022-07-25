@@ -264,7 +264,7 @@ MonoBehaviour:
   meshToMatch: {fileID: 1163825970}
   heightMap: {fileID: 2800000, guid: fd76d69ae7134d6418339c00af2aee9e, type: 3}
   splatMap: {fileID: 2800000, guid: f92f3f3a22dbbdb4a8dca55f8b5dec99, type: 3}
-  heightMapHeight: 72.8
+  heightMapHeight: 70.85
   baseOffset: -29.2
 --- !u!1 &259077291
 GameObject:
@@ -899,7 +899,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1709551538}
   serializedVersion: 8
-  lengthInSec: 0.5
+  lengthInSec: 0.1
   simulationSpeed: 1
   stopAction: 0
   cullingMode: 0
@@ -974,7 +974,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 0.5
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -5605,8 +5605,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1709551538}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 41.1, y: -67.01, z: 87.5}
+  m_LocalRotation: {x: -0, y: 0.6480081, z: -0, w: 0.76163346}
+  m_LocalPosition: {x: 47.7283, y: -67.01, z: 81.86054}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5615,7 +5615,7 @@ Transform:
   - {fileID: 1924945848}
   m_Father: {fileID: 0}
   m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 80.783, z: 0}
 --- !u!1 &1745769803
 GameObject:
   m_ObjectHideFlags: 0

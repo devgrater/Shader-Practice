@@ -54,6 +54,31 @@ public class GrassPointScatter : MonoBehaviour
         //RecalculateGrassCount();
         //if (ScatterGrass())
         //    UpdateAllBuffers();
+
+        Reset();
+    //
+    }
+
+    public GameObject GetMatchedMesh()
+    {
+        return meshToMatch;
+    }
+
+    // Update is called once per frame
+    void LateUpdate()
+    {
+        RecalculateGrassCount();
+        if (ScatterGrass())
+            UpdateAllBuffers();
+        UpdateParameters();
+        CullWithCompute();
+        
+        BatchRenderGrass();
+
+    }
+
+    private void Reset()
+    {
         if (meshToMatch)
         {
             //do something with the mesh...
@@ -78,26 +103,14 @@ public class GrassPointScatter : MonoBehaviour
                 _targetCamera = UnityEditor.SceneView.lastActiveSceneView.camera;
             }
         }
-        setInitialPos = true;
-
-    //
-    }
-
-    // Update is called once per frame
-    void LateUpdate()
-    {
-        RecalculateGrassCount();
-        if (ScatterGrass())
-            UpdateAllBuffers();
-        UpdateParameters();
-        CullWithCompute();
-        
-        BatchRenderGrass();
-        
-        setInitialPos = false;
     }
 
     void OnDisable()
+    {
+        ReleaseAllBuffers();
+    }
+
+    void ReleaseAllBuffers()
     {
         if (argsBuffer != null)
             argsBuffer.Release();

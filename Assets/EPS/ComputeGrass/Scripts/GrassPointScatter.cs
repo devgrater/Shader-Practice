@@ -28,7 +28,6 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private float blockSize = 4;
     [SerializeField] private ComputeShader compute;
 
-    [SerializeField] private Camera playerCamera;
     private Camera _targetCamera;
     private Plane[] cameraFrustumPlanes = new Plane[6];
     private List<int> visibleCellIDList = new List<int>();
@@ -54,15 +53,18 @@ public class GrassPointScatter : MonoBehaviour
         //RecalculateGrassCount();
         //if (ScatterGrass())
         //    UpdateAllBuffers();
-
+        //test
         Reset();
-    //
+        ScatterGrass(true);
+        UpdateAllBuffers();
+        //
     }
 
     public GameObject GetMatchedMesh()
     {
         return meshToMatch;
     }
+
 
     // Update is called once per frame
     void LateUpdate()
@@ -72,13 +74,14 @@ public class GrassPointScatter : MonoBehaviour
             UpdateAllBuffers();
         UpdateParameters();
         CullWithCompute();
-        
+
         BatchRenderGrass();
 
     }
 
     private void Reset()
     {
+        ReleaseAllBuffers();
         if (meshToMatch)
         {
             //do something with the mesh...
@@ -94,10 +97,11 @@ public class GrassPointScatter : MonoBehaviour
             origin = transform.position;
         }
 
-        _targetCamera = playerCamera;
+        _targetCamera = Camera.main;
         if (!Application.isPlaying)
         {
-            if (UnityEditor.SceneView.lastActiveSceneView.camera != null)
+            SceneView latest = UnityEditor.SceneView.lastActiveSceneView;
+            if (latest != null && latest != null)
             {
                 cullRange = 1000;
                 _targetCamera = UnityEditor.SceneView.lastActiveSceneView.camera;
@@ -134,9 +138,9 @@ public class GrassPointScatter : MonoBehaviour
         calculatedCount = Mathf.CeilToInt(planeSizeX * planeSizeZ * Mathf.Max(density, 1.0f));
     }
 
-    bool ScatterGrass()
+    bool ScatterGrass(bool force = false)
     {
-        if (calculatedCount == cacheCount)
+        if (calculatedCount == cacheCount && !force)
             return false;
         //how many blocks are there?
 
@@ -166,7 +170,7 @@ public class GrassPointScatter : MonoBehaviour
             int xID = Mathf.Min(cellCountX - 1, Mathf.FloorToInt(Mathf.InverseLerp(minX, maxX, pos.x) * cellCountX)); //use min to force within 0~[cellCountX-1]  
             int zID = Mathf.Min(cellCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(minZ, maxZ, pos.z) * cellCountZ)); //use min to force within 0~[cellCountZ-1]
 
-            
+
             allGrassPos.Add(new Vector4(pos.x, pos.y, pos.z, Random.Range(0, 1)));
             cellPosWSsList[xID + zID * cellCountX].Add(pos);
         }
@@ -195,13 +199,18 @@ public class GrassPointScatter : MonoBehaviour
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
         renderBound.SetMinMax(origin - new Vector3(planeSizeX, baseOffset, planeSizeZ), origin + new Vector3(planeSizeX, baseOffset, planeSizeZ));
-        instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
+        
+        if(grassInfluenceRT && grassRTCamera)
+        {
+            instancedMaterial.SetTexture("_GrassInfluence", grassInfluenceRT);
 
-        float minX, maxX, minZ, maxZ;
-        GetCameraBounds(out minX, out maxX, out minZ, out maxZ);
-        instancedMaterial.SetVector("_InfluenceBounds", 
-            new Vector4(minX, maxX, minZ, maxZ)
-        );
+            float minX, maxX, minZ, maxZ;
+            GetCameraBounds(out minX, out maxX, out minZ, out maxZ);
+            instancedMaterial.SetVector("_InfluenceBounds",
+                new Vector4(minX, maxX, minZ, maxZ)
+            );
+        }
+
         instancedMaterial.SetBuffer("_VisibleInstanceOnlyTransformIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
         Graphics.DrawMeshInstancedIndirect(GetGrassMeshCache(), 0, instancedMaterial, renderBound, argsBuffer);
     }
@@ -211,16 +220,19 @@ public class GrassPointScatter : MonoBehaviour
     //                  HELPER FUNCTION                           //
     ////////////////////////////////////////////////////////////////
 
-    void UpdateParameters(){
-        
-        if(heightMap){
+    void UpdateParameters()
+    {
+
+        if (heightMap)
+        {
             compute.SetTexture(0, "_HeightMap", heightMap);
             compute.SetBool("_SetInitialPos", setInitialPos);
             compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
             instancedMaterial.SetTexture("_HeightMap", heightMap);
             instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
         }
-        if(splatMap){
+        if (splatMap)
+        {
             compute.SetTexture(0, "_SplatMap", splatMap);
             instancedMaterial.SetTexture("_SplatMap", splatMap);
         }
@@ -233,7 +245,7 @@ public class GrassPointScatter : MonoBehaviour
 
     void CullWithCompute()
     {
-        
+
         Matrix4x4 v = _targetCamera.worldToCameraMatrix;
         Matrix4x4 p = _targetCamera.projectionMatrix;
         Matrix4x4 vp = p * v;
@@ -257,14 +269,14 @@ public class GrassPointScatter : MonoBehaviour
 
         for (int i = 0; i < cellPosWSsList.Length; i++)
         {
-           
+
             //create cell bound
             Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, origin.y, i / cellCountX + 0.5f);
             centerPosWS.x = Mathf.Lerp(minX, maxX, centerPosWS.x / cellCountX);
             centerPosWS.z = Mathf.Lerp(minZ, maxZ, centerPosWS.z / cellCountZ);
             Vector3 sizeWS = new Vector3(blockSize, -baseOffset, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
             Bounds cellBound = new Bounds(centerPosWS, sizeWS);
-            
+
 
             if (GeometryUtility.TestPlanesAABB(cameraFrustumPlanes, cellBound))
             {
@@ -418,6 +430,34 @@ public class GrassPointScatter : MonoBehaviour
         //lookup the visible positions using the given ids.
     }
 
+    ////////////////////////////////////////////////////////////////
+    //                  CONTROL FROM SCRIPTS                      //
+    ////////////////////////////////////////////////////////////////
+    public void SetDimensions(float psx, float psz)
+    {
+        this.planeSizeX = psx;
+        this.planeSizeZ = psz;
+    }
 
+    public float GetPlaneSizeX()
+    {
+        return this.planeSizeX;
+    }
+
+    public float GetPlaneSizeZ()
+    {
+        return this.planeSizeZ;
+
+    }
+
+    public void AttachToMesh(GameObject gameObject)
+    {
+        this.meshToMatch = gameObject;
+    }
+
+    public void SetComputeShader(ComputeShader cs)
+    {
+        this.compute = cs; 
+    }
 
 }

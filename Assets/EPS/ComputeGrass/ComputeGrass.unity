@@ -5876,6 +5876,8 @@ MonoBehaviour:
       PublicKeyToken=null
   - assemblyQualifiedName: Daynight, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+  - assemblyQualifiedName: ExponentialHeightFog, Assembly-CSharp, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
 --- !u!114 &1924945846
 MonoBehaviour:
   m_ObjectHideFlags: 0

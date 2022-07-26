@@ -33,6 +33,8 @@ public class GrassPainter : EditorWindow
             if (!hasCreatedScatter)
             {
                 //create scatter;
+                GameObject empty = new GameObject();
+                empty.AddComponent<GrassPointScatter>();
             }
         }
         

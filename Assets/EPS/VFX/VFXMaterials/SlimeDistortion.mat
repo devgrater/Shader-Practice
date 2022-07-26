@@ -1,0 +1,177 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SlimeDistortion
+  m_Shader: {fileID: 4800000, guid: 65660bccea8c50e4eb9db3350b292419, type: 3}
+  m_ValidKeywords:
+  - _AIRDISTORTIONSWITCH1_ON
+  - _CUSTOM2XYKEY_PARTICLE
+  - _FRESNELKEY_OFF
+  - _IF_MODEDEPTHFADE1_ON
+  - _MASKCUSTOMDATAKEY2_OFF
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3100
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AirDistortionTex:
+        m_Texture: {fileID: 2800000, guid: c5ba943ef187ffe48a5af01fa63c8f37, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DestortionTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DissolveTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex02:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VertexOffsetTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _tex4coord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _tex4coord2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _tex4coord3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AirDistortionSwitch1: 1
+    - _AirDistortionTexRotate: 0
+    - _AirDistortionTex_U1: 0
+    - _AirDistortionTex_V1: 0
+    - _AirDistortion_Intensity1: 4
+    - _BumpScale: 1
+    - _CullMode: 2
+    - _Custom2xyKey: 1
+    - _Cutoff: 0.5
+    - _DepthFade: 0
+    - _DestortionIntensity: 0
+    - _DestortionTexRotate: 0
+    - _DestortionTex_U1: 0
+    - _DestortionTex_V1: 0
+    - _DestortionToVertexOffset: 0
+    - _DetailNormalMapScale: 1
+    - _DissolveIntensityCustom1z: 0.649
+    - _DissolveTex_U1: 0
+    - _DissolveTex_V1: 0
+    - _DissolveTexrotate: 180
+    - _Dst: 10
+    - _DstBlend: 0
+    - _FresnelKey: 0
+    - _FresnelPower: 2
+    - _FresnelScale: 1
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _LineWidth: 0
+    - _MainTexToDissolve1: 0
+    - _MainTex_U: 0
+    - _MainTex_V: 0
+    - _Maintexrotate: 0
+    - _MaskCustomDataKey2: 1
+    - _MaskTex02_U1: 0
+    - _MaskTex02_V1: 0
+    - _MaskTex_U1: 0
+    - _MaskTex_V1: 0
+    - _MaskTexrotate1: 0
+    - _MaskTexrotate2: 0
+    - _Metallic: 0
+    - _Mode: 0
+    - _ModeFresnel_Bias1: 0
+    - _ModeFresnel_Power1: 0
+    - _ModeFresnel_Scale1: 1
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _SmoothnessTextureChannel: 0
+    - _SoftaDissolve: 1
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _Tile1: 0
+    - _Tile2: 0
+    - _Tile3: 0
+    - _UVSec: 0
+    - _VertexOffsetIntensity: 0
+    - _VertexOffsetTexRotate: 0
+    - _VertexOffsetTex_U1: 0
+    - _VertexOffsetTex_V1: 0
+    - _ZWrite: 0
+    - __dirty: 1
+    - _if_ModeDepthFade1: 1
+    - _transparentforR: 0
+    - _transparentforR1: 0
+    - _transparentforR2: 0
+    m_Colors:
+    - _Color: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
+    - _DissolveLineColor: {r: 64, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FresnelColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Gradation: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []

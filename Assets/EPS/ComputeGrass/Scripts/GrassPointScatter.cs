@@ -493,12 +493,16 @@ public class GrassPointScatter : MonoBehaviour
         if (!heightInfo)
         {
             //Blit heightmap:
+            Shader s = Shader.Find("Hidden/BlitHeightMap");
+            Material m = new Material(s);
+            RenderTexture rt = RenderTexture.GetTemporary(1024, 1024, 0, RenderTextureFormat.ARGB32);
+            m.SetTexture("_TargetTex", heightMap);
+            Graphics.Blit(heightMap, rt, m);
+
             Texture2D heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
-            Color c = new Color(0.0f, 0.0f, 0.0f, 1.0f);
-            Color[] pixels = Enumerable.Repeat(c, Screen.width * Screen.height).ToArray();
-            heightInfoTexture.SetPixels(pixels);
-            heightInfoTexture.Apply();
+            Graphics.CopyTexture(rt, heightInfoTexture);
             heightInfo = heightInfoTexture;
+            //rt.Release();
         }
         
         if (meshToMatch && meshToMatch.GetComponent<Renderer>())
@@ -507,7 +511,6 @@ public class GrassPointScatter : MonoBehaviour
             meshToMatch.GetComponent<Renderer>().SetPropertyBlock(mpb);
             
         }
-        
         return heightInfo;
     }
 

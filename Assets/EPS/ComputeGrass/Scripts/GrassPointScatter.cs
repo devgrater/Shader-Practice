@@ -38,6 +38,9 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private float heightMapHeight;
     [SerializeField] private float baseOffset;
 
+    [SerializeField] private Texture colorInfo;
+    [SerializeField] private Texture heightInfo;
+
     private bool setInitialPos = true;
 
     private float cullRange = 200;
@@ -46,6 +49,8 @@ public class GrassPointScatter : MonoBehaviour
     private int cellCountX;
     private int cellCountZ;
     private Vector3 origin;
+
+    private MaterialPropertyBlock mpb;
 
     // Start is called before the first frame update
     void OnEnable()
@@ -81,12 +86,14 @@ public class GrassPointScatter : MonoBehaviour
 
     private void Reset()
     {
+        mpb = new MaterialPropertyBlock();
         ReleaseAllBuffers();
         if (meshToMatch)
         {
             //do something with the mesh...
             Renderer meshRenderer = meshToMatch.GetComponent<Renderer>();
             Bounds b = meshRenderer.bounds;
+            meshRenderer.GetPropertyBlock(mpb);
             origin = b.center;
             origin.y = b.max.y;
             planeSizeX = b.extents.x;
@@ -363,7 +370,7 @@ public class GrassPointScatter : MonoBehaviour
         maxZ = cameraBounds.z + camSize;
     }
 
-    void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
+    public void GetGrassBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
         float boundSizeX = planeSizeX;
         //Vector3 origin = origin;
@@ -460,4 +467,47 @@ public class GrassPointScatter : MonoBehaviour
         this.compute = cs; 
     }
 
+    public void GenerateStarterTexture()
+    {
+        
+        Texture heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+        
+        heightInfo = heightInfoTexture;
+    }
+
+
+    public Texture GetColorInfoTexture()
+    {
+        if (!colorInfo)
+        {
+            Texture colorInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            colorInfo = colorInfoTexture;
+        }
+        return colorInfo;
+    }
+
+    public Texture GetHeightInfoTexture()
+    {
+        if (!heightInfo)
+        {
+            Texture heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            heightInfo = heightInfoTexture;
+        }
+        
+        if (meshToMatch && meshToMatch.GetComponent<Renderer>())
+        {
+            mpb.SetTexture("_MainTex", heightInfo);
+            meshToMatch.GetComponent<Renderer>().SetPropertyBlock(mpb);
+        }
+        return heightInfo;
+    }
+
+    public Vector2 ConvertToUVSpace(Vector3 input)
+    {
+        float minX, maxX, minZ, maxZ;
+        GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
+        float uvx = (input.x - minX) / (maxX - minX);
+        float uvz = (input.z - minZ) / (maxZ - minZ);
+        return new Vector2(uvx, uvz);
+    }
 }

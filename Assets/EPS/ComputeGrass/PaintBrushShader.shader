@@ -1,4 +1,4 @@
-Shader "Hidden/PaintBrushShader"
+Shader "Hidden/GrassPaint/PaintBrushShader"
 {
     Properties
     {
@@ -12,17 +12,19 @@ Shader "Hidden/PaintBrushShader"
 
         Pass
         {
+            Name "HeightPainting"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
             #include "UnityCG.cginc"
 
-            
-        float4 _BrushSettings; //xy - mouse coordinates, z - brush radius, w - aspect ratio
-        float4 _BrushColor; // 0 - nothing (no mouse press)
-        sampler2D _BrushStroke;
-        int _UseCustomStroke;
+            float4 _MouseInfo; //xy - mouse coordinates, z - aspect ratio, w - rotation (not used yet!)
+            float4 _BrushSettings; //x - brush size, y - softness, z - strength, w - is reverse
+            float4 _BrushColor; // 0 - nothing (no mouse press)
+            float4 _ActiveChannel;
+            sampler2D _BrushStroke;
+            int _UseCustomStroke;
 
             struct appdata
             {
@@ -51,14 +53,31 @@ Shader "Hidden/PaintBrushShader"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // just invert the colors
 
+                //finding the sdfs:
+
                 //compute stroke uv:
-                float2 distanceXY = _BrushSettings.xy - i.uv;
+                float2 hardDistance =  _MouseInfo.xy - i.uv;//circle sdf (reversed)
+                hardDistance.x *= _MouseInfo.z;
+                fixed distanceFromCenter = length(hardDistance);
+                fixed baseSDF = _BrushSettings.x - distanceFromCenter;
+
+                fixed smoothnessBounds = (1.0 - _BrushSettings.y) * _BrushSettings.x;
+                fixed alpha = saturate(distanceFromCenter - _BrushSettings.x * _BrushSettings.y);
+                alpha /= smoothnessBounds;
+                alpha = saturate(1 - alpha);
+                alpha *= _BrushSettings.z * _BrushSettings.w;
+                //float2 softnessDistance =  _MouseInfo.xy - i.uv;
+                //softnessDistance.x *= _MouseInfo.z;
+                //fixed softnessSDF = saturate(_BrushSettings.y * _BrushSettings.x - length(softnessDistance));
+                //fixed circle = saturate(sign(baseSDF));
+
+                //fixed smoothCircle = lerp(0.0, )
 
                 
 
 
                 //col.rgb = 1 - col.rgb;
-                return col;
+                return lerp(col, 0.0, alpha);//saturate(col + circle * _BrushSettings.w);
             }
             ENDCG
         }

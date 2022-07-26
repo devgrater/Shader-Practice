@@ -20,16 +20,29 @@ public class GrassPainter : EditorWindow
         COLOR,
         DENSITY,
         HEIGHT,
-        FREEROAM
+        FREEROAM,
+        CALIBRATION
     }
+
+    private enum CalibrationMode
+    {
+        BASE,
+        HEIGHT,
+        NONE
+    }
+
     static GameObject target;
     static GrassPointScatter targetScatter;
     static float brushSize = 4.0f;
     static float brushSoftness = 0.5f;
     static float brushStrength = 0.5f;
+    static float brushValue = 0.5f;
+   
     static Texture targetColorInfo;
     static Texture targetHeightInfo;
     static PaintMode currentPaintMode = PaintMode.FREEROAM;
+    static CalibrationMode currentCalibrationMode = CalibrationMode.NONE;
+    static bool isSetColorsMode = false;
     static Color brushColor;
 
     static Shader paintBrushShader;
@@ -92,7 +105,7 @@ public class GrassPainter : EditorWindow
             targetColorInfo = targetScatter.GetColorInfoTexture();
             targetHeightInfo = targetScatter.GetHeightInfoTexture();
         }
-
+        
         if (target)
         {
             GUILayout.Label("  II. 刷草信息载入", header);
@@ -105,33 +118,40 @@ public class GrassPainter : EditorWindow
             GUILayout.Label("  III. 快乐刷草人", header);
             GUILayout.Label("    调整笔刷，然后开始刷草吧！");
             EditorGUILayout.BeginHorizontal();
-            if(GUILayout.Toggle(currentPaintMode == PaintMode.DENSITY, "模式：草地数量", "Button"))
+            if(GUILayout.Toggle(currentPaintMode == PaintMode.DENSITY, "绘制：草地数量", "Button"))
                 currentPaintMode = PaintMode.DENSITY;
-            if (GUILayout.Toggle(currentPaintMode == PaintMode.COLOR, "模式：草地染色", "Button"))
-                currentPaintMode = PaintMode.COLOR;
-            if (GUILayout.Toggle(currentPaintMode == PaintMode.HEIGHT, "模式：草地高矮", "Button"))
+            if (GUILayout.Toggle(currentPaintMode == PaintMode.HEIGHT, "绘制：草地高矮", "Button"))
                 currentPaintMode = PaintMode.HEIGHT;
-            if (GUILayout.Toggle(currentPaintMode == PaintMode.FREEROAM, "模式：关闭", "Button"))
+            if (GUILayout.Toggle(currentPaintMode == PaintMode.COLOR, "绘制：草地染色", "Button"))
+                currentPaintMode = PaintMode.COLOR;
+            
+            if (GUILayout.Toggle(currentPaintMode == PaintMode.FREEROAM, "关闭绘制功能", "Button"))
                 currentPaintMode = PaintMode.FREEROAM;
             EditorGUILayout.EndHorizontal();
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Toggle(isSetColorsMode, "绘制模式：设置颜色", "Button"))
+                isSetColorsMode = true;
+            if (GUILayout.Toggle(!isSetColorsMode, "绘制模式：叠加颜色", "Button"))
+                isSetColorsMode = false;
+            EditorGUILayout.EndHorizontal();
             brushSize = EditorGUILayout.Slider("画笔大小([]键更改)", brushSize, 0, 100);
-            brushSoftness = EditorGUILayout.Slider("画笔硬度(Shift+[]键更改)", brushSoftness, 0, 1);
+            brushSoftness = EditorGUILayout.Slider("画笔硬度(Shift []键更改)", brushSoftness, 0, 1);
             brushStrength = EditorGUILayout.Slider("画笔强度(+-键更改)", brushStrength, 0, 1);
+            brushValue = EditorGUILayout.Slider("画笔数值(Shift +-键更改)", brushValue, 0, 1);
             if(currentPaintMode != PaintMode.FREEROAM)
             {
                 int controlId = GUIUtility.GetControlID(FocusType.Passive);
                 GUIUtility.hotControl = controlId;
             }
-            if (currentPaintMode == PaintMode.COLOR)
-            {
-                //color slider:
-                brushColor = EditorGUILayout.ColorField("画笔颜色", brushColor);
-            }
+            //color slider:
+            brushColor = EditorGUILayout.ColorField("画笔颜色(仅染色模式生效)", brushColor);
            
 
         }
 
     }
+
+    private PaintMode previousPaintMode;
 
     public void OnSceneView(SceneView sceneview)
     {
@@ -146,7 +166,7 @@ public class GrassPainter : EditorWindow
         */
         Event e = Event.current;
         HandleBrushTweak(e);
-        if (!target) return;
+        if (!target || currentPaintMode == PaintMode.FREEROAM) return;
 
 
 
@@ -163,7 +183,6 @@ public class GrassPainter : EditorWindow
             {
                 Handles.DrawWireDisc(hitInfo.point, hitInfo.normal, brushSize);
                 Handles.DrawWireDisc(hitInfo.point, hitInfo.normal, Mathf.Clamp(brushSoftness, 0.01f, 0.99f) * brushSize);
-                Handles.color = Color.white;
                 if (e.type == EventType.MouseDrag || e.type == EventType.MouseDown)
                 {
                     if (e.button == 0)
@@ -172,10 +191,18 @@ public class GrassPainter : EditorWindow
                         GUIUtility.hotControl = controlId;
                         e.Use();
                         //HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-                        HandleDrawing(hitInfo.point, e.shift?-1.0f:1.0f);
-                        
+                        HandleDrawing(hitInfo.point, e.shift ? -1.0f : 1.0f);
                     }
                 }
+                /*
+                if(e.type == EventType.MouseDown && e.button != 0)
+                {
+                    currentPaintMode = previousPaintMode;
+                    int controlId = GUIUtility.GetControlID(FocusType.Passive);
+                    GUIUtility.hotControl = controlId;
+                    e.Use();
+                    //HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+                }*/
             }
         }
 
@@ -206,13 +233,41 @@ public class GrassPainter : EditorWindow
         float scaledBrushSize = brushSize / (maxZ - minZ);
         Vector4 brushSettingsBundle = new Vector4(scaledBrushSize, brushSoftness, brushStrength, reverseInfo);
 
+        Vector4 paintChannelBundle = new Vector4(
+            0.0f, currentPaintMode == PaintMode.DENSITY ? 1.0f : 0.0f,
+            currentPaintMode == PaintMode.HEIGHT ? 1.0f : 0.0f, 0.0f
+        );
+
         paintBrushMaterial.SetVector("_MouseInfo", mouseInfoBundle);
         paintBrushMaterial.SetVector("_BrushSettings", brushSettingsBundle);
+        paintBrushMaterial.SetVector("_ActiveChannel", paintChannelBundle);
+
+        Texture activeContext;
+
+        int passId = 1;
+        Color c;
+        if (currentPaintMode == PaintMode.COLOR)
+        {
+            activeContext = targetColorInfo;
+            c = brushColor;
+            passId = 2;
+        }
+        else
+        {
+            activeContext = targetHeightInfo;
+            c = new Color(brushValue, brushValue, brushValue, 1.0f);
+            if (isSetColorsMode)
+                passId = 0;
+        }
+        paintBrushMaterial.SetVector("_BrushColor", c);
+
+
 
         //argetHeightInfo.
         blitBuffer = RenderTexture.GetTemporary(1024, 1024, 0, RenderTextureFormat.ARGB32);//new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
-        Graphics.Blit(targetHeightInfo, blitBuffer, paintBrushMaterial);
-        Graphics.CopyTexture(blitBuffer, targetHeightInfo);
+        //                                                                     use color pass if we in color mode. shift work as removing color (setting to 0)
+        Graphics.Blit(activeContext, blitBuffer, paintBrushMaterial, passId);
+        Graphics.CopyTexture(blitBuffer, activeContext);
         //blitBuffer.Release();
     }
 
@@ -252,15 +307,31 @@ public class GrassPainter : EditorWindow
                     //fall thru
                     goto case KeyCode.KeypadPlus;
                 case KeyCode.KeypadPlus:
-                    brushStrength += 0.05f;
-                    brushStrength = Mathf.Min(brushStrength, 1.0f);
+                    if (e.shift)
+                    {
+                        brushValue += 0.05f;
+                        brushValue = Mathf.Min(brushValue, 1.0f);
+                    }
+                    else
+                    {
+                        brushStrength += 0.05f;
+                        brushStrength = Mathf.Min(brushStrength, 1.0f);
+                    }
                     break;
                 case KeyCode.Minus:
                     //fall thru
                     goto case KeyCode.KeypadMinus;
                 case KeyCode.KeypadMinus:
-                    brushStrength -= 0.05f;
-                    brushStrength = Mathf.Max(brushStrength, 0.0f);
+                    if (e.shift)
+                    {
+                        brushValue -= 0.05f;
+                        brushValue = Mathf.Max(brushValue, 0.0f);
+                    }
+                    else
+                    {
+                        brushStrength -= 0.05f;
+                        brushStrength = Mathf.Max(brushStrength, 0.0f);
+                    }
                     break;
                 case KeyCode.Escape:
                     HandleUtility.Repaint();

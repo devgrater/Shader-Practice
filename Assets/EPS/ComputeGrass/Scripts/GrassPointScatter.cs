@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Linq;
 
 [ExecuteAlways]
 public class GrassPointScatter : MonoBehaviour
@@ -37,9 +38,10 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private Texture splatMap;
     [SerializeField] private float heightMapHeight;
     [SerializeField] private float baseOffset;
+    [SerializeField] private float baseHeight;
 
-    [SerializeField] private Texture colorInfo;
-    [SerializeField] private Texture heightInfo;
+    [SerializeField] private Texture2D colorInfo;
+    [SerializeField] private Texture2D heightInfo;
 
     private bool setInitialPos = true;
 
@@ -470,7 +472,7 @@ public class GrassPointScatter : MonoBehaviour
     public void GenerateStarterTexture()
     {
         
-        Texture heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+        Texture2D heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
         
         heightInfo = heightInfoTexture;
     }
@@ -480,7 +482,7 @@ public class GrassPointScatter : MonoBehaviour
     {
         if (!colorInfo)
         {
-            Texture colorInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            Texture2D colorInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
             colorInfo = colorInfoTexture;
         }
         return colorInfo;
@@ -490,7 +492,12 @@ public class GrassPointScatter : MonoBehaviour
     {
         if (!heightInfo)
         {
-            Texture heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            //Blit heightmap:
+            Texture2D heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            Color c = new Color(0.0f, 0.0f, 0.0f, 1.0f);
+            Color[] pixels = Enumerable.Repeat(c, Screen.width * Screen.height).ToArray();
+            heightInfoTexture.SetPixels(pixels);
+            heightInfoTexture.Apply();
             heightInfo = heightInfoTexture;
         }
         
@@ -498,7 +505,9 @@ public class GrassPointScatter : MonoBehaviour
         {
             mpb.SetTexture("_MainTex", heightInfo);
             meshToMatch.GetComponent<Renderer>().SetPropertyBlock(mpb);
+            
         }
+        
         return heightInfo;
     }
 
@@ -510,4 +519,22 @@ public class GrassPointScatter : MonoBehaviour
         float uvz = (input.z - minZ) / (maxZ - minZ);
         return new Vector2(uvx, uvz);
     }
+
+    public void SetBase(Vector3 pos)
+    {
+        //calculate difference
+        baseOffset = pos.y - origin.y;
+    }
+
+    public void SetHeight(Vector3 pos)
+    {
+        baseHeight = pos.y - origin.y;
+    }
+
+    public Vector3 GetOrigin()
+    {
+        return this.origin;
+    }
+
+
 }

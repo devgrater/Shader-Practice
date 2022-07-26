@@ -9,11 +9,8 @@ Shader "Hidden/GrassPaint/PaintBrushShader"
         // No culling or depth
         Cull Off ZWrite Off ZTest Always
 
-
-        Pass
-        {
-            Name "HeightPainting"
-            CGPROGRAM
+        CGINCLUDE
+            
             #pragma vertex vert
             #pragma fragment frag
 
@@ -24,6 +21,7 @@ Shader "Hidden/GrassPaint/PaintBrushShader"
             float4 _BrushColor; // 0 - nothing (no mouse press)
             float4 _ActiveChannel;
             sampler2D _BrushStroke;
+            sampler2D _MainTex;
             int _UseCustomStroke;
 
             struct appdata
@@ -46,8 +44,96 @@ Shader "Hidden/GrassPaint/PaintBrushShader"
                 return o;
             }
 
-            sampler2D _MainTex;
+        ENDCG
 
+        Pass
+        {
+            Name "HeightPaintingSet"
+            CGPROGRAM
+
+            fixed4 frag (v2f i) : SV_Target
+            {
+                fixed4 col = tex2D(_MainTex, i.uv);
+                // just invert the colors
+
+                //finding the sdfs:
+
+                //compute stroke uv:
+                float2 hardDistance =  _MouseInfo.xy - i.uv;//circle sdf (reversed)
+                hardDistance.x *= _MouseInfo.z;
+                fixed distanceFromCenter = length(hardDistance);
+                fixed baseSDF = _BrushSettings.x - distanceFromCenter;
+
+                fixed smoothnessBounds = (1.0 - _BrushSettings.y) * _BrushSettings.x;
+                fixed alpha = saturate(distanceFromCenter - _BrushSettings.x * _BrushSettings.y);
+                alpha /= smoothnessBounds;
+                alpha = saturate(1 - alpha);
+                alpha *= _BrushSettings.z;
+                //float2 softnessDistance =  _MouseInfo.xy - i.uv;
+                //softnessDistance.x *= _MouseInfo.z;
+                //fixed softnessSDF = saturate(_BrushSettings.y * _BrushSettings.x - length(softnessDistance));
+                //fixed circle = saturate(sign(baseSDF));
+
+                //fixed smoothCircle = lerp(0.0, )
+
+                
+
+
+                //col.rgb = 1 - col.rgb;
+                col.g = saturate(lerp(col.g, _BrushColor.g, alpha * _ActiveChannel.g));
+                col.b = saturate(lerp(col.b, _BrushColor.b, alpha * _ActiveChannel.b));
+                return saturate(col);//saturate(lerp(col, _BrushColor, alpha));//saturate(col + circle * _BrushSettings.w);
+            }
+            ENDCG
+        }
+
+        Pass
+        {
+
+            Name "HeightPaintingAdd"
+            CGPROGRAM
+
+            fixed4 frag (v2f i) : SV_Target
+            {
+                fixed4 col = tex2D(_MainTex, i.uv);
+                // just invert the colors
+
+                //finding the sdfs:
+
+                //compute stroke uv:
+                float2 hardDistance =  _MouseInfo.xy - i.uv;//circle sdf (reversed)
+                hardDistance.x *= _MouseInfo.z;
+                fixed distanceFromCenter = length(hardDistance);
+                fixed baseSDF = _BrushSettings.x - distanceFromCenter;
+
+                fixed smoothnessBounds = (1.0 - _BrushSettings.y) * _BrushSettings.x;
+                fixed alpha = saturate(distanceFromCenter - _BrushSettings.x * _BrushSettings.y);
+                alpha /= smoothnessBounds;
+                alpha = saturate(1 - alpha);
+                alpha *= _BrushSettings.z * _BrushSettings.w;
+                //float2 softnessDistance =  _MouseInfo.xy - i.uv;
+                //softnessDistance.x *= _MouseInfo.z;
+                //fixed softnessSDF = saturate(_BrushSettings.y * _BrushSettings.x - length(softnessDistance));
+                //fixed circle = saturate(sign(baseSDF));
+
+                //fixed smoothCircle = lerp(0.0, )
+
+                
+
+                col.g = saturate(col.g + _BrushColor.g * alpha * _ActiveChannel.g);
+                col.b = saturate(col.b + _BrushColor.b * alpha * _ActiveChannel.b);
+                return saturate(col);
+                //col.rgb = 1 - col.rgb;
+                //return lerp(col, _BrushColor, alpha);//saturate(col + circle * _BrushSettings.w);
+            }
+            ENDCG
+        }
+
+        Pass
+        {
+            Name "ColorPainting"
+            CGPROGRAM
+            
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
@@ -77,7 +163,7 @@ Shader "Hidden/GrassPaint/PaintBrushShader"
 
 
                 //col.rgb = 1 - col.rgb;
-                return lerp(col, 0.0, alpha);//saturate(col + circle * _BrushSettings.w);
+                return lerp(col, _BrushColor, alpha);//saturate(col + circle * _BrushSettings.w);
             }
             ENDCG
         }

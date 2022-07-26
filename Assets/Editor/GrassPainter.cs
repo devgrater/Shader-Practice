@@ -38,8 +38,8 @@ public class GrassPainter : EditorWindow
     static float brushStrength = 0.5f;
     static float brushValue = 0.5f;
    
-    static Texture targetColorInfo;
-    static Texture targetHeightInfo;
+    static Texture2D targetColorInfo;
+    static Texture2D targetHeightInfo;
     static PaintMode currentPaintMode = PaintMode.FREEROAM;
     static CalibrationMode currentCalibrationMode = CalibrationMode.NONE;
     static bool isSetColorsMode = false;

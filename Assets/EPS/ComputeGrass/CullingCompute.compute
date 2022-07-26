@@ -14,6 +14,7 @@ SamplerState sampler_SplatMap;
 float2 _HeightControl;
 float4 _GrassBounds;
 int _SetInitialPos;
+int _EditorMode;
 
 
 RWStructuredBuffer<float4> _AllInstancesPosWSBuffer; //will not change until instance count change
@@ -40,28 +41,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//if instance is inside camera frustum, and is within draw distance, we append it to _VisibleInstanceOnlyTransformBuffer
 	//y test allow 50% more threshold (hardcode for grass)
 	//x test allow 10% more threshold (hardcode for grass)
-
+		//compute height map space uv:
+	//assuming that the heightmap never rotates:
+	float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
+	float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
+	//sample height map:
+	float2 uvs = saturate(float2(heightMapSpaceUVX, heightMapSpaceUVZ));
 	float rng = PseudoRandom(worldPos.xz);
+	float4 heightInfo = _HeightMap.SampleLevel(sampler_HeightMap, uvs, 0).xyzw;
+	float4 colorInfo = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
 	if(randomHeight == 0.0f){
 
 	
-		//compute height map space uv:
-		//assuming that the heightmap never rotates:
-		float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
-		float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
-		//sample height map:
-		float2 uvs = saturate(float2(heightMapSpaceUVX, heightMapSpaceUVZ));
 
-		float4 heightInfo = _HeightMap.SampleLevel(sampler_HeightMap, uvs, 0).xyzw;
+
+		
 		worldPos.y += _HeightControl.x + heightInfo.r * _HeightControl.y;
 		_AllInstancesPosWSBuffer[id.x + _StartOffset].xyz = worldPos;
-		_AllInstancesColorDataBuffer[id.x + _StartOffset].w = 0.4f + 0.6f * rng;
+		_AllInstancesColorDataBuffer[id.x + _StartOffset].w = (0.4f + 0.6f * rng);
 
 		//sample splatmap:
-		float4 splatmap = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
-		hardCull = rng < smoothstep(0.1, 1.0, splatmap.r);
-		_AllInstancesPosWSBuffer[id.x + _StartOffset].w = hardCull;
+		
 	}
+	
+	//float4 splatmap = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
+	hardCull = rng < smoothstep(0.1, 1.0, heightInfo.g);
+	_AllInstancesPosWSBuffer[id.x + _StartOffset].w = hardCull;
+
 	//cull with splatmap:
 	//compute bounds...
 

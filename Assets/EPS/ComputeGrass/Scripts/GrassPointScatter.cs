@@ -234,10 +234,10 @@ public class GrassPointScatter : MonoBehaviour
 
         if (heightMap)
         {
-            compute.SetTexture(0, "_HeightMap", heightMap);
+            compute.SetTexture(0, "_HeightMap", GetHeightInfoTexture());
             compute.SetBool("_SetInitialPos", setInitialPos);
             compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
-            instancedMaterial.SetTexture("_HeightMap", heightMap);
+            instancedMaterial.SetTexture("_HeightMap", GetHeightInfoTexture());
             instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
         }
         if (splatMap)
@@ -245,7 +245,7 @@ public class GrassPointScatter : MonoBehaviour
             compute.SetTexture(0, "_SplatMap", splatMap);
             instancedMaterial.SetTexture("_SplatMap", splatMap);
         }
-
+        compute.SetInt("_EditorMode", Application.isPlaying ? 0 : 1);
         float minX, maxX, minZ, maxZ;
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
         compute.SetVector("_GrassBounds", new Vector4(minX, maxX, minZ, maxZ));
@@ -478,7 +478,7 @@ public class GrassPointScatter : MonoBehaviour
     }
 
 
-    public Texture GetColorInfoTexture()
+    public Texture2D GetColorInfoTexture()
     {
         if (!colorInfo)
         {
@@ -488,7 +488,7 @@ public class GrassPointScatter : MonoBehaviour
         return colorInfo;
     }
 
-    public Texture GetHeightInfoTexture()
+    public Texture2D GetHeightInfoTexture()
     {
         if (!heightInfo)
         {
@@ -539,5 +539,12 @@ public class GrassPointScatter : MonoBehaviour
         return this.origin;
     }
 
+    public void SetTextures(Texture2D cif, Texture2D hif)
+    {
+        splatMap = cif;
+        heightMap = hif;
+    }
+
 
 }
+

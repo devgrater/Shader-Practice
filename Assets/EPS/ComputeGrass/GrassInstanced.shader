@@ -42,7 +42,7 @@ Shader "Unlit/GrassInstanced"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 pos : SV_POSITION;
-
+                float4 colorData : TEXCOORD2;
             };
 
             #if SHADER_TARGET >= 45
@@ -71,7 +71,7 @@ Shader "Unlit/GrassInstanced"
             {
                 #if SHADER_TARGET >= 45
                 float4 data = _PositionBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
-                float4 colorData = _ColorDataBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
+                fixed4 colorData = _ColorDataBuffer[_VisibleInstanceOnlyTransformIDBuffer[instanceID]];
 
                     //float rotation = data.w * data.w * _Time.y * 0.5f;
                    // rotate2D(data.xz, rotation);
@@ -83,6 +83,8 @@ Shader "Unlit/GrassInstanced"
                     unity_WorldToObject = unity_ObjectToWorld;
                     unity_WorldToObject._14_24_34 *= -1;
                     unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
+                #else
+                    colorData = fixed4(1.0, 1.0, 1.0, 1.0);
                 #endif
 
                 v2f o;

@@ -27,7 +27,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _GrassThickness: 0.539
-    - _MinWidth: 0.4
+    - _MinWidth: 0.25
     m_Colors:
     - _DeepColor: {r: 0, g: 0.5, b: 0.1, a: 1}
     - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}

@@ -41,8 +41,8 @@ public class GrassPointScatter : MonoBehaviour
     [SerializeField] private float baseOffset;
     [SerializeField] private float baseHeight;
 
-    [SerializeField] private Texture2D colorInfo;
-    [SerializeField] private Texture2D heightInfo;
+    [SerializeField] private RenderTexture colorInfo;
+    [SerializeField] private RenderTexture heightInfo;
 
     private bool setInitialPos = true;
 
@@ -52,8 +52,6 @@ public class GrassPointScatter : MonoBehaviour
     private int cellCountX;
     private int cellCountZ;
     private Vector3 origin;
-
-    private MaterialPropertyBlock mpb;
 
     // Start is called before the first frame update
     void OnEnable()
@@ -98,14 +96,12 @@ public class GrassPointScatter : MonoBehaviour
 
     private void Reset()
     {
-        mpb = new MaterialPropertyBlock();
         ReleaseAllBuffers();
         if (meshToMatch)
         {
             //do something with the mesh...
             Renderer meshRenderer = meshToMatch.GetComponent<Renderer>();
             Bounds b = meshRenderer.bounds;
-            meshRenderer.GetPropertyBlock(mpb);
             origin = b.center;
             origin.y = b.max.y;
             planeSizeX = b.extents.x;
@@ -249,7 +245,7 @@ public class GrassPointScatter : MonoBehaviour
         {
             compute.SetTexture(0, "_HeightMap", GetHeightInfoTexture());
             compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
-            compute.SetTexture(0, "_SplatMap", colorInfo);
+            compute.SetTexture(0, "_SplatMap", GetColorInfoTexture());
         }
         else
         {
@@ -500,23 +496,30 @@ public class GrassPointScatter : MonoBehaviour
     public void GenerateStarterTexture()
     {
         
-        Texture2D heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+        RenderTexture heightInfoTexture = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32);
         
         heightInfo = heightInfoTexture;
     }
 
 
-    public Texture2D GetColorInfoTexture(bool forceReset = false)
+    public RenderTexture GetColorInfoTexture(bool forceReset = false)
     {
         if (!colorInfo || forceReset)
         {
-            Texture2D colorInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            RenderTexture colorInfoTexture = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32);
             colorInfo = colorInfoTexture;
         }
         return colorInfo;
     }
 
-    public Texture2D GetHeightInfoTexture(bool forceReset = false)
+    public RenderTexture RTFromTexture(Texture2D input)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(1024, 1024, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(input, rt);
+        return rt;
+    }
+
+    public RenderTexture GetHeightInfoTexture(bool forceReset = false)
     {
         if (!heightInfo || forceReset)
         {
@@ -527,18 +530,13 @@ public class GrassPointScatter : MonoBehaviour
             m.SetTexture("_TargetTex", heightMap);
             Graphics.Blit(heightMap, rt, m);
 
-            Texture2D heightInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
+            RenderTexture heightInfoTexture = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32);
+
             Graphics.CopyTexture(rt, heightInfoTexture);
             heightInfo = heightInfoTexture;
             //rt.Release();
         }
         
-        if (meshToMatch && meshToMatch.GetComponent<Renderer>())
-        {
-            mpb.SetTexture("_MainTex", heightInfo);
-            meshToMatch.GetComponent<Renderer>().SetPropertyBlock(mpb);
-            
-        }
         return heightInfo;
     }
 
@@ -567,11 +565,13 @@ public class GrassPointScatter : MonoBehaviour
         return this.origin;
     }
 
-    public void SetTextures(Texture2D cif, Texture2D hif)
+    public void SetTextures(RenderTexture cif, RenderTexture hif)
     {
         colorInfo = cif;
         heightInfo = hif;
     }
+
+
 
 
 }

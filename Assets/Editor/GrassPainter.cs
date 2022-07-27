@@ -104,6 +104,7 @@ public class GrassPainter : EditorWindow
             }
             targetColorInfo = targetScatter.GetColorInfoTexture();
             targetHeightInfo = targetScatter.GetHeightInfoTexture();
+            targetScatter.FullReset();
         }
         
         if (target)
@@ -112,8 +113,19 @@ public class GrassPainter : EditorWindow
             GUILayout.Label("    如果之前有保存过信息，可以选择信息图后直接载入。");
             EditorGUILayout.ObjectField("草地颜色信息图", targetColorInfo, typeof(Texture2D), false); //rgb - color
             EditorGUILayout.ObjectField("草地高矮&数量信息图", targetHeightInfo, typeof(Texture2D), false); //r - heightmap, g - amount, b - patch height
-            GUILayout.Button("载入自定义草地信息");
-            GUILayout.Button("保存生成的草地信息");
+            if (GUILayout.Button("草地浮空？草不显示？点我重置！"))
+            {
+                targetScatter.SetTextures(targetColorInfo, targetHeightInfo);
+                targetScatter.FullReset();
+            }
+            GUILayout.Button("保存生成的草地信息"); //save
+            if (GUILayout.Button("重新生成草地信息"))
+            {
+                targetColorInfo = targetScatter.GetColorInfoTexture(true);
+                targetHeightInfo = targetScatter.GetHeightInfoTexture(true);
+                targetScatter.FullReset();
+            }
+
 
             GUILayout.Label("  III. 快乐刷草人", header);
             GUILayout.Label("    调整笔刷，然后开始刷草吧！");

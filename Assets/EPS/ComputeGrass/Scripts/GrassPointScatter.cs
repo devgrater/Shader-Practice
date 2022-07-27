@@ -18,6 +18,7 @@ public class GrassPointScatter : MonoBehaviour
     private ComputeBuffer argsBuffer;
     private ComputeBuffer allInstancesPosWSBuffer;
     private ComputeBuffer visibleInstancesOnlyPosWSIDBuffer;
+    private ComputeBuffer dataProcessingBuffer;
     private ComputeBuffer grassAdditionalDataBuffer;
 
     [SerializeField] private Mesh grassMesh;
@@ -76,6 +77,7 @@ public class GrassPointScatter : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
+        if (!compute) return; //dont do it if you don't have enough info!
         RecalculateGrassCount();
         if (ScatterGrass())
             UpdateAllBuffers();
@@ -84,6 +86,14 @@ public class GrassPointScatter : MonoBehaviour
 
         BatchRenderGrass();
 
+    }
+
+
+    public void FullReset()
+    {
+        Reset();
+        ScatterGrass(true);
+        UpdateAllBuffers();
     }
 
     private void Reset()
@@ -140,6 +150,10 @@ public class GrassPointScatter : MonoBehaviour
         if (grassAdditionalDataBuffer != null)
             grassAdditionalDataBuffer.Release();
         grassAdditionalDataBuffer = null;
+
+        if (dataProcessingBuffer != null)
+            dataProcessingBuffer.Release();
+        dataProcessingBuffer = null;
     }
 
     void RecalculateGrassCount()
@@ -207,7 +221,7 @@ public class GrassPointScatter : MonoBehaviour
     {
         //draw mesh instanced:
         Bounds renderBound = new Bounds();
-        renderBound.SetMinMax(origin - new Vector3(planeSizeX, baseOffset, planeSizeZ), origin + new Vector3(planeSizeX, baseOffset, planeSizeZ));
+        renderBound.SetMinMax(origin - new Vector3(planeSizeX, -baseOffset, planeSizeZ), origin + new Vector3(planeSizeX, heightMapHeight, planeSizeZ));
         
         if(grassInfluenceRT && grassRTCamera)
         {
@@ -221,7 +235,7 @@ public class GrassPointScatter : MonoBehaviour
         }
 
         instancedMaterial.SetBuffer("_VisibleInstanceOnlyTransformIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
-        Graphics.DrawMeshInstancedIndirect(GetGrassMeshCache(), 0, instancedMaterial, renderBound, argsBuffer);
+        Graphics.DrawMeshInstancedIndirect(GetGrassMeshCache(), 0, instancedMaterial, renderBound, argsBuffer, 0, null, UnityEngine.Rendering.ShadowCastingMode.Off);
     }
 
 
@@ -231,21 +245,25 @@ public class GrassPointScatter : MonoBehaviour
 
     void UpdateParameters()
     {
-
-        if (heightMap)
+        if (!Application.isPlaying)
         {
             compute.SetTexture(0, "_HeightMap", GetHeightInfoTexture());
-            compute.SetBool("_SetInitialPos", setInitialPos);
             compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
-            instancedMaterial.SetTexture("_HeightMap", GetHeightInfoTexture());
-            instancedMaterial.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
+            compute.SetTexture(0, "_SplatMap", colorInfo);
         }
-        if (splatMap)
+        else
         {
-            compute.SetTexture(0, "_SplatMap", splatMap);
-            instancedMaterial.SetTexture("_SplatMap", splatMap);
+            if (heightMap)
+            {
+                compute.SetTexture(0, "_HeightMap", heightMap);
+                compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
+            }
+            if (splatMap)
+            {
+                compute.SetTexture(0, "_SplatMap", splatMap);
+            }
         }
-        compute.SetInt("_EditorMode", Application.isPlaying ? 0 : 1);
+
         float minX, maxX, minZ, maxZ;
         GetGrassBounds(out minX, out maxX, out minZ, out maxZ);
         compute.SetVector("_GrassBounds", new Vector4(minX, maxX, minZ, maxZ));
@@ -283,7 +301,10 @@ public class GrassPointScatter : MonoBehaviour
             Vector3 centerPosWS = new Vector3(i % cellCountX + 0.5f, origin.y, i / cellCountX + 0.5f);
             centerPosWS.x = Mathf.Lerp(minX, maxX, centerPosWS.x / cellCountX);
             centerPosWS.z = Mathf.Lerp(minZ, maxZ, centerPosWS.z / cellCountZ);
-            Vector3 sizeWS = new Vector3(blockSize, -baseOffset, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
+            float height = (baseOffset + heightMapHeight);
+            //centerPosWS.y = origin.y + height;
+
+            Vector3 sizeWS = new Vector3(blockSize, height * 2, blockSize);//new Vector3(Mathf.Abs(maxX - minX) / cellCountX, 0, Mathf.Abs(maxZ - minZ) / cellCountZ);
             Bounds cellBound = new Bounds(centerPosWS, sizeWS);
 
 
@@ -408,9 +429,16 @@ public class GrassPointScatter : MonoBehaviour
         grassAdditionalDataBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(float) * 4); //uint only, per visible grass
         grassAdditionalDataBuffer.SetData(allGrassColorData);
 
+        if (dataProcessingBuffer != null)
+            dataProcessingBuffer.Release();
+        dataProcessingBuffer = new ComputeBuffer(allGrassPos.Count, sizeof(uint));
+        
+
         compute.SetBuffer(0, "_AllInstancesPosWSBuffer", allInstancesPosWSBuffer);
         compute.SetBuffer(0, "_VisibleInstancesOnlyPosWSIDBuffer", visibleInstancesOnlyPosWSIDBuffer);
         compute.SetBuffer(0, "_AllInstancesColorDataBuffer", grassAdditionalDataBuffer);
+        compute.SetBuffer(0, "_DataProcessingBuffer", dataProcessingBuffer);
+        compute.SetInt("_IsEditorMode", Application.isPlaying ? 0 : 1);
     }
 
     void RecreateArgsBuffer()
@@ -478,9 +506,9 @@ public class GrassPointScatter : MonoBehaviour
     }
 
 
-    public Texture2D GetColorInfoTexture()
+    public Texture2D GetColorInfoTexture(bool forceReset = false)
     {
-        if (!colorInfo)
+        if (!colorInfo || forceReset)
         {
             Texture2D colorInfoTexture = new Texture2D(1024, 1024, TextureFormat.ARGB32, false, true);
             colorInfo = colorInfoTexture;
@@ -488,9 +516,9 @@ public class GrassPointScatter : MonoBehaviour
         return colorInfo;
     }
 
-    public Texture2D GetHeightInfoTexture()
+    public Texture2D GetHeightInfoTexture(bool forceReset = false)
     {
-        if (!heightInfo)
+        if (!heightInfo || forceReset)
         {
             //Blit heightmap:
             Shader s = Shader.Find("Hidden/BlitHeightMap");
@@ -541,8 +569,8 @@ public class GrassPointScatter : MonoBehaviour
 
     public void SetTextures(Texture2D cif, Texture2D hif)
     {
-        splatMap = cif;
-        heightMap = hif;
+        colorInfo = cif;
+        heightInfo = hif;
     }
 
 

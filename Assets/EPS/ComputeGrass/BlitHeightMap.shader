@@ -46,7 +46,8 @@ Shader "Hidden/BlitHeightMap"
                 fixed4 col = tex2D(_TargetTex, i.uv);
                 // just invert the colors
                 //col.rgb = 1 - col.rgb;
-                col.a = 1.0f;
+                col.g = 0.0f;
+                col.ba = 1.0f;
                 return col;
             }
             ENDCG

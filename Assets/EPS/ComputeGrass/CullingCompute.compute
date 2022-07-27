@@ -13,12 +13,12 @@ Texture2D<float4> _SplatMap;
 SamplerState sampler_SplatMap;
 float2 _HeightControl;
 float4 _GrassBounds;
-int _SetInitialPos;
-int _EditorMode;
 
+int _IsEditorMode;
 
 RWStructuredBuffer<float4> _AllInstancesPosWSBuffer; //will not change until instance count change
 RWStructuredBuffer<float4> _AllInstancesColorDataBuffer;
+RWStructuredBuffer<uint> _DataProcessingBuffer;
 AppendStructuredBuffer<uint> _VisibleInstancesOnlyPosWSIDBuffer; //will set counter to 0 per frame, then fill in by this compute shader
 
 float PseudoRandom(float2 st) {
@@ -29,11 +29,10 @@ float PseudoRandom(float2 st) {
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-	float3 worldPos = _AllInstancesPosWSBuffer[id.x + _StartOffset].xyz;
-	float hardCull = _AllInstancesPosWSBuffer[id.x + _StartOffset].w;
-	float randomHeight = _AllInstancesColorDataBuffer[id.x + _StartOffset].w;
+	uint index = id.x + _StartOffset;
+	float4 worldPos = _AllInstancesPosWSBuffer[index].xyzw;
 	//posWS -> posCS
-	float4 absPosCS = abs(mul(_VPMatrix,float4(worldPos,1.0)));
+	
 
 	//do culling test in clip space, result is the same as doing test in NDC space.
 	//prefer clip space here because doing culling test in clip space is faster than doing culling test in NDC, because we can skip 1 division.
@@ -43,35 +42,61 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	//x test allow 10% more threshold (hardcode for grass)
 		//compute height map space uv:
 	//assuming that the heightmap never rotates:
+
 	float heightMapSpaceUVX = (worldPos.x - _GrassBounds.x) / (_GrassBounds.y - _GrassBounds.x);
 	float heightMapSpaceUVZ = (worldPos.z - _GrassBounds.z) / (_GrassBounds.w - _GrassBounds.z);
 	//sample height map:
 	float2 uvs = saturate(float2(heightMapSpaceUVX, heightMapSpaceUVZ));
 	float rng = PseudoRandom(worldPos.xz);
+
 	float4 heightInfo = _HeightMap.SampleLevel(sampler_HeightMap, uvs, 0).xyzw;
-	float4 colorInfo = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
-	if(randomHeight == 0.0f){
+	float4 colorInfo = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw; //xyz for color, w for random height
 
-	
-
-
-		
-		worldPos.y += _HeightControl.x + heightInfo.r * _HeightControl.y;
-		_AllInstancesPosWSBuffer[id.x + _StartOffset].xyz = worldPos;
-		_AllInstancesColorDataBuffer[id.x + _StartOffset].w = (0.4f + 0.6f * rng);
-
-		//sample splatmap:
-		
+	uint dontCullGrass = 0;
+	//if in editor mode:
+	if(_IsEditorMode){
+		//update dynamically:
+		float heightOffset = _HeightControl.x + heightInfo.r * _HeightControl.y;
+		_AllInstancesPosWSBuffer[index].w = heightOffset;
+		_AllInstancesColorDataBuffer[index].rgb = colorInfo.xyz;
+		_AllInstancesColorDataBuffer[index].w = (0.4f + 0.6f * rng) * min(max(heightInfo.b, 0.01f), 1.0f);
+		worldPos.y += heightOffset;
+		dontCullGrass = rng < smoothstep(0.1, 1.0, heightInfo.g);
+		//set data:
 	}
-	
-	//float4 splatmap = _SplatMap.SampleLevel(sampler_SplatMap, uvs, 0).xyzw;
-	hardCull = rng < smoothstep(0.1, 1.0, heightInfo.g);
-	_AllInstancesPosWSBuffer[id.x + _StartOffset].w = hardCull;
+	else{
+		//cull once, forget forever
+		uint processedData = _DataProcessingBuffer[index]; //r - has the data been processed?
+		uint hasProcessed = processedData & 1; //0001
+		dontCullGrass = processedData & 2; //0010 - if keep returns 1, otherwise 0
+		if(hasProcessed == 0){
+			//process, then ....
+			//check height info:
+
+			//process data:
+
+			//set height offset
+			float heightOffset = _HeightControl.x + heightInfo.r * _HeightControl.y;
+			_AllInstancesPosWSBuffer[index].w = heightOffset;
+			//set random height
+			_AllInstancesColorDataBuffer[index].rgb = colorInfo.xyz;
+			_AllInstancesColorDataBuffer[index].w = (0.4f + 0.6f * rng) * min(max(heightInfo.b, 0.1f), 1.0f);
+
+			//if rng is less than height info.g, we keep it
+			dontCullGrass = rng < smoothstep(0.1, 1.0, heightInfo.g);
+			processedData = processedData | (dontCullGrass * 2);
+			processedData = processedData | 1; //
+		}
+		worldPos.y += _AllInstancesPosWSBuffer[index].w;
+		_DataProcessingBuffer[index] = processedData;
+	}
+
+	float4 absPosCS = abs(mul(_VPMatrix,float4(worldPos.xyz,1.0)));
 
 	//cull with splatmap:
 	//compute bounds...
 
-   if (hardCull && (rng < -log(absPosCS.w / _MaxDrawDistance)) && (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance))
+   if (dontCullGrass && (rng < -log(absPosCS.w / _MaxDrawDistance)) && (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w*1.5 && absPosCS.x <= absPosCS.w*1.1 && absPosCS.w <= _MaxDrawDistance))
 		//decay over time:
 			_VisibleInstancesOnlyPosWSIDBuffer.Append(id.x + _StartOffset);
 }

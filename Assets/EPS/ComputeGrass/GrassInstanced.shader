@@ -84,8 +84,9 @@ Shader "Unlit/GrassInstanced"
                     unity_ObjectToWorld._13_23_33_43 = float4(0, 0, max(_GrassThickness * colorData.w, _MinWidth), 0);
                     unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
                     unity_WorldToObject = unity_ObjectToWorld;
-                    unity_WorldToObject._14_24_34 *= -1;
+                    unity_WorldToObject._14_24_34 *= -1; //who the fuck does that? what the fuck unity
                     unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
+                    unity_WorldToObject._14_24_34 *= unity_WorldToObject._11_22_33;
                 #else
                     colorData = fixed4(1.0, 1.0, 1.0, 1.0);
                 #endif
@@ -102,11 +103,14 @@ Shader "Unlit/GrassInstanced"
 
                 v.vertex.xyz += viewSpaceUV.xyz;
                 v.vertex.xyz += v.normal;
-                o.pos = UnityObjectToClipPos(v.vertex.xyz);
+                //o.pos = UnityObjectToClipPos(v.vertex.xyz);
 
 
                 
+                //float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
                 float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                v.vertex = mul(unity_WorldToObject, worldPos);
+
                 //compute uv:
                 fixed relativeU = (worldPos.x - _InfluenceBounds.x) / (_InfluenceBounds.y - _InfluenceBounds.x);
                 fixed relativeV = (worldPos.z - _InfluenceBounds.z) / (_InfluenceBounds.w - _InfluenceBounds.z);
@@ -129,6 +133,8 @@ Shader "Unlit/GrassInstanced"
                // worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
                // worldPos.y -= (1 - splatMap.r) * 10 * randomHeight;
                 o.pos = mul(UNITY_MATRIX_VP, worldPos);//UnityObjectToClipPos(v.vertex);
+                //v.vertex = mul(unity_WorldToObject, worldPos);
+                //v.vertex = mul(unity_WorldToObject, worldPos);
 
                 o.uv = v.uv;//TRANSFORM_TEX(v.uv, _MainTex);
                 o.colorData = colorData;
@@ -209,6 +215,7 @@ Shader "Unlit/GrassInstanced"
                     unity_WorldToObject = unity_ObjectToWorld;
                     unity_WorldToObject._14_24_34 *= -1;
                     unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
+                    unity_WorldToObject._14_24_34 *= unity_WorldToObject._11_22_33;
                 #endif
                 v2f o;
 
@@ -223,9 +230,10 @@ Shader "Unlit/GrassInstanced"
 
                 v.vertex.xyz += viewSpaceUV.xyz;
                 v.vertex.xyz += v.normal;
-                o.pos = UnityObjectToClipPos(v.vertex.xyz);
+                //o.pos = UnityObjectToClipPos(v.vertex.xyz);
                 
                 float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                
                 //compute uv:
                 fixed relativeU = (worldPos.x - _InfluenceBounds.x) / (_InfluenceBounds.y - _InfluenceBounds.x);
                 fixed relativeV = (worldPos.z - _InfluenceBounds.z) / (_InfluenceBounds.w - _InfluenceBounds.z);
@@ -248,6 +256,7 @@ Shader "Unlit/GrassInstanced"
                // worldPos.y += _HeightControl.x + heightMapSample.r * _HeightControl.y;
                // worldPos.y -= (1 - splatMap.r) * 10 * randomHeight;
                 o.pos = mul(UNITY_MATRIX_VP, worldPos);//UnityObjectToClipPos(v.vertex);
+                v.vertex = mul(unity_WorldToObject, worldPos);
 
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);

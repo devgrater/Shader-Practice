@@ -4,9 +4,17 @@ using UnityEngine;
 
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
 [RequireComponent(typeof(Camera))]
-public class DepthReconstruct : MonoBehaviour
+public class HeightFogController : MonoBehaviour
 {
     [SerializeField] private Material postProcess;
+    [SerializeField] private SkyboxController skybox;
+    [SerializeField] private float heightFalloff = 0.3f;
+    [SerializeField] private float depthFalloff = 0.01f;
+    [SerializeField] private float density = 0.01f;
+    [SerializeField] private float fogStartY = 0.0f;
+    [SerializeField] private float fogStartZ = 0.0f;
+    public Gradient fogGradient = new Gradient();
+    private Texture2D gradientMap;
     private Camera targetCamera;
 
     private Transform m_targetCameraTransform;
@@ -19,16 +27,39 @@ public class DepthReconstruct : MonoBehaviour
         }
     }
 
-    [SerializeField] private float fogStart;
-    [SerializeField] private float fogEnd;
-    [Range(0, 1)][SerializeField] private float fogDensity;
-    [SerializeField] private Color fogColor;
-
     void Awake(){
         targetCamera = GetComponent<Camera>();
+        RecomputeGradientMap();
     }
+
+    void RecomputeGradientMap()
+    {
+        //no mip
+        gradientMap = new Texture2D(512, 1, TextureFormat.ARGB32, false);
+        for (int i = 0; i < 512; i++)
+        {
+            gradientMap.SetPixel(i, 0, fogGradient.Evaluate(i / 512.0f));
+        }
+        gradientMap.Apply();
+        gradientMap.filterMode = FilterMode.Bilinear;
+        gradientMap.wrapMode = TextureWrapMode.Clamp;
+    }
+
     void OnRenderImage(RenderTexture src, RenderTexture dest){
-        if(postProcess != null){
+        if (!Application.isPlaying)
+        {
+            // The script is executing inside the editor
+            RecomputeGradientMap();
+        }
+        if (postProcess != null && skybox){
+            postProcess.SetTexture("_ColorRamp", skybox.GetColorRamp());
+            postProcess.SetFloat("_TimeOfDay", skybox.GetTimeOfDay());
+            postProcess.SetFloat("_Density", density);
+            Vector4 fogDataBundle = new Vector4(depthFalloff, heightFalloff, fogStartY, fogStartZ);
+            postProcess.SetVector("_Control", fogDataBundle);
+            postProcess.SetTexture("_FogRamp", gradientMap);
+            //have skb pass over some data:
+            /*
             float near = targetCamera.nearClipPlane;
             float far = targetCamera.farClipPlane;
             float fov = targetCamera.fieldOfView;
@@ -61,7 +92,7 @@ public class DepthReconstruct : MonoBehaviour
             postProcess.SetColor("_FogColor", fogColor);
             postProcess.SetFloat("_FogDensity", fogDensity);
             postProcess.SetFloat("_FogStart", fogStart);
-            postProcess.SetFloat("_FogEnd", fogEnd);
+            postProcess.SetFloat("_FogEnd", fogEnd);*/
             Graphics.Blit(src, dest, postProcess);
         }
         else{

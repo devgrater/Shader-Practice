@@ -154,6 +154,29 @@ public class SkyboxController : MonoBehaviour
         //Shader.SetGlobalTexture("_ColorRamp", gradientMap);
 
     }
+
+    public Texture2D GetColorRamp()
+    {
+        return gradientMap;
+    }
+    
+    public float GetTimeOfDay()
+    {
+        return (timeOfDay % 24000.0f) / 24000.0f;
+    }
+
+    public void SetupExternalMaterialParams(Material mat)
+    {
+        mat.SetVector("_SunControl", new Vector4(sunSize, sunStrength, sunSheen, 0.0f));
+        mat.SetVector("_MoonControl", new Vector4(moonSize, moonStrength, moonSheen, 0.0f));
+        mat.SetVector("_SunDir", sunLight.transform.forward.normalized);
+        mat.SetVector("_MoonDir", moonLight.transform.forward.normalized);
+        mat.SetColor("_SunColor", sunColor * (sunLight.enabled ? 1.0f : 0.0f));
+        mat.SetColor("_MoonColor", moonColor * (moonLight.enabled ? 1.0f : 0.0f));
+        mat.SetFloat("_TimeOfDay", (timeOfDay % 24000.0f) / 24000.0f);
+        mat.SetTexture("_ColorRamp", gradientMap);
+    }
+
     [ContextMenu("重新设置天体")]
     private void SetupSun()
     {
@@ -167,6 +190,7 @@ public class SkyboxController : MonoBehaviour
         moonLight.type = LightType.Directional;
         moon.transform.SetParent(this.transform);
     }
+
 
     private void Reset()
     {

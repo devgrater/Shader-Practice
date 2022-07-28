@@ -20,7 +20,7 @@ Shader "Hidden/ExponentialHeightFog"
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
-
+            
             struct v2f
             {
                 float2 uv : TEXCOORD0;
@@ -29,22 +29,30 @@ Shader "Hidden/ExponentialHeightFog"
                 half3 viewVector : TEXCOORD2;
             };
 
-            sampler2D _MainTex;
-            sampler2D _FogNoise;
-            float4 _MainTex_TexelSize;
-            sampler2D _CameraDepthTexture;
-            float4x4 _FrustumCornersRay;
+             sampler2D _MainTex;
+             float4 _MainTex_TexelSize;
+             sampler2D _CameraDepthTexture;
+             sampler2D _ColorRamp;
+             float _TimeOfDay;
 
-            //fog related
-            float _FogStart;
-            float _FogEnd;
-            fixed4 _FogColor;
-            half _FogDensity;
-            float4 _Control;
+             //fog related
+             fixed4 _FogColor;
+             float4 _Control;
+             fixed _Density;
+
+             half3 _SunControl;
+             half3 _MoonControl;
+             fixed3 _SunDir;
+             fixed3 _MoonDir;
+
+             fixed4 _SunColor;
+             fixed4 _MoonColor;
+             sampler2D _FogRamp;
 
         ENDCG
         Pass
         {
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -55,12 +63,6 @@ Shader "Hidden/ExponentialHeightFog"
                 o.uv = v.uv;
                 float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
                 o.viewVector = mul(unity_CameraToWorld, float4(viewVector,0));
-
-                //o.interpolatedRay = tlarea * _FrustumCornersRay[3] + brarea * _FrustumCornersRay[1];
-
-
-                //interpolate...
-
                 return o;
             }
 
@@ -70,17 +72,12 @@ Shader "Hidden/ExponentialHeightFog"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // just invert the colors
                 fixed depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
+                fixed depth01 = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
                 float3 worldPos = _WorldSpaceCameraPos + depth * i.viewVector;
 
-                //return depth / 1000000;
-                //using the y coordinates..
-                //return float4(frac(worldPos / 1000), 1.0f);
-                float fogDensity = (_FogEnd - worldPos.y) / (_FogEnd - _FogStart);
-                fogDensity = saturate(fogDensity * _FogDensity);
-                
-
+                //return 
                 fixed rdir = normalize(i.viewVector).y;
-
+                
 
 
                 //fishy!
@@ -95,36 +92,52 @@ Shader "Hidden/ExponentialHeightFog"
 
                 //densityWorld *= exp(-depth * 0.001);
 
-                float highDensityPos = exp(-higherY * _Control.g);
-                //return highDensityPos;
-                float lowDensityPos = exp(-lowerY * _Control.g);
-                //return lowDensityPos;
+                float startDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b) * _Control.g * _Density) / (_Control.g * _Density * i.viewVector.y);
+                float endDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b + depth * i.viewVector.y) * _Control.g * _Density) / (_Control.g * _Density * i.viewVector.y);
+
+                float highDensityPos = exp((_WorldSpaceCameraPos.y + _Control.b) * _Control.g);
+                float lowDensityPos = exp((-lowerY + _Control.b) * _Control.g);
+
+                float integral = endDensityPos - startDensityPos;
 
 
-                //return saturate(deltaDensity);
-                float xDirDiff = exp(-depth * _Control.r);
+                //return integral;
+
+                //return -integral;
 
                 //integrate the fog.... over the height difference.
+                //* depth / depth's y
                 //approximation: 
-                float heightIntegral = saturate((highDensityPos + lowDensityPos) * 0.5f);
+                float heightIntegral = integral;//saturate((highDensityPos + lowDensityPos) * 0.5f);
                 //return heightIntegral;//exp((-worldPos.y - _WorldSpaceCameraPos.y) * _Control.g);
-                xDirDiff = exp(-depth * heightIntegral * _Control.r);
+                float xDirDiff = exp2((-depth + _Control.a) * heightIntegral * _Density * _Control.r);
                 
                 
-                //inscatter:
-                float sunAmount = pow(saturate(dot(normalize(depth * i.viewVector.xyz), normalize(_WorldSpaceLightPos0.xyz))), 4 );
+                //inscatter: sun
+                
+                
+                float sunAmount = pow(saturate(dot(normalize(depth * i.viewVector.xyz), normalize(_WorldSpaceLightPos0.xyz))), 12);
          
-                float dirExponentialHeightLineIntegral = max(length(depth * i.viewVector.xyz) - 1.0, 0.0f);
+                float dirExponentialHeightLineIntegral = max(length((depth + _Control.a) * i.viewVector.xyz) - 1.0, 0.0f);
                 float DirectionalInscatteringFogFactor = saturate(exp2(-dirExponentialHeightLineIntegral)); 
                 sunAmount *= (1 - DirectionalInscatteringFogFactor);
-                //atmospheric scattering:
 
-                fixed4 fogColor = _FogColor;
-                fogColor.rgb = lerp(_FogColor.rgb, fixed3(1.0, 1.0, 1.0), sunAmount);
+                //inscatter: atmospheric
+                //scattering from both the sun, and from the environment:
+                //get view dir:
+                fixed4 skyCol = tex2D(
+                    _ColorRamp, fixed2(1 - (rdir + 1.0f) * 0.5f, _TimeOfDay)
+                );
+
+                fixed4 fogCol = tex2D(_FogRamp, fixed2(saturate(xDirDiff), 0.0f));
+
+                //return skyCol;
+
+                fixed4 fogColor = skyCol;
+                fogColor.rgb = lerp(fogCol, fogCol + _LightColor0.xyz * (1 - saturate(xDirDiff)), sunAmount);
+                //skyCol += sunAmount;
                 col.rgb = lerp(fogColor, col.rgb, saturate(xDirDiff));
 
-                //col.rgb = lerp(col.rgb, _FogColor.rgb, exp(-depth * _Control.g));
-                //col.rgb = fog(_WorldSpaceCameraPos, i.viewVector, _FogColor.rgb, exp(-depth) * _Control.g);
                 return col;
             }
             ENDCG

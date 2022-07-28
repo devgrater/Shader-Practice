@@ -36,7 +36,7 @@ public class GrassPointScatter : MonoBehaviour
 
     [SerializeField] private GameObject meshToMatch;
     [SerializeField] private Texture heightMap;
-    [SerializeField] private Texture splatMap;
+    [SerializeField] private Texture colorMap;
     [SerializeField] private float heightMapHeight;
     [SerializeField] private float baseOffset;
     [SerializeField] private float baseHeight;
@@ -254,9 +254,9 @@ public class GrassPointScatter : MonoBehaviour
                 compute.SetTexture(0, "_HeightMap", heightMap);
                 compute.SetVector("_HeightControl", new Vector4(baseOffset, heightMapHeight));
             }
-            if (splatMap)
+            if (colorMap)
             {
-                compute.SetTexture(0, "_SplatMap", splatMap);
+                compute.SetTexture(0, "_SplatMap", colorMap);
             }
         }
 
@@ -569,6 +569,12 @@ public class GrassPointScatter : MonoBehaviour
     {
         colorInfo = cif;
         heightInfo = hif;
+    }
+
+    public void ApplyTextures(Texture2D colorTex, Texture2D heightTex)
+    {
+        colorMap = colorTex;
+        heightMap = heightTex;
     }
 
 

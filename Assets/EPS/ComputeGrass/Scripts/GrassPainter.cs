@@ -8,8 +8,7 @@ using System.IO;
 
 public class GrassPainter : EditorWindow
 {
-
-    private void WriteImage(RenderTexture texture, string name)
+    private Texture2D WriteImage(RenderTexture texture, string name)
     {
         RenderTexture.active = texture;
         Texture2D tex = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, false);
@@ -22,8 +21,20 @@ public class GrassPainter : EditorWindow
         {
             Directory.CreateDirectory(dirPath);
         }
-        File.WriteAllBytes(dirPath + "Grass_" + name + ".jpg", bytes);
-        AssetDatabase.ImportAsset(dirPath);
+        try
+        {
+            string path = dirPath + "Grass_" + name + ".jpg";
+            File.WriteAllBytes(path, bytes);
+            AssetDatabase.ImportAsset("./Assets/GrassData/" + "Grass_" + name + ".jpg");
+            Texture2D targetTex = (Texture2D)AssetDatabase.LoadAssetAtPath("./Assets/GrassData/" + "Grass_" + name + ".jpg", typeof(Texture2D));
+            return targetTex;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            return null;
+        }
+        
     }
     private void OnEnable()
     {
@@ -188,9 +199,9 @@ public class GrassPainter : EditorWindow
             {
                 //targetScatter.GetColorInfoTexture().Apply(false); 
                 //targetScatter.GetHeightInfoTexture().Apply(false);
-                WriteImage(targetScatter.GetColorInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_color");
-                WriteImage(targetScatter.GetHeightInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_height");
-
+                Texture2D colorTex = WriteImage(targetScatter.GetColorInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_color");
+                Texture2D heightTex = WriteImage(targetScatter.GetHeightInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_height");
+                targetScatter.ApplyTextures(colorTex, heightTex);
             }//save
             if (GUILayout.Button("草地不在地面上？重新生成草地信息"))
             {

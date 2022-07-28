@@ -29,7 +29,7 @@ Material:
     - _GrassThickness: 0.539
     - _MinWidth: 0.25
     m_Colors:
-    - _DeepColor: {r: 0, g: 0.5, b: 0.1, a: 1}
+    - _DeepColor: {r: 0.23851903, g: 0.52056867, b: 0.754717, a: 1}
     - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShallowColor: {r: 0.7724667, g: 0.8, b: 0.101960756, a: 1}
   m_BuildTextureStacks: []

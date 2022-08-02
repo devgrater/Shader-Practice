@@ -90,23 +90,7 @@ Shader "Unlit/ApproximateSSS"
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-
-            fixed4 blur3x3(float blurDistance, fixed2 uv){
-                fixed2 xOffset = fixed2(_GrabTexture_TexelSize.x * blurDistance, 0.0f);
-                fixed2 yOffset = fixed2(0.0f, _GrabTexture_TexelSize.y * blurDistance);
-                //fixed2 uvOffset = _GrabTexture_TexelSize.xy * blurDistance;
-                float4 colorSum = 0.0f;
-                
-                
-                for(int x = -2; x <= 2; x++){
-                    for(int y = -2; y <= 2; y++){
-                        fixed2 newUV = xOffset * x + yOffset * y + uv;
-                        colorSum += tex2D(_GrabTexture, newUV);
-                        //return colorSum;
-                    }
-                }
-                return colorSum / 25;
-            }
+            #pragma multi_compile_fwdbase
 
 
             fixed4 frag (v2f i) : SV_Target
@@ -120,6 +104,7 @@ Shader "Unlit/ApproximateSSS"
 
                 float ssSum = bss + fss;
                 float lighting = saturate(dot(normal, _WorldSpaceLightPos0.xyz));
+                lighting = smoothstep(0.2, 0.47, lighting);
 
                 float3 backColor = lerp(_InnerColor.rgb, _LightColor0.rgb, saturate(pow(ssSum, _SSIntensity))) * ssSum;
 
@@ -132,17 +117,6 @@ Shader "Unlit/ApproximateSSS"
 
                 
                 float depthEncoded = tex2D(_CameraDepthTexture, i.screenPosition.xy / i.screenPosition.w);
-                float linearDepth = LinearEyeDepth(depthEncoded);
-
-                float surfaceDepth = i.screenPosition.w;
-                float depthDifference = linearDepth - i.screenPosition.w;
-
-                fixed blurAmount = 1 - 1 / max(depthDifference, 0.01);
-                blurAmount = saturate(blurAmount);
-                blurAmount = blurAmount * blurAmount;
-                //float4 colorBehind = blur3x3(blurAmount * 12, i.screenPosition.xy / i.screenPosition.w);
-                //return colorBehind;
-                //baseCol = lerp(colorBehind, baseCol, saturate(blurAmount));
 
                 float3 unlitCol = baseCol.rgb * _InnerColor.rgb * 0.5f;
                 float3 diffuse = lerp(unlitCol, baseCol.rgb, lighting);
@@ -150,23 +124,11 @@ Shader "Unlit/ApproximateSSS"
                 float3 halfDir = normalize(viewDir + _WorldSpaceLightPos0.xyz);
                 
                 float highlight = saturate(dot(halfDir, normal));
-                //float innerhighlight = pow(highlight, 128);
                 highlight = pow(highlight, 1024) * 0.5;
-                
-                //float3 subsurfaceHL = highlight * _InnerColor;
 
 
-                return float4(backColor + diffuse + ShadeSH9(float4(normal, 1.0f)) * 0.2, 1.0f) + fresnel + highlight;
-                //return bss + fss;
 
-                /*
-                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                float3 normalizedViewDir = normalize(i.viewDir);
-
-                float lighting = dot(normal, lightDir);
-                float subsurfaceLighting = dot(normalizedViewDir, lightDir);
-                return lighting * subsurfaceLighting;*/
-                //return float4(i.uv, i.screenPos.w, 1.0f);
+                return float4(backColor + diffuse + ShadeSH9(float4(normal, 1.0f)) * diffuse, 1.0f) + fresnel + highlight;
             }
             ENDCG
         }

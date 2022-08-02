@@ -8,8 +8,8 @@ public class HeightFogController : MonoBehaviour
 {
     [SerializeField] private Material postProcess;
     [SerializeField] private SkyboxController skybox;
-    [SerializeField] private float heightFalloff = 0.3f;
-    [SerializeField] private float depthFalloff = 0.01f;
+    [SerializeField] private float heightFalloff = 20.0f;
+    [SerializeField] private float depthFalloff = 0.000003f;
     [SerializeField] private float density = 0.01f;
     [SerializeField] private float fogStartY = 0.0f;
     [SerializeField] private float fogStartZ = 0.0f;

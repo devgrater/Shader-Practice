@@ -72,11 +72,11 @@ Shader "Hidden/ExponentialHeightFog"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // just invert the colors
                 fixed depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
-                fixed depth01 = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv));
                 float3 worldPos = _WorldSpaceCameraPos + depth * i.viewVector;
 
                 //return 
                 fixed rdir = normalize(i.viewVector).y;
+                fixed horizontalDepth = sqrt(1 - rdir * rdir) * depth;
                 
 
 
@@ -91,12 +91,9 @@ Shader "Hidden/ExponentialHeightFog"
                 //return densityPlayer;
 
                 //densityWorld *= exp(-depth * 0.001);
-
-                float startDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b) * _Control.g * _Density) / (_Control.g * _Density * i.viewVector.y);
-                float endDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b + depth * i.viewVector.y) * _Control.g * _Density) / (_Control.g * _Density * i.viewVector.y);
-
-                float highDensityPos = exp((_WorldSpaceCameraPos.y + _Control.b) * _Control.g);
-                float lowDensityPos = exp((-lowerY + _Control.b) * _Control.g);
+                half densityFunc = _Control.g * _Density;
+                float startDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b) * densityFunc) / (densityFunc * i.viewVector.y);
+                float endDensityPos = -exp2(-(_WorldSpaceCameraPos.y - _Control.b + depth * i.viewVector.y) * densityFunc) / (densityFunc * i.viewVector.y);
 
                 float integral = endDensityPos - startDensityPos;
 
@@ -110,15 +107,15 @@ Shader "Hidden/ExponentialHeightFog"
                 //approximation: 
                 float heightIntegral = integral;//saturate((highDensityPos + lowDensityPos) * 0.5f);
                 //return heightIntegral;//exp((-worldPos.y - _WorldSpaceCameraPos.y) * _Control.g);
-                float xDirDiff = exp2((-depth + _Control.a) * heightIntegral * _Density * _Control.r);
+                float xDirDiff = exp2((-horizontalDepth + _Control.a) * heightIntegral * _Density * _Control.r);
                 
                 
                 //inscatter: sun
                 
                 
-                float sunAmount = pow(saturate(dot(normalize(depth * i.viewVector.xyz), normalize(_WorldSpaceLightPos0.xyz))), 12);
+                float sunAmount = pow(saturate(dot(normalize(horizontalDepth * i.viewVector.xyz), normalize(_WorldSpaceLightPos0.xyz))), 12);
          
-                float dirExponentialHeightLineIntegral = max(length((depth + _Control.a) * i.viewVector.xyz) - 1.0, 0.0f);
+                float dirExponentialHeightLineIntegral = max(length((horizontalDepth + _Control.a) * i.viewVector.xyz) - 1.0, 0.0f);
                 float DirectionalInscatteringFogFactor = saturate(exp2(-dirExponentialHeightLineIntegral)); 
                 sunAmount *= (1 - DirectionalInscatteringFogFactor);
 
@@ -134,9 +131,13 @@ Shader "Hidden/ExponentialHeightFog"
                 //return skyCol;
 
                 fixed4 fogColor = skyCol;
-                fogColor.rgb = lerp(fogCol, fogCol + _LightColor0.xyz * (1 - saturate(xDirDiff)), sunAmount);
+                fixed skyboxVisibility = pow(1 - saturate(rdir) * 0.5, 8);
+                fogColor.rgb = lerp(fogCol, fogCol + _LightColor0.xyz * (1 - saturate(xDirDiff)), 1 - (1 - sunAmount) * skyboxVisibility);
                 //skyCol += sunAmount;
-                col.rgb = lerp(fogColor, col.rgb, saturate(xDirDiff));
+
+                col.rgb = lerp(fogColor, col.rgb, 1 - (1 - saturate(xDirDiff)) * skyboxVisibility);
+
+
 
                 return col;
             }

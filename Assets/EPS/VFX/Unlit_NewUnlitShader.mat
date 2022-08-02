@@ -7,14 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_ApproximateSSS
-  m_Shader: {fileID: 4800000, guid: 8d3a0a001826dbb43b815305fe1bfe9f, type: 3}
+  m_Name: Unlit_NewUnlitShader
+  m_Shader: {fileID: 4800000, guid: cfab3031488a4554e9352c4e29fa3652, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
@@ -24,17 +24,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Smoothness:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats:
-    - _BackSurfaceDistortion: 1.44
-    - _FrontSurfaceDistortion: 0.57
-    - _SSIntensity: 8
-    - _SurfaceDistortion: 0.72
-    m_Colors:
-    - _InnerColor: {r: 0, g: 1, b: 0.9654484, a: 1}
-    - _Tint: {r: 0.254717, g: 0, b: 0.088171236, a: 0}
+    m_Floats: []
+    m_Colors: []
   m_BuildTextureStacks: []

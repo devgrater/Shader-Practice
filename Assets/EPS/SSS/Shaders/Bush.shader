@@ -2,15 +2,18 @@ Shader "Unlit/Bush"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("叶片材质", 2D) = "white" {}
         
-        _Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
-        _SpecColor ("Spec Color", Color) = (1,1,1,0)
-        _Emission ("Emissive Color", Color) = (0,0,0,0)
-        [PowerSlider(5.0)] _Shininess ("Shininess", Range (0.1, 1)) = 0.7
-        _Color ("Main Color", Color) = (1,1,1,1)
-        _BillboardSize ("Billboard Size", Range(1, 4)) = 2.0
-        _Inflate ("Inflate", Range(0, 4)) = 0.0
+        _Cutoff ("Alpha透贴", Range(0,1)) = 0.5
+        //_SpecColor ("Spec Color", Color) = (1,1,1,0)
+        //_Emission ("Emissive Color", Color) = (0,0,0,0)
+        //[PowerSlider(5.0)] _Shininess ("Shininess", Range (0.1, 1)) = 0.7
+        _Color ("主颜色", Color) = (1,1,1,1)
+        _TopColor ("顶部颜色", Color) = (1,1,1,1)
+        //_GradientRange("渐变开始位置", Float) = 0.0
+        _GradientOffset("渐变开始偏移", Range(-1, 1)) = 0.0
+        _BillboardSize ("面片大小", Range(-4, 4)) = 2.0
+        _Inflate ("面片扩展", Range(-4, 4)) = 0.0
     }
     SubShader
     {
@@ -47,17 +50,19 @@ Shader "Unlit/Bush"
                 float4 pos : SV_POSITION;
                 LIGHTING_COORDS(2, 3)
                 float3 normal : NORMAL;
-                float rim : TEXCOORD4;
+                //float rim : TEXCOORD4;
                 float3 viewDir : TEXCOORD5;
             };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float4 _Color;
+            fixed4 _Color;
+            fixed4 _TopColor;
             fixed _Cutoff;
             fixed _Amount;
-            float _BillboardSize;
-            float _Inflate;
+            fixed _GradientOffset;
+            half _BillboardSize;
+            half _Inflate;
 
             v2f vert (appdata v)
             {
@@ -69,17 +74,13 @@ Shader "Unlit/Bush"
 
                 float3 centerOffset = v.vertex.xyz; 
                 float2 tweakedUV = (v.uv.xy - 0.5f) * 2.0f;
-                float3 viewSpaceUV = mul(float4(tweakedUV, 0.0f, 0.0f), UNITY_MATRIX_MV);
-                float3 scale = unity_ObjectToWorld._m00_m11_m22;
-                viewSpaceUV = normalize(viewSpaceUV * scale) * _BillboardSize;
-                //o.pos = UnityObjectToClipPos(v.vertex);
+                float3 viewSpaceUV = mul(float3(tweakedUV, 0.0f), UNITY_MATRIX_MV);
+                //float3 scale = unity_ObjectToWorld._m00_m11_m22;
+                viewSpaceUV = normalize(viewSpaceUV);
 
-               
-                
-
-                v.vertex.xyz += viewSpaceUV.xyz;
+                v.vertex.xyz += viewSpaceUV.xyz * _BillboardSize;
                 v.vertex.xyz += v.normal * _Inflate;
-                o.pos = UnityObjectToClipPos(v.vertex.xyz);
+                o.pos = UnityObjectToClipPos(v.vertex);
                 
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
@@ -87,9 +88,6 @@ Shader "Unlit/Bush"
                 UNITY_TRANSFER_FOG(o, o.pos);
                 //per vertex rimlight, because...
                 o.viewDir = WorldSpaceViewDir(v.vertex);
-                o.rim = dot(o.normal, o.viewDir);
-                o.rim = saturate(o.rim);
-                
 
 
                 return o;
@@ -98,41 +96,36 @@ Shader "Unlit/Bush"
             fixed4 frag (v2f i) : SV_Target
             {
                 
+                fixed3 normal = normalize(i.normal);
+                fixed3 viewDir = normalize(i.viewDir);
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 gradient = lerp(_Color, _TopColor, saturate(normal.y + _GradientOffset));
+                fixed4 col = tex2D(_MainTex, i.uv) * gradient;
                 fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                //return float4(i.uv, 0.0f, 1.0f);
-                //extract scale from the object to world matrix:
-                
 
                 fixed shadow = LIGHT_ATTENUATION(i);
-                fixed lighting = dot(normalize(i.normal), lightDir);
+                fixed lighting = dot(normal, lightDir);
                 //reduce lighting contribution here:
-                fixed edgeHighlight = 1 - saturate(dot(normalize(i.normal), normalize(i.viewDir)));
-                edgeHighlight = pow(edgeHighlight, 8) * 1.5;
-                fixed shadowContrib = dot(lightDir, normalize(i.viewDir));
-                shadowContrib = saturate(shadowContrib);
-                shadowContrib = pow(shadowContrib, 16);
-                edgeHighlight *= 1 - shadowContrib;
-                shadowContrib = 1 - shadowContrib * 0.5f;
-                //shadowContrib = pow(shadowContrib, 4);
-                //return shadowContrib;
+                fixed edgeHighlight = 1 - saturate(dot(normal, viewDir));
+                edgeHighlight = pow(edgeHighlight, 8) * 0.5;
 
                 lighting = min(saturate(lighting), shadow);
-                lighting = 1 - (1 - lighting) * shadowContrib;
+                //lighting = 1 - (1 - lighting) * shadowContrib;
                 lighting += edgeHighlight;
-                lighting = lighting * 0.5f + 0.5f;
+
                 clip(col.a - _Cutoff);
-                return col * lighting;
+                fixed4 envLighting = col * fixed4(ShadeSH9(float4(normal, 1.0f)), 1.0f);
+                
+                return col * lighting + envLighting;
             }
             ENDCG
         }
 
         
         Pass {
-            Cull Off
+            //Cull Off
             Name "TwoSidedCaster"
             Tags { "LightMode" = "ShadowCaster" }
 
@@ -158,12 +151,13 @@ Shader "Unlit/Bush"
             v2f vert( appdata_base v )
             {
                 v2f o;
-                //float3 centerOffset = v.vertex.xyz; 
+                float3 centerOffset = v.vertex.xyz; 
                 float2 tweakedUV = (v.texcoord.xy - 0.5f) * 2.0f;
-                float3 viewSpaceUV = mul(float4(tweakedUV, 0.0f, 0.0f), UNITY_MATRIX_MV);
-                float3 scale = unity_ObjectToWorld._m00_m11_m22;
-                viewSpaceUV = normalize(viewSpaceUV * scale);
-                v.vertex.xyz += viewSpaceUV * _BillboardSize;
+                float3 viewSpaceUV = mul(float3(tweakedUV, 0.0f), UNITY_MATRIX_MV);
+                //float3 scale = unity_ObjectToWorld._m00_m11_m22;
+                viewSpaceUV = normalize(viewSpaceUV);
+
+                v.vertex.xyz += viewSpaceUV.xyz * _BillboardSize;
                 v.vertex.xyz += v.normal * _Inflate;
                 
                 UNITY_SETUP_INSTANCE_ID(v);

@@ -201,7 +201,7 @@ public class GrassPainter : EditorWindow
                 //targetScatter.GetHeightInfoTexture().Apply(false);
                 Texture2D colorTex = WriteImage(targetScatter.GetColorInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_color");
                 Texture2D heightTex = WriteImage(targetScatter.GetHeightInfoTexture(), target.gameObject.name + "_" + SceneManager.GetActiveScene().name + "_height");
-                targetScatter.ApplyTextures(colorTex, heightTex);
+                //targetScatter.ApplyTextures(colorTex, heightTex);
             }//save
             if (GUILayout.Button("草地不在地面上？重新生成草地信息"))
             {

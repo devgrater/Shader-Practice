@@ -34,8 +34,6 @@ Shader "Unlit/Leaves"
             #include "UnityLightingCommon.cginc"
             
 
-
-
             struct appdata
             {
                 float4 vertex : POSITION;

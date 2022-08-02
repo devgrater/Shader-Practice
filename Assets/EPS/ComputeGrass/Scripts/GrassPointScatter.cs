@@ -100,8 +100,8 @@ public class GrassPointScatter : MonoBehaviour
         if (meshToMatch)
         {
             //do something with the mesh...
-            Renderer meshRenderer = meshToMatch.GetComponent<Renderer>();
-            Bounds b = meshRenderer.bounds;
+            Collider collider = meshToMatch.GetComponent<Collider>();
+            Bounds b = collider.bounds;
             origin = b.center;
             origin.y = b.max.y;
             planeSizeX = b.extents.x;

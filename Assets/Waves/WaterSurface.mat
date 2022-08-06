@@ -2,14 +2,15 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WaterSurface
-  m_Shader: {fileID: 4800000, guid: 668dcdf83b07f4b40a667b19b7548381, type: 3}
-  m_ShaderKeywords: 
+  m_Shader: {fileID: 4800000, guid: f1997503de0e233439012c78f4157fa7, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -43,13 +44,15 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _Amplitude: 1.1
+    - _BlurAmount: 1
     - _CausticBaseDepth: 741.79
     - _CausticPower: 0.3
     - _CausticTiling: 0.06
     - _MaxWaterDepth: 4.88
-    - _NoiseCutoff: 0.76
+    - _NoiseCutoff: 0.398
     - _OffsetBase: -2.03
     - _OffsetCeil: 1
     - _Speed: -12
@@ -57,7 +60,7 @@ Material:
     - _WaterTransparency: 0.72
     - _Wavelength: 8.36
     m_Colors:
-    - _CausticBlendColor: {r: 0, g: 1, b: 0.8862746, a: 1}
+    - _CausticBlendColor: {r: 1024, g: 0, b: 0, a: 1}
     - _DeepColor: {r: 0, g: 1, b: 0.83921576, a: 1}
     - _Direction: {r: 0.71, g: 8.9, b: 0.31, a: -12.21}
     - _ShallowColor: {r: 0, g: 0.7176471, b: 0.507311, a: 1}

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Duck 1
+  m_Shader: {fileID: 4800000, guid: 8d3a0a001826dbb43b815305fe1bfe9f, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 1999
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 2ecaca7f1e9157140aeda067f8fb2922, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Smoothness:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BackSurfaceDistortion: 0.61
+    - _FrontSurfaceDistortion: 1.4
+    - _SSIntensity: 0
+    - _SurfaceDistortion: 0.72
+    m_Colors:
+    - _InnerColor: {r: 0.16042183, g: 0.9716981, b: 0.48800668, a: 1}
+    - _Tint: {r: 0.27843142, g: 0.79431987, b: 1, a: 0}
+  m_BuildTextureStacks: []
